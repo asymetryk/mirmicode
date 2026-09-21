@@ -1,0 +1,48 @@
+{
+  "bases": [
+    {
+      "id": "mirmicode",
+      "repo": "asymetryk/mirmicode",
+      "label": "Map MVP spike",
+      "thread_name": "bases-map",
+      "harness": "cursor",
+      "model": "unknown",
+      "updated_at": "2026-09-21T19:05:00Z",
+      "x": 0.3,
+      "y": 0.3
+    },
+    {
+      "id": "charter-notes",
+      "repo": "example/charter",
+      "label": "Readme pass",
+      "thread_name": "charter-notes",
+      "harness": "codex",
+      "model": "gpt-5.4",
+      "updated_at": "2026-09-21T13:10:00Z",
+      "x": 0.76,
+      "y": 0.24
+    },
+    {
+      "id": "ops-board",
+      "repo": "example/ops-board",
+      "label": "Cluster sketch",
+      "thread_name": "live-state",
+      "harness": "opencode",
+      "model": "unknown",
+      "updated_at": "2026-09-20T21:40:00Z",
+      "x": 0.58,
+      "y": 0.7
+    },
+    {
+      "id": "prompt-lab",
+      "repo": "example/prompt-lab",
+      "label": "Session label",
+      "thread_name": "ohmypi-session",
+      "harness": "ohmypi",
+      "model": "local",
+      "updated_at": "2026-09-18T15:00:00Z",
+      "x": 0.22,
+      "y": 0.72
+    }
+  ]
+}
