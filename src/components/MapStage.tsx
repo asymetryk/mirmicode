@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { postureOf, factionName } from "../factions";
 import { harnessSlug } from "../format";
+import { dominantFaction } from "../rtsArt";
 import { WORLD, fitView, clamp, unitSlot, type PositionedBase } from "../layout";
 import type { ViewState } from "../types";
 import { Minimap } from "./Minimap";
@@ -208,7 +209,11 @@ export function MapStage({
                 aria-pressed={baseSelected && selectedUnitId === null}
                 onClick={() => onTokenClick(base.id, null)}
               >
-                <Outpost selected={baseSelected} attached={baseSelected && attached} />
+                <Outpost
+                  faction={dominantFaction(base.units)}
+                  selected={baseSelected}
+                  attached={baseSelected && attached}
+                />
                 <span className="outpost-name">{base.repo}</span>
               </button>
               {base.units.map((unit, index) => {
@@ -226,7 +231,7 @@ export function MapStage({
                     aria-pressed={selected}
                     aria-label={`${factionName(unit.harness)} ${unit.model}, ${unit.status ?? "idle"}, on ${base.repo}`}
                     title={`${factionName(unit.harness)} · ${unit.model}`}
-                    style={{ left: slot.x, top: 108 + slot.y }}
+                    style={{ left: slot.x, top: 128 + slot.y }}
                     onClick={() => onTokenClick(base.id, unit.id)}
                   >
                     <span className="unit-figure">

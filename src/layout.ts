@@ -40,8 +40,8 @@ export function fitView(
   if (bases.length === 0 || width <= 0 || height <= 0) {
     return { x: 40, y: 40, scale: 1 };
   }
-  const padX = 240;
-  const padY = 210;
+  const padX = 260;
+  const padY = 230;
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
@@ -74,7 +74,7 @@ export function unitSlot(index: number, count: number): { x: number; y: number }
   const rowCount = Math.min(columns, count - rowStart);
   const column = index - rowStart;
   return {
-    x: (column - (rowCount - 1) / 2) * 96,
-    y: row * 78,
+    x: (column - (rowCount - 1) / 2) * 150,
+    y: row * 124,
   };
 }

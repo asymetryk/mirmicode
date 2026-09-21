@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import sampleBases from "../data/sample-bases.json";
 import { postureOf } from "../factions";
+import { dominantFaction, glyphId, heroSrc, outpostSrc } from "../rtsArt";
 import { fitView, positionBases, unitSlot } from "../layout";
 import { normalizeWorkingSetPayload } from "./normalize";
 import { loadFixture, parseWorkingSetUrl, resolveSnapshot } from "./source";
@@ -307,6 +308,57 @@ describe("posture", () => {
     expect(postureOf("blocked")).toBe("blocked");
     expect(postureOf("queued")).toBe("blocked");
     expect(postureOf(null)).toBe("idle");
+  });
+});
+
+describe("rts sprites", () => {
+  it("maps each known model onto one crest, stable across factions", () => {
+    expect(glyphId("Astra")).toBe("a");
+    expect(glyphId("Sol")).toBe("a");
+    expect(glyphId("MiniMax")).toBe("a");
+    expect(glyphId("Luna")).toBe("b");
+    expect(glyphId("Grok-4.6")).toBe("b");
+    expect(glyphId("Kimi")).toBe("b");
+    expect(glyphId("Terra")).toBe("c");
+    expect(glyphId("Gemini")).toBe("c");
+    expect(glyphId("unknown-model")).toBeNull();
+  });
+
+  it("points heroes and outposts at the committed png pack", () => {
+    expect(heroSrc("cursor")).toBe("/rts-art/hero-cursor-angular.png");
+    expect(heroSrc("codex")).toBe("/rts-art/hero-codex-organic.png");
+    expect(heroSrc("ohmypi")).toBe("/rts-art/hero-ohmypi-mechanical.png");
+    expect(heroSrc("opencode")).toBeNull();
+    expect(outpostSrc("Cursor")).toBe("/rts-art/building-outpost-cursor.png");
+  });
+
+  it("picks the plurality faction for the outpost and breaks ties toward cursor", () => {
+    expect(
+      dominantFaction([
+        { harness: "cursor" },
+        { harness: "cursor" },
+        { harness: "codex" },
+        { harness: "ohmypi" },
+      ]),
+    ).toBe("cursor");
+    expect(
+      dominantFaction([
+        { harness: "codex" },
+        { harness: "codex" },
+        { harness: "cursor" },
+      ]),
+    ).toBe("codex");
+    expect(
+      dominantFaction([
+        { harness: "cursor" },
+        { harness: "codex" },
+      ]),
+    ).toBe("cursor");
+    expect(dominantFaction([{ harness: "opencode" }])).toBeNull();
+
+    for (const base of loadFixture().bases) {
+      expect(dominantFaction(base.units)).not.toBeNull();
+    }
   });
 });
 

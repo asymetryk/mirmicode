@@ -2,7 +2,7 @@
 
 **Macro the project. Micro the agents.**
 
-Bird’s-eye map of an agent campaign. A **base** is a repo outpost: pad, walls, and a command node. A **faction** is a harness, and each faction has its own silhouette — Cursor angular, Codex organic, OhMyPi mechanical. A **unit** is one agent on that outpost, a Mirmi. The **model is the unit type** inside the faction: Codex fields Astra, Luna, Terra, and Sol; Cursor fields Grok-4.6 and Gemini; OhMyPi fields Astra, Sol, MiniMax, and Kimi. Same model name, different faction, different body. Idle, working, and blocked change posture and glow. The repo name and last touch stay in the HUD.
+Bird’s-eye map of an agent campaign. A **base** is a repo outpost. A **faction** is a harness, and each faction has its own painted body — Cursor angular, Codex organic, OhMyPi mechanical. A **unit** is one agent on that outpost, a Mirmi. The **model is the unit type**: Codex fields Astra, Luna, Terra, and Sol; Cursor fields Grok-4.6 and Gemini; OhMyPi fields Astra, Sol, MiniMax, and Kimi. The same model wears the same crest on whichever faction body it stands on. Idle, working, and blocked are filters and overlays on that sprite. The repo name and last touch stay in the HUD.
 
 Build in public. Not monetized. No accounts, no payments, no analytics.
 
@@ -27,7 +27,25 @@ npm run preview
 
 Drag to pan. Scroll to zoom. **Select** a unit to read its harness, model, thread, and status in the HUD. **Attach** locks the view on that unit’s base. The **minimap** jumps the view. Escape detaches. These are view controls. The map does not send orders to agents.
 
-The legend under the title shows the faction silhouettes and the unit-type glyphs on those bodies.
+The legend under the title shows the faction sprites and the model crests on those bodies.
+
+## Sprites
+
+Painted units and outposts live in `public/rts-art/` (`MANIFEST.txt` records the pack). Heroes and buildings are 1024×1024 with the figure framed near the bottom. Crests are centered.
+
+A unit is the faction hero with an optional crest on the torso:
+
+| Crest | File | Models |
+| --- | --- | --- |
+| A | `glyph-model-a.png` | Astra, Sol, MiniMax |
+| B | `glyph-model-b.png` | Luna, Grok-4.6, Kimi |
+| C | `glyph-model-c.png` | Terra, Gemini |
+
+Models outside that table draw the faction body with no crest. A harness without a painted hero (OpenCode, unknown) keeps its faction color and a plain token. No fourth sprite is invented.
+
+An outpost uses the building of the faction with the most units on that repo. A tie breaks toward Cursor, then Codex, then OhMyPi. In the sample fixture that is Cursor on `asymetryk/mirmicode`, Codex on `example/charter` and `example/prompt-lab`, and OhMyPi on `example/ops-board`.
+
+Selection is still a ring around the figure. Working adds a faction-colored glow. Blocked adds a red slash. Idle dims the sprite.
 
 ## Sample data
 
@@ -119,4 +137,4 @@ You are the commander. Agents on a base are Mirmis — a myrmidon word for the u
 
 ## Out of scope
 
-Spectating a session, dragging work onto another base, chat or retask orders, game-engine art, payments, and any analytics SDK.
+Spectating a session, dragging work onto another base, chat or retask orders, a game engine, payments, and any analytics SDK.
