@@ -154,8 +154,18 @@ describe("resolveSnapshot", () => {
     };
     const result = await resolveSnapshot("https://working-set.example/bases", fetchImpl);
     expect(result.snapshot.source).toBe("fixture");
-    expect(result.fallbackReason).toMatch(/Could not resolve host/);
-    expect(result.fallbackReason).toMatch(/fixture/);
+    expect(result.fallbackReason).toBe("Could not resolve host. Showing the local fixture.");
+  });
+
+  it("turns a network TypeError into a readable fallback", async () => {
+    const fetchImpl: typeof fetch = async () => {
+      throw new TypeError("Failed to fetch");
+    };
+    const result = await resolveSnapshot("https://working-set.example/bases", fetchImpl);
+    expect(result.snapshot.source).toBe("fixture");
+    expect(result.fallbackReason).toBe(
+      "Working Set could not be reached. Showing the local fixture.",
+    );
   });
 
   it("rejects credentials and non-http URLs", () => {

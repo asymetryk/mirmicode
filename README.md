@@ -6,7 +6,7 @@ Bird’s-eye map of agent campaigns. Each project is a base. On every base: when
 
 Build in public. Not monetized. No accounts, no payments, no analytics.
 
-![Bases map](docs/bases-map.svg)
+![Bases map with asymetryk/mirmicode selected](docs/bases-map.png)
 
 ## Run
 

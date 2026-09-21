@@ -68,12 +68,17 @@ export async function resolveSnapshot(
     const snapshot = await loadWorkingSet(trimmed, fetchImpl, now);
     return { snapshot, fallbackReason: null };
   } catch (error) {
-    const reason = error instanceof Error ? error.message : "Working Set request failed.";
     return {
       snapshot: loadFixture(now),
-      fallbackReason: `${reason} Showing the local fixture.`,
+      fallbackReason: `${readableReason(error)} Showing the local fixture.`,
     };
   }
+}
+
+function readableReason(error: unknown): string {
+  if (error instanceof TypeError) return "Working Set could not be reached.";
+  const raw = error instanceof Error && error.message ? error.message : "Working Set request failed.";
+  return /[.!?]$/.test(raw) ? raw : `${raw}.`;
 }
 
 export function parseWorkingSetUrl(url: string): URL {
