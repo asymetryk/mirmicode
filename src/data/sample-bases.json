@@ -12,7 +12,7 @@
           "harness": "cursor",
           "model": "Grok-4.6",
           "thread_name": "bases-map",
-          "status": "active",
+          "status": "working",
           "updated_at": "2026-09-21T19:05:00Z"
         },
         {
@@ -28,7 +28,7 @@
           "harness": "codex",
           "model": "Luna",
           "thread_name": "readme-faction",
-          "status": "active",
+          "status": "working",
           "updated_at": "2026-09-21T18:12:00Z"
         },
         {
@@ -36,7 +36,7 @@
           "harness": "ohmypi",
           "model": "Kimi",
           "thread_name": "copy-pass",
-          "status": "queued",
+          "status": "blocked",
           "updated_at": "2026-09-21T12:05:00Z"
         }
       ]
@@ -53,7 +53,7 @@
           "harness": "codex",
           "model": "Astra",
           "thread_name": "charter-notes",
-          "status": "active",
+          "status": "working",
           "updated_at": "2026-09-21T13:10:00Z"
         },
         {
@@ -69,7 +69,7 @@
           "harness": "ohmypi",
           "model": "Sol",
           "thread_name": "tone-pass",
-          "status": "active",
+          "status": "working",
           "updated_at": "2026-09-21T15:05:00Z"
         },
         {
@@ -94,7 +94,7 @@
           "harness": "ohmypi",
           "model": "MiniMax",
           "thread_name": "live-state",
-          "status": "active",
+          "status": "working",
           "updated_at": "2026-09-20T21:40:00Z"
         },
         {
@@ -110,7 +110,7 @@
           "harness": "codex",
           "model": "Sol",
           "thread_name": "diagram",
-          "status": "active",
+          "status": "working",
           "updated_at": "2026-09-20T20:05:00Z"
         },
         {
@@ -118,7 +118,7 @@
           "harness": "cursor",
           "model": "Gemini",
           "thread_name": "check",
-          "status": "queued",
+          "status": "blocked",
           "updated_at": "2026-09-20T16:00:00Z"
         }
       ]
@@ -135,7 +135,7 @@
           "harness": "codex",
           "model": "Sol",
           "thread_name": "rewrite",
-          "status": "active",
+          "status": "working",
           "updated_at": "2026-09-18T15:00:00Z"
         },
         {
@@ -151,7 +151,7 @@
           "harness": "ohmypi",
           "model": "Kimi",
           "thread_name": "scratch",
-          "status": "active",
+          "status": "working",
           "updated_at": "2026-09-19T08:45:00Z"
         },
         {

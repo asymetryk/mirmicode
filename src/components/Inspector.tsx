@@ -1,8 +1,8 @@
 import type { FormEvent } from "react";
-import { factionName } from "../factions";
+import { factionName, postureLabel, postureOf } from "../factions";
 import { formatAbsolute, formatLastTouched, harnessSlug } from "../format";
 import type { CampaignBase, Unit } from "../types";
-import { UnitMark } from "./UnitMark";
+import { UnitFigure } from "./UnitFigure";
 
 type InspectorProps = {
   base: CampaignBase | null;
@@ -46,14 +46,24 @@ export function Inspector({
         </p>
         <h2>{unit ? unit.model : base ? base.repo : "Select a unit"}</h2>
         {unit && base ? (
-          <dl className="facts">
-            <Fact label="Harness" value={factionName(unit.harness)} />
-            <Fact label="Model" value={unit.model} />
-            <Fact label="Thread" value={unit.threadName ?? "—"} />
-            <Fact label="Status" value={unit.status ?? "—"} />
-            <Fact label="Base" value={base.repo} />
-            <Fact label="Last touched" value={formatLastTouched(unit.updatedAt, now)} detail={absolute} />
-          </dl>
+          <>
+            <div
+              className="hud-figure"
+              data-faction={harnessSlug(unit.harness)}
+              data-posture={postureOf(unit.status)}
+            >
+              <UnitFigure harness={unit.harness} model={unit.model} status={unit.status} selected />
+              <p>{postureLabel(postureOf(unit.status))}</p>
+            </div>
+            <dl className="facts">
+              <Fact label="Harness" value={factionName(unit.harness)} />
+              <Fact label="Model" value={unit.model} />
+              <Fact label="Thread" value={unit.threadName ?? "—"} />
+              <Fact label="Status" value={unit.status ?? "—"} />
+              <Fact label="Base" value={base.repo} />
+              <Fact label="Last touched" value={formatLastTouched(unit.updatedAt, now)} detail={absolute} />
+            </dl>
+          </>
         ) : base ? (
           <dl className="facts">
             <Fact label="Repo" value={base.repo} />
@@ -75,10 +85,11 @@ export function Inspector({
                   type="button"
                   className={entry.id === unit?.id ? "roster-unit is-selected" : "roster-unit"}
                   data-faction={harnessSlug(entry.harness)}
+                  data-posture={postureOf(entry.status)}
                   aria-pressed={entry.id === unit?.id}
                   onClick={() => onSelectUnit(base.id, entry.id)}
                 >
-                  <UnitMark model={entry.model} />
+                  <UnitFigure harness={entry.harness} model={entry.model} status={entry.status} />
                   <span>
                     <strong>{entry.model}</strong>
                     <span className="roster-meta">

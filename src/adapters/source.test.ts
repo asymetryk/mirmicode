@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import sampleBases from "../data/sample-bases.json";
+import { postureOf } from "../factions";
 import { fitView, positionBases, unitSlot } from "../layout";
 import { normalizeWorkingSetPayload } from "./normalize";
 import { loadFixture, parseWorkingSetUrl, resolveSnapshot } from "./source";
@@ -295,6 +296,17 @@ describe("sample fixture", () => {
     expect(harnesses.has("cursor")).toBe(true);
     expect(harnesses.has("codex")).toBe(true);
     expect(harnesses.has("ohmypi")).toBe(true);
+  });
+});
+
+describe("posture", () => {
+  it("maps working, idle, and blocked words", () => {
+    expect(postureOf("working")).toBe("working");
+    expect(postureOf("active")).toBe("working");
+    expect(postureOf("idle")).toBe("idle");
+    expect(postureOf("blocked")).toBe("blocked");
+    expect(postureOf("queued")).toBe("blocked");
+    expect(postureOf(null)).toBe("idle");
   });
 });
 

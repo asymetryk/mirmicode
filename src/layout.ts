@@ -74,7 +74,7 @@ export function unitSlot(index: number, count: number): { x: number; y: number }
   const rowCount = Math.min(columns, count - rowStart);
   const column = index - rowStart;
   return {
-    x: (column - (rowCount - 1) / 2) * 84,
-    y: row * 62,
+    x: (column - (rowCount - 1) / 2) * 96,
+    y: row * 78,
   };
 }

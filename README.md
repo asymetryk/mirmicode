@@ -2,7 +2,7 @@
 
 **Macro the project. Micro the agents.**
 
-Bird’s-eye map of an agent campaign. A **base** is a repo. A **faction** is a harness — Cursor, Codex, OhMyPi — drawn in its own color. A **unit** is one agent on that base, a Mirmi. The **model is the unit type**: Codex fields Astra, Luna, Terra, and Sol; Cursor fields Grok-4.6 and Gemini; OhMyPi fields Astra, Sol, MiniMax, and Kimi. The same model in two factions is the same shape in two colors.
+Bird’s-eye map of an agent campaign. A **base** is a repo outpost: pad, walls, and a command node. A **faction** is a harness, and each faction has its own silhouette — Cursor angular, Codex organic, OhMyPi mechanical. A **unit** is one agent on that outpost, a Mirmi. The **model is the unit type** inside the faction: Codex fields Astra, Luna, Terra, and Sol; Cursor fields Grok-4.6 and Gemini; OhMyPi fields Astra, Sol, MiniMax, and Kimi. Same model name, different faction, different body. Idle, working, and blocked change posture and glow. The repo name and last touch stay in the HUD.
 
 Build in public. Not monetized. No accounts, no payments, no analytics.
 
@@ -27,7 +27,7 @@ npm run preview
 
 Drag to pan. Scroll to zoom. **Select** a unit to read its harness, model, thread, and status in the HUD. **Attach** locks the view on that unit’s base. The **minimap** jumps the view. Escape detaches. These are view controls. The map does not send orders to agents.
 
-The legend under the title is the key: faction color, then unit-type mark.
+The legend under the title shows the faction silhouettes and the unit-type glyphs on those bodies.
 
 ## Sample data
 
@@ -100,7 +100,7 @@ Unknown fields are ignored, including any message or transcript body. Strings ar
           "harness": "cursor",
           "model": "Grok-4.6",
           "thread_name": "bases-map",
-          "status": "active",
+          "status": "working",
           "updated_at": "2026-09-21T19:05:00Z"
         }
       ]

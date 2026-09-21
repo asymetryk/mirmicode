@@ -120,7 +120,6 @@ export function App() {
         selectedBaseId={selectedBaseId}
         selectedUnitId={selectedUnitId}
         attached={attached && selected !== null}
-        now={now}
         onSelectBase={(id) => {
           setSelectedBaseId(id);
           setSelectedUnitId(null);

@@ -1,18 +1,18 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { formatLastTouched, harnessSlug } from "../format";
-import { factionName } from "../factions";
+import { postureOf, factionName } from "../factions";
+import { harnessSlug } from "../format";
 import { WORLD, fitView, clamp, unitSlot, type PositionedBase } from "../layout";
 import type { ViewState } from "../types";
 import { Minimap } from "./Minimap";
-import { UnitMark } from "./UnitMark";
+import { Outpost } from "./Outpost";
+import { UnitFigure } from "./UnitFigure";
 
 type MapStageProps = {
   bases: PositionedBase[];
   selectedBaseId: string | null;
   selectedUnitId: string | null;
   attached: boolean;
-  now: number;
   onSelectBase: (id: string) => void;
   onSelectUnit: (baseId: string, unitId: string) => void;
 };
@@ -22,7 +22,6 @@ export function MapStage({
   selectedBaseId,
   selectedUnitId,
   attached,
-  now,
   onSelectBase,
   onSelectUnit,
 }: MapStageProps) {
@@ -200,30 +199,17 @@ export function MapStage({
         <p className="world-mark">Bases</p>
         {bases.map((base) => {
           const baseSelected = base.id === selectedBaseId;
-          const factions = [...new Set(base.units.map((unit) => unit.harness))];
           return (
             <div key={base.id} className="base-site" style={{ left: base.x, top: base.y }}>
               <button
                 type="button"
-                className={["base-pad", baseSelected ? "is-selected" : "", baseSelected && attached ? "is-attached" : ""]
-                  .filter(Boolean)
-                  .join(" ")}
+                className="outpost"
                 data-base-id={base.id}
                 aria-pressed={baseSelected && selectedUnitId === null}
                 onClick={() => onTokenClick(base.id, null)}
               >
-                <span className="pad-repo">{base.repo}</span>
-                <span className="pad-meta">
-                  {base.units.length} {base.units.length === 1 ? "unit" : "units"}
-                  {" · "}
-                  {formatLastTouched(base.updatedAt, now)}
-                </span>
-                <span className="faction-ticks" aria-hidden="true">
-                  {factions.map((harness) => (
-                    <i key={harness} data-faction={harnessSlug(harness)} />
-                  ))}
-                </span>
-                {baseSelected && attached ? <span className="attach-flag">Attached</span> : null}
+                <Outpost selected={baseSelected} attached={baseSelected && attached} />
+                <span className="outpost-name">{base.repo}</span>
               </button>
               {base.units.map((unit, index) => {
                 const slot = unitSlot(index, base.units.length);
@@ -236,13 +222,21 @@ export function MapStage({
                     data-base-id={base.id}
                     data-unit-id={unit.id}
                     data-faction={harnessSlug(unit.harness)}
+                    data-posture={postureOf(unit.status)}
                     aria-pressed={selected}
-                    aria-label={`${factionName(unit.harness)} ${unit.model} on ${base.repo}`}
+                    aria-label={`${factionName(unit.harness)} ${unit.model}, ${unit.status ?? "idle"}, on ${base.repo}`}
                     title={`${factionName(unit.harness)} · ${unit.model}`}
-                    style={{ left: slot.x, top: 72 + slot.y }}
+                    style={{ left: slot.x, top: 108 + slot.y }}
                     onClick={() => onTokenClick(base.id, unit.id)}
                   >
-                    <UnitMark model={unit.model} />
+                    <span className="unit-figure">
+                      <UnitFigure
+                        harness={unit.harness}
+                        model={unit.model}
+                        status={unit.status}
+                        selected={selected}
+                      />
+                    </span>
                     <span className="unit-type">{unit.model}</span>
                   </button>
                 );

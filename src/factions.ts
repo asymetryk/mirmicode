@@ -39,6 +39,21 @@ export function factionName(harness: string): string {
   }
 }
 
+export type Posture = "idle" | "working" | "blocked";
+
+export function postureOf(status: string | null): Posture {
+  const key = (status ?? "").toLowerCase();
+  if (key === "working" || key === "active" || key === "busy") return "working";
+  if (key === "blocked" || key === "queued" || key === "stuck" || key === "error") return "blocked";
+  return "idle";
+}
+
+export function postureLabel(posture: Posture): string {
+  if (posture === "working") return "Working";
+  if (posture === "blocked") return "Blocked";
+  return "Idle";
+}
+
 export function unitKind(model: string): UnitKind {
   const key = model.toLowerCase().replace(/[^a-z0-9]+/g, "");
   if (key.includes("grok")) return "grok";
