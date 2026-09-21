@@ -2,11 +2,11 @@
 
 **Macro the project. Micro the agents.**
 
-Bird’s-eye map of agent campaigns. Each project is a base. On every base: when it was last touched, which harness was on it, which model, and the thread name or human label.
+Bird’s-eye map of an agent campaign. A **base** is a repo. A **faction** is a harness — Cursor, Codex, OhMyPi — drawn in its own color. A **unit** is one agent on that base, a Mirmi. The **model is the unit type**: Codex fields Astra, Luna, Terra, and Sol; Cursor fields Grok-4.6 and Gemini; OhMyPi fields Astra, Sol, MiniMax, and Kimi. The same model in two factions is the same shape in two colors.
 
 Build in public. Not monetized. No accounts, no payments, no analytics.
 
-![Bases map with asymetryk/mirmicode selected](docs/bases-map.png)
+![Multi-faction units on the Mirmicode base](docs/bases-map.png)
 
 ## Run
 
@@ -15,7 +15,7 @@ npm install
 npm run dev
 ```
 
-Open http://127.0.0.1:5173. The map loads the committed sample fixture (four bases).
+Open http://127.0.0.1:5173. The map loads the committed sample fixture: four bases, each with units from more than one faction.
 
 ```bash
 npm test
@@ -25,22 +25,19 @@ npm run preview
 
 `preview` serves the static build at http://127.0.0.1:4173.
 
-Drag to pan. Scroll to zoom. **Select** a base to read it. **Attach** locks the view on that base. The **minimap** jumps the view. Escape detaches. These are view controls. The map does not send orders to agents.
+Drag to pan. Scroll to zoom. **Select** a unit to read its harness, model, thread, and status in the HUD. **Attach** locks the view on that unit’s base. The **minimap** jumps the view. Escape detaches. These are view controls. The map does not send orders to agents.
+
+The legend under the title is the key: faction color, then unit-type mark.
 
 ## Sample data
 
 `src/data/sample-bases.json` is synthetic metadata so the map runs with nothing else reachable. `example/*` repos are not live telemetry. The status line says `Fixture · sample data`.
 
-| Base | Last touched | Harness | Model | Thread / label |
-| --- | --- | --- | --- | --- |
-| `asymetryk/mirmicode` | 2026-09-21 19:05 UTC | cursor | unknown | `bases-map` / Map MVP spike |
-| `example/charter` | 2026-09-21 13:10 UTC | codex | gpt-5.4 | `charter-notes` / Readme pass |
-| `example/ops-board` | 2026-09-20 21:40 UTC | opencode | unknown | `live-state` / Cluster sketch |
-| `example/prompt-lab` | 2026-09-18 15:00 UTC | ohmypi | local | `ohmypi-session` / Session label |
+Each base carries several units. `asymetryk/mirmicode` has Cursor Grok-4.6, Cursor Gemini, Codex Luna, and OhMyPi Kimi.
 
 ## Data adapter
 
-CAHQ Working Set is the intended source of truth: metadata only, for Cursor, Codex, OhMyPi, and OpenCode surfaces. This spike does not vendor that service.
+CAHQ Working Set is the intended source of truth: metadata only, for Cursor, Codex, OhMyPi, and OpenCode surfaces. This spike does not vendor that service. OpenCode still renders as its own faction color if a payload names it. The fixture demonstrates the three factions above.
 
 From the environment that produced this spike, the private Working Set host did not resolve, and the private reference implementation was not readable. The map therefore ships a fixture plus an adapter Howard can point at a JSON URL later.
 
@@ -65,20 +62,28 @@ There is no built-in path, auth header, or transcript fetch. If Working Set need
 - a top-level array, or
 - an object with a `bases`, `items`, or `records` array
 
-Each record:
+Two record shapes collapse into the same map:
+
+1. **Grouped base.** One object per repo, with a `units` array (or `agents`, same meaning). This is the shape to prefer once Working Set can emit multi-unit rows.
+2. **Flat unit row.** One object per agent. Rows that share a repo, ignoring case, become one base with many units. A legacy single harness/model row is one unit on that repo.
+
+Flat rows do not invent a second unit from a parent harness when `units` or `agents` is present. The parent harness and model are ignored in that case.
 
 | Map field | Accepted keys | Notes |
 | --- | --- | --- |
-| Repo / base | `repo`, `repository`, `project`, or `base` | `base` may be a string or an object with `repo`, `repository`, `full_name`, or `name`. Records without a repo are dropped. |
-| Harness | `harness` or `surface` | Lowercased. Missing becomes `unknown`. |
-| Model | `model` | Blank or missing becomes `unknown`. |
-| Label | `label` | Human label. Empty becomes an em dash on the map. |
-| Thread | `thread_name` or `threadName` | Empty becomes an em dash. |
-| Last touched | `updated_at`, `updatedAt`, `last_touched`, or `lastTouched` | ISO-8601 string. Missing becomes `unknown`. |
-| Id | `id` | Optional. Derived from repo + label + thread when omitted. |
-| Placement | `x`, `y` | Optional numbers in `0..1`. Map presentation only. Ignored when out of range. Working Set does not have to send them. |
+| Repo / base | `repo`, `repository`, `project`, or `base` | `base` may be a string or an object with `repo`, `repository`, `full_name`, or `name`. Records without a repo are dropped. Same repo merges. |
+| Base id | `id` on a grouped base | Optional. Derived from the repo when omitted. Duplicate base ids get a numeric suffix. On a flat row, `id` belongs to the unit. |
+| Base label | `label` on a grouped base | Human name for the repo. Flat-row `label` stays on the unit. |
+| Units | `units` or `agents` | Array of unit objects. Omit it and the record itself is one unit. |
+| Faction / harness | `harness` or `surface` | Lowercased. Missing becomes `unknown`. |
+| Unit type / model | `model` | Blank or missing becomes `unknown`. |
+| Thread | `thread_name` or `threadName` | Empty renders as an em dash. |
+| Status | `status` | Free text such as `active`. Empty renders as an em dash. |
+| Unit label | `label` on a unit or flat row | Optional human label. |
+| Last touched | `updated_at`, `updatedAt`, `last_touched`, or `lastTouched` | ISO-8601 string. The base shows the latest unit time. |
+| Placement | `x`, `y` on the base | Optional numbers in `0..1`. Map presentation only. Ignored when out of range. |
 
-Unknown fields are ignored, including any message or transcript body. Strings are capped at 180 characters. The fixture is one valid document:
+Unknown fields are ignored, including any message or transcript body. Strings are capped at 180 characters. A grouped fixture record looks like this:
 
 ```json
 {
@@ -86,25 +91,31 @@ Unknown fields are ignored, including any message or transcript body. Strings ar
     {
       "id": "mirmicode",
       "repo": "asymetryk/mirmicode",
-      "label": "Map MVP spike",
-      "thread_name": "bases-map",
-      "harness": "cursor",
-      "model": "unknown",
-      "updated_at": "2026-09-21T19:05:00Z",
+      "label": "Map MVP",
       "x": 0.3,
-      "y": 0.3
+      "y": 0.28,
+      "units": [
+        {
+          "id": "mirmicode-grok",
+          "harness": "cursor",
+          "model": "Grok-4.6",
+          "thread_name": "bases-map",
+          "status": "active",
+          "updated_at": "2026-09-21T19:05:00Z"
+        }
+      ]
     }
   ]
 }
 ```
 
-When the live payload uses different names, extend the alias lists in `normalize.ts`. The UI only renders `CampaignBase` (`src/types.ts`).
+When the live payload uses different names, extend the alias lists in `normalize.ts`. The UI only renders `CampaignBase` and `Unit` (`src/types.ts`).
 
 Startup URL precedence: a saved “use fixture” choice, then a URL saved in this browser, then `VITE_WORKING_SET_URL`, then the fixture.
 
 ## Lore
 
-You are the commander. Agents on a base are Mirmis — a myrmidon word for the units under that command. The name is flavor. The product is the map.
+You are the commander. Agents on a base are Mirmis — a myrmidon word for the units under that command. Factions are the harnesses those units belong to. The name is flavor. The product is the map.
 
 ## Out of scope
 

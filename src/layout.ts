@@ -40,8 +40,8 @@ export function fitView(
   if (bases.length === 0 || width <= 0 || height <= 0) {
     return { x: 40, y: 40, scale: 1 };
   }
-  const padX = 200;
-  const padY = 160;
+  const padX = 240;
+  const padY = 210;
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
@@ -64,4 +64,17 @@ export function fitView(
 
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+/** Token position relative to a base anchor. Rows are centered and hold up to four units. */
+export function unitSlot(index: number, count: number): { x: number; y: number } {
+  const columns = Math.min(4, Math.max(count, 1));
+  const row = Math.floor(index / columns);
+  const rowStart = row * columns;
+  const rowCount = Math.min(columns, count - rowStart);
+  const column = index - rowStart;
+  return {
+    x: (column - (rowCount - 1) / 2) * 84,
+    y: row * 62,
+  };
 }

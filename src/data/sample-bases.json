@@ -3,46 +3,166 @@
     {
       "id": "mirmicode",
       "repo": "asymetryk/mirmicode",
-      "label": "Map MVP spike",
-      "thread_name": "bases-map",
-      "harness": "cursor",
-      "model": "unknown",
-      "updated_at": "2026-09-21T19:05:00Z",
+      "label": "Map MVP",
       "x": 0.3,
-      "y": 0.3
+      "y": 0.28,
+      "units": [
+        {
+          "id": "mirmicode-grok",
+          "harness": "cursor",
+          "model": "Grok-4.6",
+          "thread_name": "bases-map",
+          "status": "active",
+          "updated_at": "2026-09-21T19:05:00Z"
+        },
+        {
+          "id": "mirmicode-gemini",
+          "harness": "cursor",
+          "model": "Gemini",
+          "thread_name": "legend-pass",
+          "status": "idle",
+          "updated_at": "2026-09-21T17:20:00Z"
+        },
+        {
+          "id": "mirmicode-luna",
+          "harness": "codex",
+          "model": "Luna",
+          "thread_name": "readme-faction",
+          "status": "active",
+          "updated_at": "2026-09-21T18:12:00Z"
+        },
+        {
+          "id": "mirmicode-kimi",
+          "harness": "ohmypi",
+          "model": "Kimi",
+          "thread_name": "copy-pass",
+          "status": "queued",
+          "updated_at": "2026-09-21T12:05:00Z"
+        }
+      ]
     },
     {
-      "id": "charter-notes",
+      "id": "charter",
       "repo": "example/charter",
       "label": "Readme pass",
-      "thread_name": "charter-notes",
-      "harness": "codex",
-      "model": "gpt-5.4",
-      "updated_at": "2026-09-21T13:10:00Z",
-      "x": 0.76,
-      "y": 0.24
+      "x": 0.74,
+      "y": 0.24,
+      "units": [
+        {
+          "id": "charter-astra",
+          "harness": "codex",
+          "model": "Astra",
+          "thread_name": "charter-notes",
+          "status": "active",
+          "updated_at": "2026-09-21T13:10:00Z"
+        },
+        {
+          "id": "charter-terra",
+          "harness": "codex",
+          "model": "Terra",
+          "thread_name": "structure-pass",
+          "status": "idle",
+          "updated_at": "2026-09-21T11:40:00Z"
+        },
+        {
+          "id": "charter-sol",
+          "harness": "ohmypi",
+          "model": "Sol",
+          "thread_name": "tone-pass",
+          "status": "active",
+          "updated_at": "2026-09-21T15:05:00Z"
+        },
+        {
+          "id": "charter-grok",
+          "harness": "cursor",
+          "model": "Grok-4.6",
+          "thread_name": "review",
+          "status": "idle",
+          "updated_at": "2026-09-21T09:30:00Z"
+        }
+      ]
     },
     {
       "id": "ops-board",
       "repo": "example/ops-board",
       "label": "Cluster sketch",
-      "thread_name": "live-state",
-      "harness": "opencode",
-      "model": "unknown",
-      "updated_at": "2026-09-20T21:40:00Z",
-      "x": 0.58,
-      "y": 0.7
+      "x": 0.64,
+      "y": 0.74,
+      "units": [
+        {
+          "id": "ops-minimax",
+          "harness": "ohmypi",
+          "model": "MiniMax",
+          "thread_name": "live-state",
+          "status": "active",
+          "updated_at": "2026-09-20T21:40:00Z"
+        },
+        {
+          "id": "ops-astra",
+          "harness": "ohmypi",
+          "model": "Astra",
+          "thread_name": "notes",
+          "status": "idle",
+          "updated_at": "2026-09-20T18:15:00Z"
+        },
+        {
+          "id": "ops-sol",
+          "harness": "codex",
+          "model": "Sol",
+          "thread_name": "diagram",
+          "status": "active",
+          "updated_at": "2026-09-20T20:05:00Z"
+        },
+        {
+          "id": "ops-gemini",
+          "harness": "cursor",
+          "model": "Gemini",
+          "thread_name": "check",
+          "status": "queued",
+          "updated_at": "2026-09-20T16:00:00Z"
+        }
+      ]
     },
     {
       "id": "prompt-lab",
       "repo": "example/prompt-lab",
-      "label": "Session label",
-      "thread_name": "ohmypi-session",
-      "harness": "ohmypi",
-      "model": "local",
-      "updated_at": "2026-09-18T15:00:00Z",
+      "label": "Prompt lab",
       "x": 0.22,
-      "y": 0.72
+      "y": 0.7,
+      "units": [
+        {
+          "id": "lab-sol",
+          "harness": "codex",
+          "model": "Sol",
+          "thread_name": "rewrite",
+          "status": "active",
+          "updated_at": "2026-09-18T15:00:00Z"
+        },
+        {
+          "id": "lab-luna",
+          "harness": "codex",
+          "model": "Luna",
+          "thread_name": "compare",
+          "status": "idle",
+          "updated_at": "2026-09-18T12:10:00Z"
+        },
+        {
+          "id": "lab-kimi",
+          "harness": "ohmypi",
+          "model": "Kimi",
+          "thread_name": "scratch",
+          "status": "active",
+          "updated_at": "2026-09-19T08:45:00Z"
+        },
+        {
+          "id": "lab-gemini",
+          "harness": "cursor",
+          "model": "Gemini",
+          "thread_name": "samples",
+          "status": "idle",
+          "updated_at": "2026-09-18T19:20:00Z"
+        }
+      ]
     }
   ]
 }

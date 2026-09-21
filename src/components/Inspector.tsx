@@ -1,9 +1,12 @@
 import type { FormEvent } from "react";
-import { formatAbsolute, formatLastTouched } from "../format";
-import type { CampaignBase } from "../types";
+import { factionName } from "../factions";
+import { formatAbsolute, formatLastTouched, harnessSlug } from "../format";
+import type { CampaignBase, Unit } from "../types";
+import { UnitMark } from "./UnitMark";
 
 type InspectorProps = {
   base: CampaignBase | null;
+  unit: Unit | null;
   attached: boolean;
   now: number;
   fetchedAt: string | null;
@@ -14,10 +17,12 @@ type InspectorProps = {
   onLoadUrl: (event: FormEvent<HTMLFormElement>) => void;
   onUseFixture: () => void;
   onToggleAttach: () => void;
+  onSelectUnit: (baseId: string, unitId: string) => void;
 };
 
 export function Inspector({
   base,
+  unit,
   attached,
   now,
   fetchedAt,
@@ -28,28 +33,64 @@ export function Inspector({
   onLoadUrl,
   onUseFixture,
   onToggleAttach,
+  onSelectUnit,
 }: InspectorProps) {
-  const absolute = base ? formatAbsolute(base.updatedAt) : null;
+  const touched = unit?.updatedAt ?? base?.updatedAt ?? null;
+  const absolute = touched ? formatAbsolute(touched) : null;
 
   return (
-    <aside className="inspector" aria-label="Selected base">
+    <aside className="inspector" aria-label="Unit">
       <div className="inspector-body">
-        <p className="kicker">{base ? "Selected" : "Nothing selected"}</p>
-        <h2>{base ? base.repo : "Select a base"}</h2>
-        {base ? (
+        <p className="kicker">
+          {unit ? `${factionName(unit.harness)} unit` : base ? "Base" : "Nothing selected"}
+        </p>
+        <h2>{unit ? unit.model : base ? base.repo : "Select a unit"}</h2>
+        {unit && base ? (
           <dl className="facts">
-            <Fact label="Last touched" value={formatLastTouched(base.updatedAt, now)} detail={absolute} />
-            <Fact label="Harness" value={base.harness} />
-            <Fact label="Model" value={base.model} />
-            <Fact label="Thread" value={base.threadName ?? "—"} />
+            <Fact label="Harness" value={factionName(unit.harness)} />
+            <Fact label="Model" value={unit.model} />
+            <Fact label="Thread" value={unit.threadName ?? "—"} />
+            <Fact label="Status" value={unit.status ?? "—"} />
+            <Fact label="Base" value={base.repo} />
+            <Fact label="Last touched" value={formatLastTouched(unit.updatedAt, now)} detail={absolute} />
+          </dl>
+        ) : base ? (
+          <dl className="facts">
+            <Fact label="Repo" value={base.repo} />
             <Fact label="Label" value={base.label ?? "—"} />
+            <Fact label="Last touched" value={formatLastTouched(base.updatedAt, now)} detail={absolute} />
+            <Fact label="Units" value={String(base.units.length)} />
           </dl>
         ) : (
           <p className="lede">
-            Select a base to read when it was last touched, which harness was on it, which model,
-            and the thread name or human label.
+            Select a unit on a base. A base is a repo. A faction is a harness. The model is the unit
+            type.
           </p>
         )}
+        {base && base.units.length > 0 ? (
+          <ul className="roster">
+            {base.units.map((entry) => (
+              <li key={entry.id}>
+                <button
+                  type="button"
+                  className={entry.id === unit?.id ? "roster-unit is-selected" : "roster-unit"}
+                  data-faction={harnessSlug(entry.harness)}
+                  aria-pressed={entry.id === unit?.id}
+                  onClick={() => onSelectUnit(base.id, entry.id)}
+                >
+                  <UnitMark model={entry.model} />
+                  <span>
+                    <strong>{entry.model}</strong>
+                    <span className="roster-meta">
+                      {factionName(entry.harness)}
+                      {entry.status ? ` · ${entry.status}` : ""}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
         <div className="actions">
           <button type="button" onClick={onToggleAttach} disabled={!base || loading} aria-pressed={attached}>
             {attached ? "Detach view" : "Attach view"}

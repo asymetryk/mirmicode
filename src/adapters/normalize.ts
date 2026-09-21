@@ -1,4 +1,4 @@
-import type { CampaignBase } from "../types";
+import type { CampaignBase, Unit } from "../types";
 
 const TEXT_LIMIT = 180;
 
@@ -8,8 +8,9 @@ export type NormalizedPayload = {
 };
 
 /**
- * Maps a Working Set JSON payload into campaign bases.
- * Accepted shape is documented in the README.
+ * Maps a Working Set JSON payload into bases and the units on them.
+ * A base is a repo. Each unit is one agent: harness = faction, model = unit type.
+ * Flat rows that share a repo collapse into one base.
  * Unknown fields are dropped. Transcript bodies are never read.
  */
 export function normalizeWorkingSetPayload(payload: unknown): NormalizedPayload {
@@ -19,8 +20,10 @@ export function normalizeWorkingSetPayload(payload: unknown): NormalizedPayload 
   }
 
   const issues: string[] = [];
-  const seen = new Map<string, number>();
-  const bases: CampaignBase[] = [];
+  const byRepo = new Map<string, MutableBase>();
+  const order: string[] = [];
+  const seenBaseIds = new Map<string, number>();
+  const seenUnitIds = new Map<string, number>();
 
   records.value.forEach((entry, index) => {
     if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
@@ -34,26 +37,106 @@ export function normalizeWorkingSetPayload(payload: unknown): NormalizedPayload 
       return;
     }
 
-    const label = bound(readString(record.label));
-    const threadName = bound(
-      readString(record.thread_name) ?? readString(record.threadName),
-    );
-    const rawId = bound(readString(record.id)) ?? fallbackId(repo, label, threadName);
-    const id = uniqueId(rawId, seen);
+    const base = ensureBase(byRepo, order, seenBaseIds, repo, record);
+    const nested = readUnitArray(record);
+    if (nested) {
+      nested.forEach((unitEntry, unitIndex) => {
+        if (!unitEntry || typeof unitEntry !== "object" || Array.isArray(unitEntry)) {
+          issues.push(`Dropped unit ${unitIndex + 1} on ${repo}: expected an object.`);
+          return;
+        }
+        base.units.push(readUnit(unitEntry as Record<string, unknown>, repo, seenUnitIds));
+      });
+      return;
+    }
 
-    bases.push({
-      id,
-      repo: bound(repo) ?? repo,
-      label,
-      threadName,
-      harness: bound(readHarness(record)) ?? "unknown",
-      model: bound(readModel(record)) ?? "unknown",
-      updatedAt: readUpdatedAt(record),
-      place: readPlace(record),
-    });
+    base.units.push(readUnit(record, repo, seenUnitIds));
+  });
+
+  const bases = order.map((key) => {
+    const base = byRepo.get(key);
+    if (!base) {
+      throw new Error(`Missing base ${key}`);
+    }
+    return {
+      id: base.id,
+      repo: base.repo,
+      label: base.label,
+      updatedAt: latestTimestamp(base.units.map((unit) => unit.updatedAt).concat(base.updatedAt)),
+      place: base.place,
+      units: base.units,
+    };
   });
 
   return { bases, issues };
+}
+
+type MutableBase = {
+  id: string;
+  repo: string;
+  label: string | null;
+  updatedAt: string;
+  place: { x: number; y: number } | null;
+  units: Unit[];
+};
+
+function ensureBase(
+  byRepo: Map<string, MutableBase>,
+  order: string[],
+  seenBaseIds: Map<string, number>,
+  repo: string,
+  record: Record<string, unknown>,
+): MutableBase {
+  const key = repo.toLowerCase();
+  const existing = byRepo.get(key);
+  if (existing) {
+    if (readUnitArray(record) && !existing.label) existing.label = bound(readString(record.label));
+    if (!existing.place) existing.place = readPlace(record);
+    const touched = readUpdatedAt(record);
+    if (touched !== "unknown") existing.updatedAt = latestTimestamp([existing.updatedAt, touched]);
+    return existing;
+  }
+
+  const requestedId = readUnitArray(record) ? bound(readString(record.id)) : null;
+  const id = uniqueId(requestedId ?? repoSlug(repo), seenBaseIds);
+  const base: MutableBase = {
+    id,
+    repo: bound(repo) ?? repo,
+    label: readUnitArray(record) ? bound(readString(record.label)) : null,
+    updatedAt: readUpdatedAt(record),
+    place: readPlace(record),
+    units: [],
+  };
+  byRepo.set(key, base);
+  order.push(key);
+  return base;
+}
+
+function readUnitArray(record: Record<string, unknown>): unknown[] | null {
+  if (Array.isArray(record.units)) return record.units;
+  if (Array.isArray(record.agents)) return record.agents;
+  return null;
+}
+
+function readUnit(
+  record: Record<string, unknown>,
+  repo: string,
+  seenUnitIds: Map<string, number>,
+): Unit {
+  const harness = bound(readHarness(record)) ?? "unknown";
+  const model = bound(readModel(record)) ?? "unknown";
+  const threadName = bound(readString(record.thread_name) ?? readString(record.threadName));
+  const rawId =
+    bound(readString(record.id)) ?? fallbackUnitId(repo, harness, model, threadName);
+  return {
+    id: uniqueId(rawId, seenUnitIds),
+    harness,
+    model,
+    threadName,
+    label: bound(readString(record.label)),
+    status: bound(readString(record.status)),
+    updatedAt: readUpdatedAt(record),
+  };
 }
 
 function readRecords(
@@ -130,16 +213,35 @@ function bound(value: string | null): string | null {
   return `${value.slice(0, TEXT_LIMIT - 1)}…`;
 }
 
-function fallbackId(
+function fallbackUnitId(
   repo: string,
-  label: string | null,
+  harness: string,
+  model: string,
   threadName: string | null,
 ): string {
-  return [repo, label ?? "", threadName ?? ""].join("::").toLowerCase();
+  return [repo, harness, model, threadName ?? ""].join("::").toLowerCase();
+}
+
+function repoSlug(repo: string): string {
+  return repo.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "base";
 }
 
 function uniqueId(id: string, seen: Map<string, number>): string {
   const count = seen.get(id) ?? 0;
   seen.set(id, count + 1);
   return count === 0 ? id : `${id}-${count + 1}`;
+}
+
+function latestTimestamp(values: string[]): string {
+  let best = "unknown";
+  let bestMs = Number.NEGATIVE_INFINITY;
+  for (const value of values) {
+    const ms = Date.parse(value);
+    if (Number.isNaN(ms)) continue;
+    if (ms >= bestMs) {
+      bestMs = ms;
+      best = value;
+    }
+  }
+  return best;
 }

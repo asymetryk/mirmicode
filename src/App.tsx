@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { resolveSnapshot } from "./adapters/source";
 import { Inspector } from "./components/Inspector";
+import { Legend } from "./components/Legend";
 import { MapStage } from "./components/MapStage";
 import { positionBases } from "./layout";
 import type { MapSnapshot } from "./types";
@@ -14,7 +15,8 @@ export function App() {
   const [snapshot, setSnapshot] = useState<MapSnapshot | null>(null);
   const [fallbackReason, setFallbackReason] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedBaseId, setSelectedBaseId] = useState<string | null>(null);
+  const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [attached, setAttached] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
@@ -45,18 +47,25 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (!snapshot || !selectedId) return;
-    if (!snapshot.bases.some((base) => base.id === selectedId)) {
-      setSelectedId(null);
+    if (!snapshot || !selectedBaseId) return;
+    const base = snapshot.bases.find((entry) => entry.id === selectedBaseId);
+    if (!base) {
+      setSelectedBaseId(null);
+      setSelectedUnitId(null);
       setAttached(false);
+      return;
     }
-  }, [snapshot, selectedId]);
+    if (selectedUnitId && !base.units.some((unit) => unit.id === selectedUnitId)) {
+      setSelectedUnitId(null);
+    }
+  }, [snapshot, selectedBaseId, selectedUnitId]);
 
   const positioned = useMemo(
     () => positionBases(snapshot?.bases ?? []),
     [snapshot],
   );
-  const selected = positioned.find((base) => base.id === selectedId) ?? null;
+  const selected = positioned.find((base) => base.id === selectedBaseId) ?? null;
+  const selectedUnit = selected?.units.find((unit) => unit.id === selectedUnitId) ?? null;
 
   async function onLoadUrl(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -104,16 +113,26 @@ export function App() {
         </div>
         {banner ? <p className="banner">{banner}</p> : null}
       </header>
+      <Legend bases={positioned} />
       <MapStage
         key={`${snapshot?.source ?? "pending"}:${snapshot?.fetchedAt ?? "0"}`}
         bases={positioned}
-        selectedId={selectedId}
+        selectedBaseId={selectedBaseId}
+        selectedUnitId={selectedUnitId}
         attached={attached && selected !== null}
         now={now}
-        onSelect={(id) => setSelectedId(id)}
+        onSelectBase={(id) => {
+          setSelectedBaseId(id);
+          setSelectedUnitId(null);
+        }}
+        onSelectUnit={(baseId, unitId) => {
+          setSelectedBaseId(baseId);
+          setSelectedUnitId(unitId);
+        }}
       />
       <Inspector
         base={selected}
+        unit={selectedUnit}
         attached={attached && selected !== null}
         now={now}
         fetchedAt={snapshot?.fetchedAt ?? null}
@@ -124,6 +143,10 @@ export function App() {
         onLoadUrl={onLoadUrl}
         onUseFixture={onUseFixture}
         onToggleAttach={onToggleAttach}
+        onSelectUnit={(baseId, unitId) => {
+          setSelectedBaseId(baseId);
+          setSelectedUnitId(unitId);
+        }}
       />
     </div>
   );
@@ -132,7 +155,8 @@ export function App() {
 function statusLine(snapshot: MapSnapshot | null, loading: boolean): string {
   if (loading && !snapshot) return "Loading bases…";
   if (!snapshot) return "No snapshot";
-  const count = `${snapshot.bases.length} ${snapshot.bases.length === 1 ? "base" : "bases"}`;
+  const units = snapshot.bases.reduce((sum, base) => sum + base.units.length, 0);
+  const count = `${snapshot.bases.length} ${snapshot.bases.length === 1 ? "base" : "bases"} · ${units} units`;
   if (loading) return `Loading… · ${count}`;
   if (snapshot.source === "working-set") return `Working Set · ${count}`;
   return `Fixture · sample data · ${count}`;

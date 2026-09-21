@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import sampleBases from "../data/sample-bases.json";
-import { fitView, positionBases } from "../layout";
+import { fitView, positionBases, unitSlot } from "../layout";
 import { normalizeWorkingSetPayload } from "./normalize";
 import { loadFixture, parseWorkingSetUrl, resolveSnapshot } from "./source";
 
@@ -25,15 +25,89 @@ describe("normalizeWorkingSetPayload", () => {
     expect(normalized.issues).toEqual([]);
     expect(normalized.bases).toHaveLength(1);
     expect(normalized.bases[0]).toMatchObject({
-      id: "alpha",
       repo: "example/alpha",
-      label: "Alpha label",
-      threadName: "alpha-thread",
-      harness: "cursor",
-      model: "demo-model",
+      label: null,
       updatedAt: "2026-09-21T12:00:00Z",
       place: { x: 0.25, y: 0.5 },
     });
+    expect(normalized.bases[0]?.units).toEqual([
+      expect.objectContaining({
+        id: "alpha",
+        harness: "cursor",
+        model: "demo-model",
+        threadName: "alpha-thread",
+        label: "Alpha label",
+      }),
+    ]);
+  });
+
+  it("groups flat rows for one repo into units", () => {
+    const normalized = normalizeWorkingSetPayload({
+      records: [
+        {
+          repo: "example/shared",
+          harness: "cursor",
+          model: "Gemini",
+          thread_name: "one",
+          updated_at: "2026-09-21T01:00:00Z",
+        },
+        {
+          repo: "Example/shared",
+          surface: "codex",
+          model: "Luna",
+          threadName: "two",
+          status: "active",
+          updated_at: "2026-09-21T05:00:00Z",
+        },
+      ],
+    });
+
+    expect(normalized.bases).toHaveLength(1);
+    expect(normalized.bases[0]?.updatedAt).toBe("2026-09-21T05:00:00Z");
+    expect(normalized.bases[0]?.units.map((unit) => [unit.harness, unit.model, unit.status])).toEqual([
+      ["cursor", "Gemini", null],
+      ["codex", "Luna", "active"],
+    ]);
+  });
+
+  it("reads a grouped base with an agents array and ignores the parent harness", () => {
+    const normalized = normalizeWorkingSetPayload({
+      bases: [
+        {
+          id: "grouped",
+          repo: "example/grouped",
+          label: "Grouped base",
+          harness: "cursor",
+          model: "Gemini",
+          x: 0.4,
+          y: 0.6,
+          agents: [
+            {
+              harness: "ohmypi",
+              model: "Kimi",
+              status: "idle",
+              thread_name: "kimi-thread",
+              transcript: "do not keep",
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(normalized.bases[0]).toMatchObject({
+      id: "grouped",
+      label: "Grouped base",
+      place: { x: 0.4, y: 0.6 },
+    });
+    expect(normalized.bases[0]?.units).toHaveLength(1);
+    expect(normalized.bases[0]?.units[0]).toMatchObject({
+      harness: "ohmypi",
+      model: "Kimi",
+      status: "idle",
+      threadName: "kimi-thread",
+    });
+    expect(JSON.stringify(normalized.bases[0])).not.toContain("do not keep");
+    expect(JSON.stringify(normalized.bases[0])).not.toContain("Gemini");
   });
 
   it("accepts surface, base, threadName, and last_touched aliases", () => {
@@ -51,11 +125,13 @@ describe("normalizeWorkingSetPayload", () => {
 
     expect(normalized.bases[0]).toMatchObject({
       repo: "example/nested",
+      label: null,
+      updatedAt: "2026-09-20T00:00:00Z",
+    });
+    expect(normalized.bases[0]?.units[0]).toMatchObject({
       harness: "opencode",
       model: "unknown",
       threadName: "nested-thread",
-      label: null,
-      updatedAt: "2026-09-20T00:00:00Z",
     });
   });
 
@@ -68,9 +144,11 @@ describe("normalizeWorkingSetPayload", () => {
     });
 
     expect(fromArray.bases[0]?.repo).toBe("example/array");
+    expect(fromArray.bases[0]?.units[0]?.label).toBe("Array");
     expect(fromArray.bases[0]?.updatedAt).toBe("2026-09-01T00:00:00Z");
     expect(fromRecords.bases[0]?.repo).toBe("example/records");
     expect(fromRecords.bases[0]?.label).toBeNull();
+    expect(fromRecords.bases[0]?.units[0]?.label).toBeNull();
   });
 
   it("drops records without a repo and reports an empty payload", () => {
@@ -94,8 +172,20 @@ describe("normalizeWorkingSetPayload", () => {
     });
 
     expect(normalized.bases[0]?.place).toBeNull();
-    expect(normalized.bases[0]?.id).toBe("same");
-    expect(normalized.bases[1]?.id).toBe("same-2");
+    expect(normalized.bases[0]?.units[0]?.id).toBe("same");
+    expect(normalized.bases[1]?.units[0]?.id).toBe("same-2");
+  });
+
+  it("suffixes duplicate base ids on grouped records", () => {
+    const normalized = normalizeWorkingSetPayload({
+      bases: [
+        { id: "same", repo: "example/one", units: [{ harness: "codex", model: "Luna" }] },
+        { id: "same", repo: "example/two", units: [{ harness: "codex", model: "Sol" }] },
+      ],
+    });
+    expect(normalized.bases.map((base) => base.id)).toEqual(["same", "same-2"]);
+    expect(normalized.bases[0]?.units).toHaveLength(1);
+    expect(normalized.bases[1]?.units).toHaveLength(1);
   });
 
   it("bounds oversized text and leaves unknown fields unread", () => {
@@ -109,10 +199,10 @@ describe("normalizeWorkingSetPayload", () => {
         },
       ],
     });
-    const base = normalized.bases[0];
-    expect(base?.label?.endsWith("…")).toBe(true);
-    expect(base?.label?.length).toBeLessThanOrEqual(180);
-    expect(JSON.stringify(base)).not.toContain("secret conversation");
+    const unit = normalized.bases[0]?.units[0];
+    expect(unit?.label?.endsWith("…")).toBe(true);
+    expect(unit?.label?.length).toBeLessThanOrEqual(180);
+    expect(JSON.stringify(normalized.bases[0])).not.toContain("secret conversation");
   });
 });
 
@@ -146,6 +236,12 @@ describe("resolveSnapshot", () => {
     expect(result.fallbackReason).toBeNull();
     expect(result.snapshot.source).toBe("working-set");
     expect(result.snapshot.bases[0]?.repo).toBe("example/live");
+    expect(result.snapshot.bases[0]?.units[0]).toMatchObject({
+      harness: "codex",
+      model: "demo",
+      threadName: "live-thread",
+      label: "Live label",
+    });
   });
 
   it("falls back to the fixture when the request fails", async () => {
@@ -175,21 +271,30 @@ describe("resolveSnapshot", () => {
 });
 
 describe("sample fixture", () => {
-  it("has at least three bases and the four map fields", () => {
+  it("has at least three bases and several factions of units on each", () => {
     const raw = sampleBases;
     expect(raw.bases.length).toBeGreaterThanOrEqual(3);
-
-    for (const base of raw.bases) {
-      expect(typeof base.repo).toBe("string");
-      expect(typeof base.harness).toBe("string");
-      expect(typeof base.model).toBe("string");
-      expect(typeof base.updated_at).toBe("string");
-      expect(typeof base.label === "string" || typeof base.thread_name === "string").toBe(true);
-    }
 
     const snapshot = loadFixture();
     expect(snapshot.notice).toBeNull();
     expect(snapshot.bases.length).toBe(raw.bases.length);
+
+    for (const base of snapshot.bases) {
+      expect(base.units.length).toBeGreaterThanOrEqual(2);
+      const factions = new Set(base.units.map((unit) => unit.harness));
+      expect(factions.size).toBeGreaterThanOrEqual(2);
+      for (const unit of base.units) {
+        expect(unit.harness.length).toBeGreaterThan(0);
+        expect(unit.model.length).toBeGreaterThan(0);
+        expect(unit.threadName || unit.status).toBeTruthy();
+        expect(unit.updatedAt).not.toBe("unknown");
+      }
+    }
+
+    const harnesses = new Set(snapshot.bases.flatMap((base) => base.units.map((unit) => unit.harness)));
+    expect(harnesses.has("cursor")).toBe(true);
+    expect(harnesses.has("codex")).toBe(true);
+    expect(harnesses.has("ohmypi")).toBe(true);
   });
 });
 
@@ -206,5 +311,12 @@ describe("layout", () => {
     expect(fitted.scale).toBeGreaterThan(0.3);
     expect(Number.isFinite(fitted.x)).toBe(true);
     expect(Number.isFinite(fitted.y)).toBe(true);
+  });
+
+  it("spreads units around a base instead of stacking them", () => {
+    const slots = [0, 1, 2, 3].map((index) => unitSlot(index, 4));
+    const keys = new Set(slots.map((slot) => `${slot.x},${slot.y}`));
+    expect(keys.size).toBe(4);
+    expect(Math.max(...slots.map((slot) => slot.x)) - Math.min(...slots.map((slot) => slot.x))).toBeGreaterThan(80);
   });
 });
