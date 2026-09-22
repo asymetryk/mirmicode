@@ -202,6 +202,24 @@ summary:focus-visible {
   top: 4%;
 }
 
+.legend-thumb {
+  position: relative;
+  width: 40px;
+  height: 34px;
+  flex: none;
+}
+
+.legend-thumb img {
+  position: absolute;
+  width: 68px;
+  height: 68px;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  pointer-events: none;
+}
+
 .legend .unit-sprite[data-posture="idle"] .hero,
 .legend .unit-sprite[data-posture="idle"] .glyph,
 .legend .unit-sprite[data-posture="idle"] .hero-fallback {
@@ -238,6 +256,7 @@ summary:focus-visible {
 }
 
 .outpost-sprite img,
+.outpost-sprite .is-pending,
 .outpost-fallback {
   position: absolute;
   width: 240px;
@@ -295,8 +314,8 @@ summary:focus-visible {
 
 .unit {
   position: absolute;
-  z-index: 2;
-  width: 128px;
+  z-index: 3;
+  width: 108px;
   padding: 0;
   transform: translate(-50%, -42%);
   display: flex;
@@ -307,6 +326,8 @@ summary:focus-visible {
   border: 0;
   color: var(--faint);
 }
+
+.unit.is-selected { z-index: 5; }
 
 .unit[data-faction="cursor"] { color: var(--cursor); }
 .unit[data-faction="codex"] { color: var(--codex); }
@@ -323,15 +344,29 @@ summary:focus-visible {
 }
 
 .unit-sprite .hero,
-.unit-sprite .hero-fallback {
+.unit-sprite .hero-fallback,
+.unit-sprite .hero.is-pending {
   position: absolute;
-  width: 158px;
-  height: 158px;
+  width: 150px;
+  height: 150px;
   left: 50%;
   top: 0;
   transform: translate(-50%, -16%);
   object-fit: contain;
   pointer-events: none;
+  z-index: 1;
+}
+
+.unit-sprite .fx-marker {
+  position: absolute;
+  width: 118px;
+  height: 72px;
+  left: 50%;
+  bottom: -8px;
+  transform: translate(-50%, 0);
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .unit-sprite .hero-fallback {
@@ -396,13 +431,40 @@ summary:focus-visible {
   filter: drop-shadow(0 0 6px #e15b4a) saturate(0.75);
 }
 
+.dressing {
+  position: absolute;
+  width: 0;
+  height: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.dressing img,
+.dressing .is-pending {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 176px;
+  height: 176px;
+  transform: translate(-50%, -32%);
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.dressing.resource img,
+.dressing.resource .is-pending {
+  width: 132px;
+  height: 132px;
+  transform: translate(-50%, -24%);
+}
+
 .unit-type {
   position: relative;
   z-index: 3;
   max-width: 100%;
   margin-top: -4px;
   color: var(--text);
-  font-size: 16px;
+  font-size: 13px;
   line-height: 1.15;
   text-align: center;
   overflow-wrap: anywhere;
@@ -624,10 +686,11 @@ summary:focus-visible {
   margin: 0 0 0.9rem;
 }
 
-.hud-figure .unit-sprite { width: 112px; height: 136px; }
+.hud-figure .unit-sprite { width: 148px; height: 176px; }
 .hud-figure .unit-sprite .hero,
-.hud-figure .unit-sprite .hero-fallback { width: 198px; height: 198px; }
+.hud-figure .unit-sprite .hero-fallback { width: 248px; height: 248px; }
 .hud-figure .unit-sprite .glyph { width: 92px; }
+.hud-figure .unit-sprite .fx-marker { width: 160px; height: 96px; bottom: 0; }
 .hud-figure[data-faction="cursor"] { color: var(--cursor); }
 .hud-figure[data-faction="codex"] { color: var(--codex); }
 .hud-figure[data-faction="ohmypi"] { color: var(--ohmypi); }

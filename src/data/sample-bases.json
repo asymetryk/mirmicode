@@ -4,8 +4,8 @@
       "id": "mirmicode",
       "repo": "asymetryk/mirmicode",
       "label": "Map MVP",
-      "x": 0.3,
-      "y": 0.28,
+      "x": 0.26,
+      "y": 0.22,
       "units": [
         {
           "id": "mirmicode-grok",
@@ -24,6 +24,38 @@
           "updated_at": "2026-09-21T17:20:00Z"
         },
         {
+          "id": "mirmicode-scout",
+          "harness": "cursor",
+          "model": "Scout",
+          "thread_name": "wide-screen",
+          "status": "working",
+          "updated_at": "2026-09-21T18:40:00Z"
+        },
+        {
+          "id": "mirmicode-drone",
+          "harness": "cursor",
+          "model": "Drone",
+          "thread_name": "overwatch",
+          "status": "idle",
+          "updated_at": "2026-09-21T16:10:00Z"
+        },
+        {
+          "id": "mirmicode-builder",
+          "harness": "cursor",
+          "model": "Builder",
+          "thread_name": "pad-fit",
+          "status": "working",
+          "updated_at": "2026-09-21T18:55:00Z"
+        },
+        {
+          "id": "mirmicode-tankette",
+          "harness": "cursor",
+          "model": "Tankette",
+          "thread_name": "yard",
+          "status": "idle",
+          "updated_at": "2026-09-21T15:05:00Z"
+        },
+        {
           "id": "mirmicode-luna",
           "harness": "codex",
           "model": "Luna",
@@ -32,12 +64,28 @@
           "updated_at": "2026-09-21T18:12:00Z"
         },
         {
+          "id": "mirmicode-skiff",
+          "harness": "codex",
+          "model": "Skiff",
+          "thread_name": "ferry",
+          "status": "idle",
+          "updated_at": "2026-09-21T14:22:00Z"
+        },
+        {
           "id": "mirmicode-kimi",
           "harness": "ohmypi",
           "model": "Kimi",
           "thread_name": "copy-pass",
           "status": "blocked",
           "updated_at": "2026-09-21T12:05:00Z"
+        },
+        {
+          "id": "mirmicode-medic",
+          "harness": "ohmypi",
+          "model": "Medic",
+          "thread_name": "patch",
+          "status": "working",
+          "updated_at": "2026-09-21T18:02:00Z"
         }
       ]
     },
@@ -45,8 +93,8 @@
       "id": "charter",
       "repo": "example/charter",
       "label": "Readme pass",
-      "x": 0.74,
-      "y": 0.24,
+      "x": 0.76,
+      "y": 0.2,
       "units": [
         {
           "id": "charter-astra",
@@ -66,11 +114,43 @@
         },
         {
           "id": "charter-sol",
-          "harness": "ohmypi",
+          "harness": "codex",
           "model": "Sol",
           "thread_name": "tone-pass",
           "status": "working",
           "updated_at": "2026-09-21T15:05:00Z"
+        },
+        {
+          "id": "charter-worker",
+          "harness": "codex",
+          "model": "Worker",
+          "thread_name": "hauling",
+          "status": "idle",
+          "updated_at": "2026-09-21T10:15:00Z"
+        },
+        {
+          "id": "charter-walker",
+          "harness": "codex",
+          "model": "Walker",
+          "thread_name": "patrol",
+          "status": "working",
+          "updated_at": "2026-09-21T16:48:00Z"
+        },
+        {
+          "id": "charter-mirmi",
+          "harness": "codex",
+          "model": "Mirmi-small",
+          "thread_name": "courier",
+          "status": "idle",
+          "updated_at": "2026-09-21T09:55:00Z"
+        },
+        {
+          "id": "charter-builder",
+          "harness": "codex",
+          "model": "Builder",
+          "thread_name": "annex",
+          "status": "working",
+          "updated_at": "2026-09-21T17:30:00Z"
         },
         {
           "id": "charter-grok",
@@ -79,6 +159,14 @@
           "thread_name": "review",
           "status": "idle",
           "updated_at": "2026-09-21T09:30:00Z"
+        },
+        {
+          "id": "charter-ohmypi-sol",
+          "harness": "ohmypi",
+          "model": "Sol",
+          "thread_name": "brass-check",
+          "status": "working",
+          "updated_at": "2026-09-21T14:12:00Z"
         }
       ]
     },
@@ -86,8 +174,8 @@
       "id": "ops-board",
       "repo": "example/ops-board",
       "label": "Cluster sketch",
-      "x": 0.64,
-      "y": 0.74,
+      "x": 0.74,
+      "y": 0.8,
       "units": [
         {
           "id": "ops-minimax",
@@ -106,12 +194,52 @@
           "updated_at": "2026-09-20T18:15:00Z"
         },
         {
-          "id": "ops-sol",
-          "harness": "codex",
-          "model": "Sol",
-          "thread_name": "diagram",
+          "id": "ops-kimi",
+          "harness": "ohmypi",
+          "model": "Kimi",
+          "thread_name": "relay",
           "status": "working",
-          "updated_at": "2026-09-20T20:05:00Z"
+          "updated_at": "2026-09-20T22:05:00Z"
+        },
+        {
+          "id": "ops-tankette",
+          "harness": "ohmypi",
+          "model": "Tankette",
+          "thread_name": "gate",
+          "status": "idle",
+          "updated_at": "2026-09-20T17:40:00Z"
+        },
+        {
+          "id": "ops-skiff",
+          "harness": "ohmypi",
+          "model": "Skiff",
+          "thread_name": "run",
+          "status": "working",
+          "updated_at": "2026-09-20T21:10:00Z"
+        },
+        {
+          "id": "ops-medic",
+          "harness": "ohmypi",
+          "model": "Medic",
+          "thread_name": "bay",
+          "status": "idle",
+          "updated_at": "2026-09-20T16:25:00Z"
+        },
+        {
+          "id": "ops-drone",
+          "harness": "ohmypi",
+          "model": "Drone",
+          "thread_name": "scan",
+          "status": "working",
+          "updated_at": "2026-09-20T20:48:00Z"
+        },
+        {
+          "id": "ops-builder",
+          "harness": "ohmypi",
+          "model": "Builder",
+          "thread_name": "scaffold",
+          "status": "idle",
+          "updated_at": "2026-09-20T15:05:00Z"
         },
         {
           "id": "ops-gemini",
@@ -120,6 +248,14 @@
           "thread_name": "check",
           "status": "blocked",
           "updated_at": "2026-09-20T16:00:00Z"
+        },
+        {
+          "id": "ops-sol",
+          "harness": "codex",
+          "model": "Sol",
+          "thread_name": "diagram",
+          "status": "working",
+          "updated_at": "2026-09-20T20:05:00Z"
         }
       ]
     },
@@ -127,8 +263,8 @@
       "id": "prompt-lab",
       "repo": "example/prompt-lab",
       "label": "Prompt lab",
-      "x": 0.22,
-      "y": 0.7,
+      "x": 0.24,
+      "y": 0.78,
       "units": [
         {
           "id": "lab-sol",
@@ -147,6 +283,30 @@
           "updated_at": "2026-09-18T12:10:00Z"
         },
         {
+          "id": "lab-scout",
+          "harness": "codex",
+          "model": "Scout",
+          "thread_name": "samples-run",
+          "status": "working",
+          "updated_at": "2026-09-19T09:20:00Z"
+        },
+        {
+          "id": "lab-armed",
+          "harness": "codex",
+          "model": "Mirmi-armed",
+          "thread_name": "guard",
+          "status": "idle",
+          "updated_at": "2026-09-18T18:40:00Z"
+        },
+        {
+          "id": "lab-skiff",
+          "harness": "codex",
+          "model": "Skiff",
+          "thread_name": "hop",
+          "status": "working",
+          "updated_at": "2026-09-19T11:05:00Z"
+        },
+        {
           "id": "lab-kimi",
           "harness": "ohmypi",
           "model": "Kimi",
@@ -161,6 +321,14 @@
           "thread_name": "samples",
           "status": "idle",
           "updated_at": "2026-09-18T19:20:00Z"
+        },
+        {
+          "id": "lab-walker",
+          "harness": "cursor",
+          "model": "Walker",
+          "thread_name": "loop",
+          "status": "working",
+          "updated_at": "2026-09-19T10:15:00Z"
         }
       ]
     }

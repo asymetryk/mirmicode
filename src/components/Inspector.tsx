@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import { factionName, postureLabel, postureOf } from "../factions";
 import { formatAbsolute, formatLastTouched, harnessSlug } from "../format";
+import { roleLabel, unitRole } from "../rtsArt";
 import type { CampaignBase, Unit } from "../types";
 import { UnitFigure } from "./UnitFigure";
 
@@ -37,6 +38,7 @@ export function Inspector({
 }: InspectorProps) {
   const touched = unit?.updatedAt ?? base?.updatedAt ?? null;
   const absolute = touched ? formatAbsolute(touched) : null;
+  const role = unit ? unitRole(unit.model) : null;
 
   return (
     <aside className="inspector" aria-label="Unit">
@@ -52,12 +54,19 @@ export function Inspector({
               data-faction={harnessSlug(unit.harness)}
               data-posture={postureOf(unit.status)}
             >
-              <UnitFigure harness={unit.harness} model={unit.model} status={unit.status} selected />
+              <UnitFigure
+                harness={unit.harness}
+                model={unit.model}
+                status={unit.status}
+                selected
+                showMarker
+              />
               <p>{postureLabel(postureOf(unit.status))}</p>
             </div>
             <dl className="facts">
               <Fact label="Harness" value={factionName(unit.harness)} />
               <Fact label="Model" value={unit.model} />
+              {role ? <Fact label="Type" value={roleLabel(role)} /> : null}
               <Fact label="Thread" value={unit.threadName ?? "—"} />
               <Fact label="Status" value={unit.status ?? "—"} />
               <Fact label="Base" value={base.repo} />

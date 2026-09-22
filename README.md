@@ -2,11 +2,13 @@
 
 **Macro the project. Micro the agents.**
 
-Bird’s-eye map of an agent campaign. A **base** is a repo outpost. A **faction** is a harness, and each faction has its own painted body — Cursor angular, Codex organic, OhMyPi mechanical. A **unit** is one agent on that outpost, a Mirmi. The **model is the unit type**: Codex fields Astra, Luna, Terra, and Sol; Cursor fields Grok-4.6 and Gemini; OhMyPi fields Astra, Sol, MiniMax, and Kimi. The same model wears the same crest on whichever faction body it stands on. Idle, working, and blocked are filters and overlays on that sprite. The repo name and last touch stay in the HUD.
+Bird’s-eye map of an agent campaign. A **base** is a repo outpost. A **faction** is a harness, and each faction has its own painted body — Cursor angular, Codex organic, OhMyPi mechanical. A **unit** is one agent on that outpost, a Mirmi. The **model picks the silhouette** from the v2 atlas: scout, worker, drone, tankette, walker, medic, mirmi, armed, skiff, or builder. The same model wears the same silhouette on whichever faction body it stands on. Idle and working add a ground marker. Blocked adds a red slash. The repo name and last touch stay in the HUD.
 
 Build in public. Not monetized. No accounts, no payments, no analytics.
 
-![Multi-faction units on the Mirmicode base](docs/bases-map.png)
+![Multi-type squads on the four bases](docs/bases-map.png)
+
+![Selected Cursor walker in the HUD](docs/selected-hud.png)
 
 ## Run
 
@@ -15,7 +17,7 @@ npm install
 npm run dev
 ```
 
-Open http://127.0.0.1:5173. The map loads the committed sample fixture: four bases, each with units from more than one faction.
+Open http://127.0.0.1:5173. The map loads the committed sample fixture: four bases, each with a multi-type squad from more than one faction, plus pad, depot, turret, refinery, barracks, lab, and a few resource props.
 
 ```bash
 npm test
@@ -27,13 +29,47 @@ npm run preview
 
 Drag to pan. Scroll to zoom. **Select** a unit to read its harness, model, thread, and status in the HUD. **Attach** locks the view on that unit’s base. The **minimap** jumps the view. Escape detaches. These are view controls. The map does not send orders to agents.
 
-The legend under the title shows the faction sprites and the model crests on those bodies.
+The legend under the title groups the atlas: faction bodies, the ten unit types, and the field (buildings and resource props). It does not list every file in the pack.
 
 ## Sprites
 
-Painted units and outposts live in `public/rts-art/` (`MANIFEST.txt` records the pack). Heroes and buildings are 1024×1024 with the figure framed near the bottom. Crests are centered.
+The map draws the staged v2 pack in `public/rts-art-v2/` (`STAGED.txt` is the file list). v1 art in `public/rts-art/` stays as the fallback when a mapping has no v2 file. v2 PNGs ship with a flat backdrop; the map keys that backdrop out at display time and does not replace the files.
 
-A unit is the faction hero with an optional crest on the torso:
+A known model always picks one silhouette. A type word in the model string (`Scout`, `Mirmi-armed`) picks that sprite directly.
+
+| Model | Silhouette | v2 file stem |
+| --- | --- | --- |
+| Astra, Scout | Scout | `scout-bot-01` |
+| Luna, Worker | Worker | `worker-bot-02` |
+| Terra, Drone | Drone | `drone-05` |
+| Sol, Tankette | Tankette | `tankette-06` |
+| Grok-4.6, Walker | Walker | `walker-07` |
+| Gemini, Medic | Medic | `medic-bot-09` |
+| MiniMax, Mirmi-small | Mirmi | `mirmi-small-03` |
+| Kimi, Mirmi-armed | Armed | `mirmi-armed-04` |
+| Skiff | Skiff | `skiff-08` |
+| Builder | Builder | `builder-bot-10` |
+
+The file is `units/{cursor|codex|ohmypi}-{stem}.png`. OpenCode and other harnesses use the neutral body when that file was staged.
+
+Each base also shows a v2 outpost kit for the plurality faction: pad (the clickable base), depot, turret, refinery, barracks, and lab, plus crystal, biomass, and scrap props. A tie still breaks toward Cursor, then Codex, then OhMyPi. In the sample fixture that is Cursor on `asymetryk/mirmicode`, Codex on `example/charter` and `example/prompt-lab`, and OhMyPi on `example/ops-board`.
+
+Working units get `fx/{faction}-work-marker-02.png`. Idle units get `fx/{faction}-idle-marker-01.png`. Selection is still a ring. Working still adds a faction-colored glow. Blocked still adds a red slash. Idle still dims the sprite.
+
+### Wired vs staged-but-unused
+
+Wired on the map: all ten unit roles for Cursor, Codex, and OhMyPi; neutral unit bodies as the fallback where the file exists; pad, depot, turret, refinery, barracks, and lab; crystal, biomass, and scrap; idle and work markers.
+
+Staged but not drawn:
+
+- `ui/neutral-alert-badge-04.png`
+- `ui/neutral-button-plate-02.png`
+- `ui/neutral-panel-corner-01.png`
+- `ui/neutral-resource-pip-03.png`
+
+Not in the staged subset, so they are not referenced: neutral pad, neutral mirmi-small, neutral mirmi-armed, neutral skiff. A missing v2 unit falls back to the v1 hero plus crest when that harness has one. A harness with neither (OpenCode on an unmapped model) keeps its faction color and a plain token.
+
+v1 crests, used only on that fallback:
 
 | Crest | File | Models |
 | --- | --- | --- |
@@ -41,17 +77,11 @@ A unit is the faction hero with an optional crest on the torso:
 | B | `glyph-model-b.png` | Luna, Grok-4.6, Kimi |
 | C | `glyph-model-c.png` | Terra, Gemini |
 
-Models outside that table draw the faction body with no crest. A harness without a painted hero (OpenCode, unknown) keeps its faction color and a plain token. No fourth sprite is invented.
-
-An outpost uses the building of the faction with the most units on that repo. A tie breaks toward Cursor, then Codex, then OhMyPi. In the sample fixture that is Cursor on `asymetryk/mirmicode`, Codex on `example/charter` and `example/prompt-lab`, and OhMyPi on `example/ops-board`.
-
-Selection is still a ring around the figure. Working adds a faction-colored glow. Blocked adds a red slash. Idle dims the sprite.
-
 ## Sample data
 
 `src/data/sample-bases.json` is synthetic metadata so the map runs with nothing else reachable. `example/*` repos are not live telemetry. The status line says `Fixture · sample data`.
 
-Each base carries several units. `asymetryk/mirmicode` has Cursor Grok-4.6, Cursor Gemini, Codex Luna, and OhMyPi Kimi.
+Each base carries a mixed squad, not one hero. `asymetryk/mirmicode` is a Cursor majority (Grok-4.6 walker, Gemini medic, plus scout, drone, builder, and tankette) with Codex Luna and Skiff and OhMyPi Kimi and Medic. The other bases are a Codex charter, an OhMyPi ops board, and a Codex prompt lab. Together the fixture fields every v2 silhouette.
 
 ## Data adapter
 
