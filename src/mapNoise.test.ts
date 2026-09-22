@@ -1,15 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { normalizeWorkingSetPayload } from "./adapters/normalize";
+import { loadNativeFeedFixture } from "./adapters/nativeFeed";
 import { loadFixture } from "./adapters/source";
 import {
   DEFAULT_NOISE_FILTER,
   applyNoiseFilter,
   drawsUnitTokens,
   exactToken,
+  hasUsableContextSnippet,
   noiseReason,
   hasContextSnippet,
   unitEmphasis,
 } from "./mapNoise";
+import type { CampaignBase, Unit } from "./types";
 
 describe("exactToken", () => {
   it("matches the live strings and leaves near-synonyms alone", () => {
@@ -235,6 +238,122 @@ describe("sample fixture noise", () => {
     expect(stillVisible).not.toContain("mirmicode-detached");
     expect(stillVisible).not.toContain("unassigned-detached");
     expect(withoutDetached.hiddenCount).toBeGreaterThan(filtered.hiddenCount);
+  });
+});
+
+describe("native-feed snippet exemption", () => {
+  it("keeps native units with no prompt body and survives the default noise filter", () => {
+    const unit: Unit = {
+      id: "native-1",
+      harness: "grokbot",
+      model: "Abby",
+      threadName: "Abby",
+      label: null,
+      lastPrompt: null,
+      hasContextSnippet: false,
+      snippetExempt: true,
+      status: "open",
+      lifecycle: null,
+      presence: "present",
+      freshness: null,
+      hidden: false,
+      updatedAt: "2026-09-22T20:14:17Z",
+    };
+    expect(hasUsableContextSnippet(unit)).toBe(true);
+
+    const bases: CampaignBase[] = [
+      {
+        id: "native-agentinfra",
+        repo: "asymetryk/agentinfra",
+        label: null,
+        openProject: null,
+        updatedAt: "2026-09-22T20:14:17Z",
+        place: null,
+        stage: "active",
+        oneLiner: null,
+        units: [unit],
+      },
+      {
+        id: "native-homelab",
+        repo: "asymetryk/homelab",
+        label: null,
+        openProject: null,
+        updatedAt: "2026-09-22T20:14:17Z",
+        place: null,
+        stage: "active",
+        oneLiner: null,
+        units: [
+          { ...unit, id: "native-2" },
+        ],
+      },
+    ];
+    const filtered = applyNoiseFilter(bases, DEFAULT_NOISE_FILTER);
+    expect(filtered.hiddenCount).toBe(0);
+    expect(filtered.bases).toHaveLength(2);
+    expect(filtered.bases[0]?.units.map((u) => u.id)).toEqual(["native-1"]);
+    expect(filtered.bases[1]?.units.map((u) => u.id)).toEqual(["native-2"]);
+  });
+
+  it("still hides native units flagged hidden or with presence not_seen", () => {
+    const hidden: Unit = {
+      id: "native-hidden",
+      harness: "grokbot",
+      model: "Abby",
+      threadName: "Abby",
+      label: null,
+      lastPrompt: null,
+      hasContextSnippet: false,
+      snippetExempt: true,
+      status: "open",
+      lifecycle: null,
+      presence: "present",
+      freshness: null,
+      hidden: true,
+      updatedAt: "2026-09-22T20:14:17Z",
+    };
+    const unseen: Unit = {
+      ...hidden,
+      id: "native-unseen",
+      hidden: false,
+      presence: "not_seen",
+    };
+    const visible: Unit = {
+      ...hidden,
+      id: "native-visible",
+      hidden: false,
+      presence: "present",
+    };
+    const bases: CampaignBase[] = [
+      {
+        id: "native-mix",
+        repo: "asymetryk/agentinfra",
+        label: null,
+        openProject: null,
+        updatedAt: "2026-09-22T20:14:17Z",
+        place: null,
+        stage: "active",
+        oneLiner: null,
+        units: [hidden, unseen, visible],
+      },
+    ];
+    const filtered = applyNoiseFilter(bases, DEFAULT_NOISE_FILTER);
+    expect(filtered.hiddenCount).toBe(2);
+    expect(filtered.bases[0]?.units.map((u) => u.id)).toEqual(["native-visible"]);
+  });
+
+  it("survives the baked fixture: 19 bases stay, 3 grokbot units visible", async () => {
+    const snapshot = await loadNativeFeedFixture();
+    const filtered = applyNoiseFilter(snapshot.bases, DEFAULT_NOISE_FILTER);
+    expect(snapshot.bases).toHaveLength(19);
+    expect(filtered.bases).toHaveLength(19);
+    const visibleUnits = filtered.bases.flatMap((base) => base.units);
+    expect(visibleUnits.length).toBeGreaterThanOrEqual(3);
+    for (const unit of visibleUnits) {
+      expect(unit.lastPrompt).toBeNull();
+      expect(unit.hasContextSnippet).toBe(false);
+      expect(unit.snippetExempt).toBe(true);
+    }
+    expect(visibleUnits.every((u) => u.id.length > 0)).toBe(true);
   });
 });
 

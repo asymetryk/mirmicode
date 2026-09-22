@@ -4,6 +4,7 @@ import { postureOf, postureSignal, factionName } from "../factions";
 import { drawsUnitTokens, unitEmphasis } from "../mapNoise";
 import { harnessSlug, unitContext } from "../format";
 import {
+  bareBuildingSet,
   buildingSetForStage,
   buildingSrc,
   dominantFaction,
@@ -227,6 +228,14 @@ export function MapStage({
           const faction = dominantFaction(base.units);
           const unassigned = !drawsUnitTokens(base.repo);
           const bare = base.units.length === 0;
+          const dressBuildings = !unassigned;
+          // A bare camp with no faction claim still gets stage dressing so the
+          // field has variety. We use a deterministic subset keyed by repo.
+          const buildingKinds = dressBuildings
+            ? faction === null
+              ? bareBuildingSet(base.stage, base.repo)
+              : buildingSetForStage(base.stage)
+            : [];
           return (
             <div
               key={base.id}
@@ -235,11 +244,9 @@ export function MapStage({
               data-stage={stageClassName(base.stage)}
               style={{ left: base.x, top: base.y }}
             >
-              {unassigned || bare
-                ? null
-                : buildingSetForStage(base.stage)
-                    .filter((kind) => kind !== "pad")
-                    .map((kind) => {
+              {buildingKinds
+                .filter((kind) => kind !== "pad")
+                .map((kind) => {
                 const src = buildingSrc(faction, kind);
                 const slot = BUILDING_OFFSET[kind];
                 if (!src) return null;
@@ -254,22 +261,22 @@ export function MapStage({
                   </span>
                 );
               })}
-              {unassigned || bare
-                ? null
-                : resourcePlacements(baseIndex).map((prop) => {
-                const slot = RESOURCE_OFFSETS[prop.slot];
-                if (!slot) return null;
-                return (
-                  <span
-                    key={`${prop.kind}-${prop.slot}`}
-                    className={`dressing resource resource-${prop.kind}`}
-                    style={{ left: slot.x, top: slot.y }}
-                    aria-hidden="true"
-                  >
-                    <Cutout src={resourceSrc(faction, prop.kind)} />
-                  </span>
-                );
-              })}
+              {dressBuildings
+                ? resourcePlacements(baseIndex).map((prop) => {
+                    const slot = RESOURCE_OFFSETS[prop.slot];
+                    if (!slot) return null;
+                    return (
+                      <span
+                        key={`${prop.kind}-${prop.slot}`}
+                        className={`dressing resource resource-${prop.kind}`}
+                        style={{ left: slot.x, top: slot.y }}
+                        aria-hidden="true"
+                      >
+                        <Cutout src={resourceSrc(faction, prop.kind)} />
+                      </span>
+                    );
+                  })
+                : null}
               <button
                 type="button"
                 className="outpost"

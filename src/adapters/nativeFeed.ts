@@ -138,6 +138,7 @@ export function parseNativeFeedSnapshot(snapshot: unknown): NativeFeedParseResul
       updatedAt: latestUpdatedAt(bucket),
       place: null,
       stage: stageFromString(camp.stage ?? null),
+      oneLiner: oneLinerFromCamp(camp),
       units: bucket,
     });
   }
@@ -222,7 +223,8 @@ function toUnit(raw: NativeFeedUnit): Unit {
   const status = typeof raw.status === "string" && raw.status.trim() ? raw.status.trim() : null;
   const updatedAt = typeof raw.updated_at === "string" && raw.updated_at ? raw.updated_at : PLACEHOLDER;
   // The native feed never carries prompt bodies. lastPrompt stays null so the
-  // public-mode scrubber is a no-op for this source.
+  // public-mode scrubber is a no-op for this source. snippetExempt lets the
+  // map hard-filter keep these units without lying about hasContextSnippet.
   return {
     id: raw.id ?? PLACEHOLDER,
     harness,
@@ -231,6 +233,7 @@ function toUnit(raw: NativeFeedUnit): Unit {
     label: null,
     lastPrompt: null,
     hasContextSnippet: false,
+    snippetExempt: true,
     status,
     lifecycle: null,
     presence: null,
@@ -238,6 +241,11 @@ function toUnit(raw: NativeFeedUnit): Unit {
     hidden: false,
     updatedAt,
   };
+}
+
+function oneLinerFromCamp(camp: NativeFeedCamp): string | null {
+  const text = typeof camp.one_liner === "string" ? camp.one_liner.trim() : "";
+  return text.length > 0 ? text : null;
 }
 
 function latestUpdatedAt(units: Unit[]): string {

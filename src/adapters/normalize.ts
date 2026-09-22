@@ -85,6 +85,7 @@ export function normalizeWorkingSetPayload(payload: unknown): NormalizedPayload 
       updatedAt: latestTimestamp(base.units.map((unit) => unit.updatedAt).concat(base.updatedAt)),
       place: base.place,
       stage: base.stage,
+      oneLiner: null,
       units: base.units,
     };
   });
@@ -108,6 +109,7 @@ type MutableBase = {
   stage: import("../types").CampStage;
   units: Unit[];
   openProjects: OpenProjectSummary[];
+  oneLiner: string | null;
 };
 
 function ensureBase(
@@ -140,6 +142,7 @@ function ensureBase(
     stage: readStage(record),
     units: [],
     openProjects: [],
+    oneLiner: null,
   };
   byRepo.set(key, base);
   order.push(key);
