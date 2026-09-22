@@ -1,3 +1,4 @@
+import { canonicalHarness } from "./factions";
 import { shouldScrubPrompts } from "./publicMode";
 import type { Unit } from "./types";
 
@@ -47,7 +48,7 @@ export function formatAbsolute(iso: string): string | null {
 }
 
 export function harnessSlug(harness: string): string {
-  const key = harness.toLowerCase();
+  const key = canonicalHarness(harness);
   if (key === "cursor" || key === "codex" || key === "ohmypi" || key === "opencode") {
     return key;
   }

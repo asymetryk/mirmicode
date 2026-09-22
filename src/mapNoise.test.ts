@@ -7,6 +7,7 @@ import {
   drawsUnitTokens,
   exactToken,
   noiseReason,
+  hasContextSnippet,
   unitEmphasis,
 } from "./mapNoise";
 
@@ -88,6 +89,44 @@ describe("unitEmphasis", () => {
     expect(unitEmphasis({ presence: "present", lifecycle: "unknown", harness: "cursor" }, "Unassigned")).toBe("collector");
     expect(unitEmphasis({ presence: "present", lifecycle: "unknown", harness: "Cursor" }, "unassigned")).toBe("collector");
     expect(unitEmphasis({ presence: null, lifecycle: null, harness: "cursor" }, "Unassigned")).toBe("normal");
+  });
+
+  it("does not dim OhMyPi for detached when it is present or has a prompt", () => {
+    const bright = { presence: "present", lifecycle: "detached", harness: "omp", lastPrompt: "ship the rail" };
+    expect(hasContextSnippet(bright)).toBe(true);
+    expect(hasContextSnippet({ lastPrompt: "  " })).toBe(false);
+    expect(unitEmphasis(bright, "asymetryk/buzz")).toBe("normal");
+    expect(
+      unitEmphasis({ presence: "present", lifecycle: "detached", harness: "ohmypi", lastPrompt: null }, "asymetryk/buzz"),
+    ).toBe("normal");
+    expect(
+      unitEmphasis(
+        { presence: "seen", lifecycle: "Detached", harness: "OhMyPi", lastPrompt: "keep the prompt" },
+        "asymetryk/buzz",
+      ),
+    ).toBe("normal");
+    expect(
+      unitEmphasis({ presence: "seen", lifecycle: "detached", harness: "ohmypi", lastPrompt: null }, "asymetryk/buzz"),
+    ).toBe("dim");
+    expect(
+      unitEmphasis(
+        { presence: "present", lifecycle: "detached", harness: "codex", lastPrompt: "still dim" },
+        "example/repo",
+      ),
+    ).toBe("dim");
+    expect(
+      unitEmphasis(
+        { presence: "present", lifecycle: "archived", harness: "ohmypi", lastPrompt: "old prompt" },
+        "asymetryk/buzz",
+      ),
+    ).toBe("dim");
+    expect(
+      unitEmphasis(
+        { presence: "present", lifecycle: "unknown", harness: "omp", lastPrompt: "unclear" },
+        "asymetryk/buzz",
+      ),
+    ).toBe("dim");
+    expect(noiseReason(bright, DEFAULT_NOISE_FILTER)).toBeNull();
   });
 });
 
@@ -183,6 +222,13 @@ describe("sample fixture noise", () => {
 
     const archived = snapshot.bases.flatMap((base) => base.units).find((unit) => unit.id === "mirmicode-archived");
     expect(unitEmphasis(archived!, "asymetryk/mirmicode")).toBe("dim");
+    const detached = snapshot.bases.flatMap((base) => base.units).find((unit) => unit.id === "mirmicode-detached");
+    expect(detached?.harness).toBe("ohmypi");
+    expect(hasContextSnippet(detached!)).toBe(true);
+    expect(unitEmphasis(detached!, "asymetryk/mirmicode")).toBe("normal");
+    const cold = snapshot.bases.flatMap((base) => base.units).find((unit) => unit.id === "unassigned-detached");
+    expect(hasContextSnippet(cold!)).toBe(true);
+    expect(unitEmphasis(cold!, "Unassigned")).toBe("normal");
 
     const withoutDetached = applyNoiseFilter(snapshot.bases, { hideNoise: true, hideDetached: true, hideArchived: false });
     const stillVisible = withoutDetached.bases.flatMap((base) => base.units.map((unit) => unit.id));

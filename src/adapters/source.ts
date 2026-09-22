@@ -1,5 +1,7 @@
+import allRepos from "../data/all-repos.json";
 import sampleBases from "../data/sample-bases.json";
-import type { MapSnapshot } from "../types";
+import { mergeRepoCatalog } from "../repos";
+import type { CampaignBase, MapSnapshot } from "../types";
 import { normalizeWorkingSetPayload } from "./normalize";
 
 /**
@@ -58,7 +60,7 @@ export function loadFixture(now = new Date()): MapSnapshot {
   return {
     source: "fixture",
     fetchedAt: now.toISOString(),
-    bases: normalized.bases,
+    bases: withRepoCatalog(normalized.bases),
     notice,
     stale: normalized.stale,
   };
@@ -98,10 +100,15 @@ export async function loadWorkingSet(
   return {
     source: "working-set",
     fetchedAt: now.toISOString(),
-    bases: normalized.bases,
+    bases: withRepoCatalog(normalized.bases),
     notice: normalized.issues.length > 0 ? normalized.issues.join(" ") : null,
     stale: normalized.stale,
   };
+}
+
+/** Baked public repo list. No GitHub token in the browser. */
+function withRepoCatalog(bases: CampaignBase[]): CampaignBase[] {
+  return mergeRepoCatalog(bases, allRepos.repos);
 }
 
 export async function resolveSnapshot(
