@@ -7,6 +7,8 @@ export type Unit = {
   model: string;
   threadName: string | null;
   label: string | null;
+  /** Genuine prompt aliases or annotation.note; never a task label. */
+  lastPrompt: string | null;
   status: string | null;
   /** ISO-8601 timestamp, or "unknown" when the payload omitted it. */
   updatedAt: string;

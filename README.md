@@ -162,10 +162,11 @@ Flat rows do not invent a second unit from a parent harness when `units` or `age
 | Thread | `thread_name` or `threadName` | Empty renders as an em dash. |
 | Status | `annotation.status`, `observed.lifecycle`, `observed.presence`, then flat `status` | First nonblank string wins. `working`, `active`, and `busy` glow; `blocked`, `queued`, `stuck`, and `error` take the blocked slash. Other values are idle. |
 | Unit label | `annotation.label`, flat `label`, then `thread_name` / `threadName` | First nonblank string wins. |
+| Last prompt | Flat `last_prompt`, `lastPrompt`, `last_user_message`, `lastUserMessage`, `user_prompt`, `userPrompt`, `prompt`, `input`, then `annotation.note` | First nonblank string wins; non-string values are ignored. Never derived from `annotation.label`. |
 | Last touched | `annotation.updated_at`, `observed.updated_at`, then flat `updated_at`, `updatedAt`, `last_touched`, or `lastTouched` | The base shows the latest valid unit time. |
 | Placement | `x`, `y` on the base | Optional numbers in `0..1`. Map presentation only. Ignored when out of range. |
 
-Unknown fields are ignored, including any message or transcript body. Strings are capped at 180 characters. A grouped fixture record looks like this:
+Unknown fields and transcript bodies are ignored. Display metadata is capped at 180 characters, except prompt text, which is retained for full native `title` tooltips. The HUD and roster show `Last prompt:` with prompt text shortened to 140 characters; without a prompt they show `Thread:` using the unit label/thread name. Map-unit titles use the same honest prefix with full prompt text. The live API currently has no dedicated last-user-prompt field; an annotation note is the supported nested fallback. Both sample fixtures include fictional prompt text and label-only units. A grouped fixture record looks like this:
 
 ```json
 {

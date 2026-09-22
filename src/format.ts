@@ -1,3 +1,15 @@
+import type { Unit } from "./types";
+
+/** Shared honest context; preserve full text for native title tooltips. */
+export function unitContext(unit: Unit, truncate = false): string | null {
+  const text = unit.lastPrompt ?? unit.label ?? unit.threadName;
+  if (!text) return null;
+  const prefix = unit.lastPrompt ? "Last prompt" : "Thread";
+  const oneLine = text.replace(/\s+/g, " ");
+  const value = truncate && oneLine.length > 140 ? `${oneLine.slice(0, 139)}…` : oneLine;
+  return `${prefix}: ${value}`;
+}
+
 export function formatLastTouched(iso: string, now = Date.now()): string {
   const timestamp = Date.parse(iso);
   if (Number.isNaN(timestamp)) return iso || "unknown";

@@ -137,6 +137,16 @@ function readUnit(
     model,
     threadName,
     label: bound(readString(annotation?.label) ?? readString(record.label) ?? threadName),
+    lastPrompt:
+      readString(record.last_prompt) ??
+      readString(record.lastPrompt) ??
+      readString(record.last_user_message) ??
+      readString(record.lastUserMessage) ??
+      readString(record.user_prompt) ??
+      readString(record.userPrompt) ??
+      readString(record.prompt) ??
+      readString(record.input) ??
+      readString(annotation?.note),
     status: bound(
       readString(annotation?.status) ??
         readString(observed?.lifecycle) ??

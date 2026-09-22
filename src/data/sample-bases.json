@@ -12,6 +12,7 @@
           "harness": "cursor",
           "model": "Grok-4.6",
           "thread_name": "bases-map",
+          "lastPrompt": "Add an honest last-prompt line to the unit HUD while preserving map pan, zoom, selection, and glow.",
           "status": "working",
           "updated_at": "2026-09-21T19:05:00Z"
         },
@@ -20,6 +21,7 @@
           "harness": "cursor",
           "model": "Gemini",
           "thread_name": "legend-pass",
+          "label": "Review the faction legend",
           "status": "idle",
           "updated_at": "2026-09-21T17:20:00Z"
         },
@@ -60,6 +62,7 @@
           "harness": "codex",
           "model": "Luna",
           "thread_name": "readme-faction",
+          "last_prompt": "Explain the faction colors in the README and keep the examples fictional.",
           "status": "working",
           "updated_at": "2026-09-21T18:12:00Z"
         },

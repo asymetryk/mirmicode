@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { postureOf, factionName } from "../factions";
-import { harnessSlug } from "../format";
+import { harnessSlug, unitContext } from "../format";
 import {
   BUILDING_KINDS,
   buildingSrc,
@@ -280,7 +280,7 @@ export function MapStage({
                     data-role={role ?? "other"}
                     aria-pressed={selected}
                     aria-label={`${factionName(unit.harness)} ${typeBit}, ${unit.status ?? "idle"}, on ${base.repo}`}
-                    title={`${factionName(unit.harness)} · ${unit.model}`}
+                    title={[`${factionName(unit.harness)} · ${unit.model}`, unitContext(unit)].filter(Boolean).join("\n")}
                     style={{ left: slot.x, top: 108 + slot.y }}
                     onClick={() => onTokenClick(base.id, unit.id)}
                   >

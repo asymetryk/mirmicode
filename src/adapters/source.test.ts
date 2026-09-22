@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import cahqSample from "../data/cahq-working-set.sample.json";
 import sampleBases from "../data/sample-bases.json";
 import { postureOf } from "../factions";
+import { unitContext } from "../format";
 import { BUILDING_OFFSET, fitView, positionBases, resourcePlacements, unitSlot } from "../layout";
 import {
   BUILDING_KINDS,
@@ -29,6 +30,28 @@ import {
 } from "./source";
 
 describe("normalizeWorkingSetPayload", () => {
+  it("keeps label-only items honest and skips blank or non-string prompts", () => {
+    const { bases } = normalizeWorkingSetPayload({ items: [
+      { observed: { repo: "example/demo" }, annotation: { label: "Thread title", note: " " }, prompt: {} },
+      { observed: { repo: "example/demo" }, annotation: { label: "Thread title", note: " Actual note " }, last_prompt: " ", input: 42 },
+      { repo: "example/demo", last_prompt: " First prompt ", lastPrompt: "Second prompt", prompt: "Third prompt" },
+    ] });
+    const [labelOnly, note, explicit] = bases[0]!.units;
+    if (!labelOnly || !note || !explicit) throw new Error("Missing normalized units");
+    expect(labelOnly.lastPrompt).toBeNull();
+    expect(unitContext(labelOnly)).toBe("Thread: Thread title");
+    expect(unitContext(note)).toBe("Last prompt: Actual note");
+    expect(unitContext(explicit)).toBe("Last prompt: First prompt");
+  });
+
+  it("preserves full prompt text while shortening visible context", () => {
+    const prompt = "Please review this fictional change. ".repeat(10);
+    const { bases } = normalizeWorkingSetPayload([{ repo: "example/demo", lastUserMessage: prompt }]);
+    const unit = bases[0]!.units[0]!;
+    expect(unitContext(unit)).toBe(`Last prompt: ${prompt.trim()}`);
+    expect(unitContext(unit, true)).toBe(`Last prompt: ${prompt.slice(0, 139)}…`);
+  });
+
   it("reads the canonical contract", () => {
     const normalized = normalizeWorkingSetPayload({
       bases: [
@@ -109,6 +132,7 @@ describe("normalizeWorkingSetPayload", () => {
         model: "nested-model",
         threadName: "flat-thread",
         label: "Annotated label",
+        lastPrompt: null,
         updatedAt: "2026-09-21T10:00:00Z",
         status: "blocked",
       },

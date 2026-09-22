@@ -7,6 +7,7 @@
       "model": "Grok-4.6",
       "thread_name": "bases-map",
       "label": "Live adapter",
+      "last_prompt": "Show the latest fictional user request without mistaking the thread title for a prompt.",
       "status": "working",
       "updated_at": "2026-09-21T19:05:00Z"
     },
