@@ -1,8 +1,10 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import cahqSample from "../data/cahq-working-set.sample.json";
 import sampleBases from "../data/sample-bases.json";
 import { postureOf } from "../factions";
+import { unitContext } from "../format";
 import { BUILDING_OFFSET, fitView, positionBases, resourcePlacements, unitSlot } from "../layout";
 import {
   BUILDING_KINDS,
@@ -19,9 +21,37 @@ import {
   unitSrc,
 } from "../rtsArt";
 import { normalizeWorkingSetPayload } from "./normalize";
-import { loadFixture, parseWorkingSetUrl, resolveSnapshot } from "./source";
+import {
+  CAHQ_WORKING_SET_ORIGIN,
+  loadFixture,
+  parseWorkingSetUrl,
+  readStartupWorkingSetUrl,
+  resolveSnapshot,
+} from "./source";
 
 describe("normalizeWorkingSetPayload", () => {
+  it("keeps label-only items honest and skips blank or non-string prompts", () => {
+    const { bases } = normalizeWorkingSetPayload({ items: [
+      { observed: { repo: "example/demo" }, annotation: { label: "Thread title", note: " " }, prompt: {} },
+      { observed: { repo: "example/demo" }, annotation: { label: "Thread title", note: " Actual note " }, last_prompt: " ", input: 42 },
+      { repo: "example/demo", last_prompt: " First prompt ", lastPrompt: "Second prompt", prompt: "Third prompt" },
+    ] });
+    const [labelOnly, note, explicit] = bases[0]!.units;
+    if (!labelOnly || !note || !explicit) throw new Error("Missing normalized units");
+    expect(labelOnly.lastPrompt).toBeNull();
+    expect(unitContext(labelOnly)).toBe("Thread: Thread title");
+    expect(unitContext(note)).toBe("Last prompt: Actual note");
+    expect(unitContext(explicit)).toBe("Last prompt: First prompt");
+  });
+
+  it("preserves full prompt text while shortening visible context", () => {
+    const prompt = "Please review this fictional change. ".repeat(10);
+    const { bases } = normalizeWorkingSetPayload([{ repo: "example/demo", lastUserMessage: prompt }]);
+    const unit = bases[0]!.units[0]!;
+    expect(unitContext(unit)).toBe(`Last prompt: ${prompt.trim()}`);
+    expect(unitContext(unit, true)).toBe(`Last prompt: ${prompt.slice(0, 139)}…`);
+  });
+
   it("reads the canonical contract", () => {
     const normalized = normalizeWorkingSetPayload({
       bases: [
@@ -58,6 +88,184 @@ describe("normalizeWorkingSetPayload", () => {
     ]);
   });
 
+  it("prefers nested item metadata over conflicting flat fields", () => {
+    const normalized = normalizeWorkingSetPayload({
+      items: [
+        {
+          item_id: "nested-item",
+          id: "flat-id",
+          repo_name: "example/flat-name",
+          repo: "example/flat",
+          harness: "cursor",
+          surface: "codex",
+          model: "flat-model",
+          label: "Flat label",
+          thread_name: "flat-thread",
+          updated_at: "2026-09-21T12:00:00Z",
+          status: "flat-status",
+          observed: {
+            repo_name: "example/nested-name",
+            repo: "example/nested-repo",
+            surface: "Oh My Pi",
+            harness: "OpenCode",
+            model: "nested-model",
+            updated_at: "2026-09-21T11:00:00Z",
+            lifecycle: "idle",
+            presence: "offline",
+          },
+          annotation: {
+            label: "Annotated label",
+            updated_at: "2026-09-21T10:00:00Z",
+            status: "blocked",
+          },
+        },
+      ],
+    });
+
+    expect(normalized.issues).toEqual([]);
+    expect(normalized.bases.map((base) => base.repo)).toEqual(["example/nested-name"]);
+    expect(normalized.bases[0]?.updatedAt).toBe("2026-09-21T10:00:00Z");
+    expect(normalized.bases[0]?.units).toEqual([
+      {
+        id: "nested-item",
+        harness: "ohmypi",
+        model: "nested-model",
+        threadName: "flat-thread",
+        label: "Annotated label",
+        lastPrompt: null,
+        updatedAt: "2026-09-21T10:00:00Z",
+        status: "blocked",
+      },
+    ]);
+  });
+
+  it("falls through absent or blank nested fields to observed and flat metadata", () => {
+    const normalized = normalizeWorkingSetPayload({
+      items: [
+        {
+          id: "observed-fallback",
+          label: "Flat label",
+          status: "flat-status",
+          updated_at: "2026-09-21T07:00:00Z",
+          observed: {
+            repo_name: " ",
+            repo: "example/fallbacks",
+            surface: "",
+            harness: "Open Code",
+            model: "observed-model",
+            updated_at: "2026-09-21T08:00:00Z",
+            lifecycle: "idle",
+            presence: "offline",
+          },
+          annotation: { label: "", updated_at: " ", status: "" },
+        },
+        {
+          id: "presence-fallback",
+          harness: "Cursor",
+          surface: "codex",
+          model: "flat-model",
+          thread_name: "snake-thread",
+          updatedAt: "2026-09-21T09:00:00Z",
+          status: "flat-status",
+          observed: { repo: "example/fallbacks", presence: "working" },
+        },
+        {
+          id: "flat-fallback",
+          surface: "Codex",
+          threadName: "camel-thread",
+          last_touched: "2026-09-21T10:00:00Z",
+          status: "blocked",
+          observed: { repo: "example/fallbacks" },
+        },
+      ],
+    });
+
+    expect(normalized.bases.map((base) => base.repo)).toEqual(["example/fallbacks"]);
+    expect(normalized.bases[0]?.updatedAt).toBe("2026-09-21T10:00:00Z");
+    expect(normalized.bases[0]?.units).toEqual([
+      expect.objectContaining({
+        id: "observed-fallback",
+        harness: "opencode",
+        model: "observed-model",
+        label: "Flat label",
+        updatedAt: "2026-09-21T08:00:00Z",
+        status: "idle",
+      }),
+      expect.objectContaining({
+        id: "presence-fallback",
+        harness: "cursor",
+        model: "flat-model",
+        label: "snake-thread",
+        updatedAt: "2026-09-21T09:00:00Z",
+        status: "working",
+      }),
+      expect.objectContaining({
+        id: "flat-fallback",
+        harness: "codex",
+        label: "camel-thread",
+        updatedAt: "2026-09-21T10:00:00Z",
+        status: "blocked",
+      }),
+    ]);
+  });
+
+  it("groups nested items without an observed repo into one Unassigned base", () => {
+    const normalized = normalizeWorkingSetPayload({
+      items: [
+        {
+          item_id: "unassigned-one",
+          source_label: "example/source-one",
+          repo_name: "example/flat-repo",
+          observed: { surface: "cursor" },
+        },
+        {
+          item_id: "unassigned-two",
+          source_label: "example/source-two",
+          annotation: { label: "Annotation only" },
+        },
+        {
+          item_id: "assigned",
+          source_label: "example/source-one",
+          observed: { repo_name: "example/assigned", surface: "codex" },
+        },
+      ],
+    });
+
+    expect(normalized.issues).toEqual([]);
+    expect(normalized.bases.map((base) => base.repo)).toEqual([
+      "Unassigned",
+      "example/assigned",
+    ]);
+    expect(normalized.bases[0]?.units.map((unit) => unit.id)).toEqual([
+      "unassigned-one",
+      "unassigned-two",
+    ]);
+    expect(JSON.stringify(normalized.bases)).not.toContain("example/source-");
+    expect(JSON.stringify(normalized.bases)).not.toContain("example/flat-repo");
+  });
+
+  it("prefers flat repo_name and uses thread names as label fallbacks", () => {
+    const normalized = normalizeWorkingSetPayload({
+      records: [
+        {
+          repo_name: "example/preferred",
+          repo: "example/ignored",
+          thread_name: "snake-thread",
+          threadName: "ignored-thread",
+        },
+        { repo_name: "example/preferred", threadName: "camel-thread" },
+        { repo_name: "example/preferred", label: "Explicit label", thread_name: "thread" },
+      ],
+    });
+
+    expect(normalized.bases.map((base) => base.repo)).toEqual(["example/preferred"]);
+    expect(normalized.bases[0]?.units.map((unit) => unit.label)).toEqual([
+      "snake-thread",
+      "camel-thread",
+      "Explicit label",
+    ]);
+  });
+
   it("groups flat rows for one repo into units", () => {
     const normalized = normalizeWorkingSetPayload({
       records: [
@@ -87,7 +295,7 @@ describe("normalizeWorkingSetPayload", () => {
     ]);
   });
 
-  it("reads a grouped base with an agents array and ignores the parent harness", () => {
+  it.each(["units", "agents"])("reads grouped %s without inheriting the parent harness", (key) => {
     const normalized = normalizeWorkingSetPayload({
       bases: [
         {
@@ -98,7 +306,7 @@ describe("normalizeWorkingSetPayload", () => {
           model: "Gemini",
           x: 0.4,
           y: 0.6,
-          agents: [
+          [key]: [
             {
               harness: "ohmypi",
               model: "Kimi",
@@ -168,6 +376,21 @@ describe("normalizeWorkingSetPayload", () => {
     expect(fromRecords.bases[0]?.units[0]?.label).toBeNull();
   });
 
+  it("reads a top-level units array of flat rows that share a repo", () => {
+    const normalized = normalizeWorkingSetPayload({
+      units: [
+        { repo: "example/shared", surface: "cursor", model: "Gemini", status: "working" },
+        { repo: "example/shared", harness: "codex", model: "Terra", status: "idle" },
+      ],
+    });
+    expect(normalized.issues).toEqual([]);
+    expect(normalized.bases).toHaveLength(1);
+    expect(normalized.bases[0]?.units.map((unit) => [unit.harness, unit.model])).toEqual([
+      ["cursor", "Gemini"],
+      ["codex", "Terra"],
+    ]);
+  });
+
   it("drops records without a repo and reports an empty payload", () => {
     const dropped = normalizeWorkingSetPayload({
       bases: [{ label: "no repo" }, { repo: "example/kept", label: "kept" }],
@@ -177,7 +400,7 @@ describe("normalizeWorkingSetPayload", () => {
     expect(dropped.bases.map((base) => base.repo)).toEqual(["example/kept"]);
     expect(dropped.issues[0]).toMatch(/missing repo\/base/);
     expect(empty.bases).toEqual([]);
-    expect(empty.issues[0]).toMatch(/no bases, items, or records/);
+    expect(empty.issues[0]).toMatch(/no bases, items, records, agents, or units/);
   });
 
   it("ignores placement outside 0–1 and suffixes duplicate ids", () => {
@@ -228,7 +451,7 @@ describe("resolveSnapshot", () => {
     const result = await resolveSnapshot("");
     expect(result.fallbackReason).toBeNull();
     expect(result.snapshot.source).toBe("fixture");
-    expect(result.snapshot.bases.length).toBeGreaterThanOrEqual(3);
+    expect(result.snapshot.bases).toEqual(loadFixture().bases);
   });
 
   it("returns working-set bases from a JSON URL", async () => {
@@ -261,29 +484,145 @@ describe("resolveSnapshot", () => {
     });
   });
 
-  it("falls back to the fixture when the request fails", async () => {
+  it.each([
+    ["Error", new Error("synthetic-secret-token at /private/synthetic-path")],
+    ["TypeError", new TypeError("synthetic-secret-token at /private/synthetic-path")],
+    ["non-Error", "synthetic-secret-token at /private/synthetic-path"],
+  ])("falls back without exposing arbitrary thrown %s details", async (_kind, error) => {
     const fetchImpl: typeof fetch = async () => {
-      throw new Error("Could not resolve host");
+      throw error;
     };
-    const result = await resolveSnapshot("https://working-set.example/bases", fetchImpl);
-    expect(result.snapshot.source).toBe("fixture");
-    expect(result.fallbackReason).toBe("Could not resolve host. Showing the local fixture.");
-  });
-
-  it("turns a network TypeError into a readable fallback", async () => {
-    const fetchImpl: typeof fetch = async () => {
-      throw new TypeError("Failed to fetch");
-    };
-    const result = await resolveSnapshot("https://working-set.example/bases", fetchImpl);
-    expect(result.snapshot.source).toBe("fixture");
-    expect(result.fallbackReason).toBe(
-      "Working Set could not be reached. Showing the local fixture.",
+    const result = await resolveSnapshot(
+      "https://working-set.example/private/synthetic-path?token=synthetic-secret-token",
+      fetchImpl,
     );
+
+    expect(result.snapshot.source).toBe("fixture");
+    expect(result.snapshot.bases).toEqual(loadFixture().bases);
+    expect(result.fallbackReason).toMatch(/request|reach|network|fetch/i);
+    expect(JSON.stringify(result)).not.toContain("synthetic-secret-token");
+    expect(JSON.stringify(result)).not.toContain("/private/synthetic-path");
   });
 
   it("rejects credentials and non-http URLs", () => {
     expect(() => parseWorkingSetUrl("https://user:pw@example.com/bases")).toThrow(/credentials/);
     expect(() => parseWorkingSetUrl("file:///tmp/bases.json")).toThrow(/http or https/);
+  });
+
+  it.each([
+    {
+      failure: "HTTP error",
+      response: () => new Response("synthetic-private-response", { status: 503 }),
+      reason: /503/,
+    },
+    {
+      failure: "non-JSON response",
+      response: () => new Response("<html>synthetic-private-response</html>"),
+      reason: /json/i,
+    },
+    {
+      failure: "empty working set",
+      response: () => new Response(JSON.stringify({ items: [] })),
+      reason: /no bases|empty/i,
+    },
+  ])("returns the fixture for $failure with a safe reason", async ({ response, reason }) => {
+    const fetchImpl: typeof fetch = async () => response();
+    const result = await resolveSnapshot("https://working-set.example/items", fetchImpl);
+
+    expect(result.snapshot.source).toBe("fixture");
+    expect(result.snapshot.bases).toEqual(loadFixture().bases);
+    expect(result.fallbackReason).toMatch(reason);
+    expect(JSON.stringify(result)).not.toContain("synthetic-private-response");
+  });
+
+  it.each([
+    ["https://working-set.example", "https://working-set.example/api/v1/working-set"],
+    ["http://working-set.example:8080/", "http://working-set.example:8080/api/v1/working-set"],
+    ["https://working-set.example/#private-fragment", "https://working-set.example/api/v1/working-set"],
+    ["https://working-set.example/custom/items#private-fragment", "https://working-set.example/custom/items"],
+    ["https://working-set.example/?view=compact#private-fragment", "https://working-set.example/?view=compact"],
+    ["https://working-set.example/custom/items?view=compact#private-fragment", "https://working-set.example/custom/items?view=compact"],
+  ])("resolves %s to the intended request endpoint", async (input, expected) => {
+    const requested: string[] = [];
+    const fetchImpl: typeof fetch = async (url) => {
+      requested.push(String(url));
+      return new Response(JSON.stringify({ items: [{ repo_name: "example/synthetic" }] }));
+    };
+
+    const result = await resolveSnapshot(input, fetchImpl);
+
+    expect(requested).toEqual([expected]);
+    expect(result.snapshot.source).toBe("working-set");
+    expect(result.snapshot.bases.map((base) => base.repo)).toEqual(["example/synthetic"]);
+    expect(result.fallbackReason).toBeNull();
+  });
+
+  it("reads startup URL precedence for VITE_WORKING_SET_URL", () => {
+    const storage = new Map<string, string>();
+    const read = {
+      getItem: (key: string) => storage.get(key) ?? null,
+    };
+    expect(readStartupWorkingSetUrl(CAHQ_WORKING_SET_ORIGIN, read)).toBe(CAHQ_WORKING_SET_ORIGIN);
+    expect(readStartupWorkingSetUrl("  ", read)).toBe("");
+    storage.set("mirmicode.workingSetUrl", "https://working-set.example/agents");
+    expect(readStartupWorkingSetUrl(CAHQ_WORKING_SET_ORIGIN, read)).toBe(
+      "https://working-set.example/agents",
+    );
+    storage.set("mirmicode.dataSource", "fixture");
+    expect(readStartupWorkingSetUrl(CAHQ_WORKING_SET_ORIGIN, read)).toBe("");
+    expect(readStartupWorkingSetUrl(CAHQ_WORKING_SET_ORIGIN, null)).toBe(CAHQ_WORKING_SET_ORIGIN);
+  });
+});
+
+describe("cahq working set sample", () => {
+  it("maps a flat multi-unit agents document onto bases, factions, crests, and glow", () => {
+    const normalized = normalizeWorkingSetPayload(cahqSample);
+    expect(normalized.issues).toEqual([]);
+    expect(normalized.bases.map((base) => base.repo)).toEqual([
+      "asymetryk/mirmicode",
+      "example/charter",
+      "example/ops-board",
+    ]);
+
+    const mirmicode = normalized.bases[0];
+    expect(mirmicode?.units.map((unit) => [unit.harness, unit.model, unit.threadName, postureOf(unit.status)])).toEqual([
+      ["cursor", "Grok-4.6", "bases-map", "working"],
+      ["codex", "Luna", "readme-faction", "working"],
+      ["ohmypi", "Kimi", "copy-pass", "blocked"],
+    ]);
+    expect(mirmicode?.updatedAt).toBe("2026-09-21T19:05:00Z");
+    expect(mirmicode?.units.map((unit) => glyphId(unit.model))).toEqual(["b", "b", "b"]);
+    expect(mirmicode?.units.map((unit) => heroSrc(unit.harness))).toEqual([
+      "/rts-art/hero-cursor-angular.png",
+      "/rts-art/hero-codex-organic.png",
+      "/rts-art/hero-ohmypi-mechanical.png",
+    ]);
+
+    const charter = normalized.bases[1];
+    expect(charter?.units.map((unit) => [unit.harness, postureOf(unit.status), unit.updatedAt])).toEqual([
+      ["codex", "working", "2026-09-21T13:10:00Z"],
+      ["cursor", "idle", "2026-09-21T11:00:00Z"],
+    ]);
+    expect(charter?.units[1]?.label).toBe("Review");
+
+    const ops = normalized.bases[2];
+    expect(ops?.units.map((unit) => unit.model)).toEqual(["MiniMax", "Sol"]);
+    expect(ops?.units.map((unit) => glyphId(unit.model))).toEqual(["a", "a"]);
+    expect(JSON.stringify(normalized)).not.toMatch(/transcript|secret/i);
+  });
+
+  it("loads that document through the live fetch path", async () => {
+    const fetchImpl: typeof fetch = async () =>
+      new Response(JSON.stringify(cahqSample), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    const result = await resolveSnapshot(`${CAHQ_WORKING_SET_ORIGIN}/agents`, fetchImpl);
+    expect(result.fallbackReason).toBeNull();
+    expect(result.snapshot.source).toBe("working-set");
+    expect(result.snapshot.bases).toHaveLength(3);
+    const units = result.snapshot.bases.reduce((sum, base) => sum + base.units.length, 0);
+    expect(units).toBe(7);
   });
 });
 

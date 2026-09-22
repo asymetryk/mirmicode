@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
+import { CAHQ_WORKING_SET_ORIGIN } from "../adapters/source";
 import { factionName, postureLabel, postureOf } from "../factions";
-import { formatAbsolute, formatLastTouched, harnessSlug } from "../format";
+import { formatAbsolute, formatLastTouched, harnessSlug, unitContext } from "../format";
 import { roleLabel, unitRole } from "../rtsArt";
 import type { CampaignBase, Unit } from "../types";
 import { UnitFigure } from "./UnitFigure";
@@ -63,6 +64,11 @@ export function Inspector({
               />
               <p>{postureLabel(postureOf(unit.status))}</p>
             </div>
+            {unitContext(unit) ? (
+              <p className="unit-context" title={unitContext(unit) ?? undefined}>
+                {unitContext(unit, true)}
+              </p>
+            ) : null}
             <dl className="facts">
               <Fact label="Harness" value={factionName(unit.harness)} />
               <Fact label="Model" value={unit.model} />
@@ -96,6 +102,7 @@ export function Inspector({
                   data-faction={harnessSlug(entry.harness)}
                   data-posture={postureOf(entry.status)}
                   aria-pressed={entry.id === unit?.id}
+                  title={unitContext(entry) ?? undefined}
                   onClick={() => onSelectUnit(base.id, entry.id)}
                 >
                   <UnitFigure harness={entry.harness} model={entry.model} status={entry.status} />
@@ -105,6 +112,11 @@ export function Inspector({
                       {factionName(entry.harness)}
                       {entry.status ? ` · ${entry.status}` : ""}
                     </span>
+                    {unitContext(entry) ? (
+                      <span className="roster-meta" title={unitContext(entry) ?? undefined}>
+                        {unitContext(entry, true)}
+                      </span>
+                    ) : null}
                   </span>
                 </button>
               </li>
@@ -129,13 +141,15 @@ export function Inspector({
             inputMode="url"
             spellCheck={false}
             autoComplete="off"
-            placeholder="https://…/bases.json"
+            placeholder={CAHQ_WORKING_SET_ORIGIN}
             value={urlDraft}
             onChange={(event) => onUrlDraft(event.target.value)}
           />
           <p className="help">
-            GET a JSON document matching the README contract. An unauthenticated request only.
-            If it fails, the map stays on the sample fixture.
+            Unauthenticated GET of Working Set JSON. On the tailnet, start from{" "}
+            {CAHQ_WORKING_SET_ORIGIN} or set <code>VITE_WORKING_SET_URL</code>. If the
+            request fails or the document has no bases, the map stays on the sample fixture
+            and the banner names the reason.
           </p>
           <div className="actions">
             <button type="submit" disabled={loading || urlDraft.trim() === ""}>
