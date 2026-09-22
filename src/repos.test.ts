@@ -31,6 +31,7 @@ function camp(repo: string, units: Unit[] = []): CampaignBase {
     openProject: null,
     updatedAt: "unknown",
     place: null,
+    stage: "unknown",
     units,
   };
 }
