@@ -60,8 +60,14 @@ describe("noiseReason", () => {
     const { bases, stale } = normalizeWorkingSetPayload({
       snapshot: { stale: true },
       items: [
-        { item_id: "still-here", observed: { repo_name: "example/kept", lifecycle: "idle", presence: "present" } },
-        { item_id: "cold", observed: { repo_name: "example/kept", lifecycle: "archived", presence: "present" } },
+        {
+          item_id: "still-here",
+          observed: { repo_name: "example/kept", lifecycle: "idle", presence: "present", lastUserPrompt: "Keep stale snapshot units" },
+        },
+        {
+          item_id: "cold",
+          observed: { repo_name: "example/kept", lifecycle: "archived", presence: "present", last_user_prompt: "Archived still counts" },
+        },
       ],
     });
     expect(stale).toBe(true);
@@ -89,11 +95,28 @@ describe("applyNoiseFilter", () => {
   it("drops empty bases, keeps detached, and sorts Unassigned collectors last", () => {
     const { bases } = normalizeWorkingSetPayload({
       items: [
-        { item_id: "bc-cloud", observed: { surface: "cursor", lifecycle: "unknown", presence: "present", model: "Scout" } },
-        { item_id: "kept", observed: { repo_name: "example/kept", surface: "codex", lifecycle: "idle", presence: "present" }, annotation: { status: "open" } },
-        { item_id: "archived", observed: { repo_name: "example/empty", lifecycle: "archived", presence: "present" } },
-        { item_id: "detached", observed: { surface: "codex", lifecycle: "detached", presence: "present", model: "Luna" } },
-        { item_id: "hid", observed: { repo_name: "example/kept", lifecycle: "idle", presence: "present" }, annotation: { hidden: true, status: "done" } },
+        {
+          item_id: "bc-cloud",
+          observed: { surface: "cursor", lifecycle: "unknown", presence: "present", model: "Scout", lastUserPrompt: "Collector prompt" },
+        },
+        {
+          item_id: "kept",
+          observed: { repo_name: "example/kept", surface: "codex", lifecycle: "idle", presence: "present", last_user_prompt: "Kept prompt" },
+          annotation: { status: "open" },
+        },
+        {
+          item_id: "archived",
+          observed: { repo_name: "example/empty", lifecycle: "archived", presence: "present", lastUserPrompt: "Archived prompt" },
+        },
+        {
+          item_id: "detached",
+          observed: { surface: "codex", lifecycle: "detached", presence: "present", model: "Luna", last_user_prompt: "Detached prompt" },
+        },
+        {
+          item_id: "hid",
+          observed: { repo_name: "example/kept", lifecycle: "idle", presence: "present", lastUserPrompt: "Hidden prompt" },
+          annotation: { hidden: true, status: "done" },
+        },
       ],
     });
     const filtered = applyNoiseFilter(bases, DEFAULT_NOISE_FILTER);
@@ -110,7 +133,12 @@ describe("applyNoiseFilter", () => {
 
   it("does not throw when presence, lifecycle, and freshness are missing", () => {
     const { bases } = normalizeWorkingSetPayload({
-      items: [{ item_id: "bare", observed: { repo_name: "example/bare", surface: "cursor", model: "Scout" } }],
+      items: [
+        {
+          item_id: "bare",
+          observed: { repo_name: "example/bare", surface: "cursor", model: "Scout", lastUserPrompt: "Bare still needs a snippet" },
+        },
+      ],
     });
     const unit = bases[0]?.units[0];
     expect(unit).toMatchObject({ presence: null, lifecycle: null, status: null, freshness: null, hidden: false });
@@ -140,7 +168,9 @@ describe("sample fixture noise", () => {
     expect(unassigned).toBeTruthy();
     const tail = unassigned?.units.slice(-2).map((unit) => unit.id);
     expect(tail).toEqual(["bc-collector", "bc-collector-2"]);
-    expect(filtered.hiddenCount).toBe(hiddenIds.length);
+    expect(filtered.hiddenCount).toBeGreaterThanOrEqual(hiddenIds.length);
+    // Noise rows plus units with no usable Last-prompt snippet.
+    expect(filtered.hiddenCount).toBe(hiddenIds.length + 11);
 
     const grok = snapshot.bases.flatMap((base) => base.units).find((unit) => unit.id === "mirmicode-grok");
     expect(grok).toMatchObject({
@@ -239,6 +269,7 @@ type ShapeItem = {
     presence: string;
     repo: string | null;
     repo_name: string | null;
+    lastUserPrompt: string;
   };
   annotation: { status: "open" };
 };
@@ -259,6 +290,7 @@ function liveShapeItems(): ShapeItem[] {
         presence,
         repo: null,
         repo_name: assigned ? "example/kept" : null,
+        lastUserPrompt: `Shape item ${index} needs a usable context snippet.`,
       },
       annotation: { status: "open" },
     };

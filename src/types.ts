@@ -12,6 +12,11 @@ export type Unit = {
    * Never a task label. Null in public BIP mode (prompts scrubbed) unless full live is on.
    */
   lastPrompt: string | null;
+  /**
+   * True when a usable Last-prompt snippet existed in the payload (same resolution as lastPrompt).
+   * Survives public scrubbing so the map hard filter can keep units that have context without showing text.
+   */
+  hasContextSnippet: boolean;
   /** annotation.status, then flat status. Operator triage such as open or done. Not lifecycle. */
   status: string | null;
   /** observed.lifecycle. Live values: idle, detached, archived, unknown. Null when absent. */

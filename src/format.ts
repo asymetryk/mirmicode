@@ -13,6 +13,18 @@ export function unitContext(unit: Unit, truncate = false): string | null {
   return `${prefix}: ${value}`;
 }
 
+/**
+ * Hero content for the selection popover: the real Last-prompt snippet when private,
+ * or null when public mode scrubs prompts (never leaks text).
+ */
+export function popoverSnippet(unit: Unit, truncate = false): string | null {
+  if (shouldScrubPrompts()) return null;
+  const prompt = unit.lastPrompt?.trim();
+  if (!prompt) return null;
+  const oneLine = prompt.replace(/\s+/g, " ");
+  return truncate && oneLine.length > 220 ? `${oneLine.slice(0, 219)}…` : oneLine;
+}
+
 export function formatLastTouched(iso: string, now = Date.now()): string {
   const timestamp = Date.parse(iso);
   if (Number.isNaN(timestamp)) return iso || "unknown";

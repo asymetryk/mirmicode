@@ -101,7 +101,8 @@
           "status": "idle",
           "presence": "not_seen",
           "lifecycle": "active",
-          "updated_at": "2026-09-18T01:00:00Z"
+          "updated_at": "2026-09-18T01:00:00Z",
+          "last_prompt": "Watch stale presence without drawing an empty shell."
         },
         {
           "id": "mirmicode-not-seen-spaced",
@@ -111,7 +112,8 @@
           "status": "idle",
           "presence": "NOT_SEEN",
           "lifecycle": "active",
-          "updated_at": "2026-09-18T01:05:00Z"
+          "updated_at": "2026-09-18T01:05:00Z",
+          "last_prompt": "Normalize NOT_SEEN spelling before noise filter."
         },
         {
           "id": "mirmicode-archived",
@@ -121,7 +123,8 @@
           "status": "idle",
           "presence": "seen",
           "lifecycle": "archived",
-          "updated_at": "2026-09-17T01:00:00Z"
+          "updated_at": "2026-09-17T01:00:00Z",
+          "last_prompt": "Archive the old README pass after the faction colors land."
         },
         {
           "id": "mirmicode-detached",
@@ -131,7 +134,8 @@
           "status": "idle",
           "presence": "seen",
           "lifecycle": "Detached",
-          "updated_at": "2026-09-17T02:00:00Z"
+          "updated_at": "2026-09-17T02:00:00Z",
+          "last_prompt": "Reconnect the OhMyPi unit that left the pad."
         },
         {
           "id": "mirmicode-unknown-status",
@@ -152,7 +156,8 @@
           "presence": "present",
           "lifecycle": "unknown",
           "freshness": "unknown",
-          "updated_at": "2026-09-17T04:00:00Z"
+          "updated_at": "2026-09-17T04:00:00Z",
+          "last_prompt": "Triage this Cursor unit whose lifecycle is still unknown."
         },
         {
           "id": "mirmicode-operator-hidden",
@@ -163,7 +168,8 @@
           "presence": "present",
           "lifecycle": "idle",
           "hidden": true,
-          "updated_at": "2026-09-17T05:00:00Z"
+          "updated_at": "2026-09-17T05:00:00Z",
+          "last_prompt": "Operator hid this unit from the public board."
         }
       ]
     },
@@ -196,7 +202,8 @@
           "model": "Sol",
           "thread_name": "tone-pass",
           "status": "working",
-          "updated_at": "2026-09-21T15:05:00Z"
+          "updated_at": "2026-09-21T15:05:00Z",
+          "last_prompt": "Continue work on tone-pass with an honest context snippet."
         },
         {
           "id": "charter-worker",
@@ -204,7 +211,8 @@
           "model": "Worker",
           "thread_name": "hauling",
           "status": "idle",
-          "updated_at": "2026-09-21T10:15:00Z"
+          "updated_at": "2026-09-21T10:15:00Z",
+          "last_prompt": "Continue work on hauling with an honest context snippet."
         },
         {
           "id": "charter-walker",
@@ -212,7 +220,8 @@
           "model": "Walker",
           "thread_name": "patrol",
           "status": "working",
-          "updated_at": "2026-09-21T16:48:00Z"
+          "updated_at": "2026-09-21T16:48:00Z",
+          "last_prompt": "Continue work on patrol with an honest context snippet."
         },
         {
           "id": "charter-mirmi",
@@ -220,7 +229,8 @@
           "model": "Mirmi-small",
           "thread_name": "courier",
           "status": "idle",
-          "updated_at": "2026-09-21T09:55:00Z"
+          "updated_at": "2026-09-21T09:55:00Z",
+          "last_prompt": "Continue work on courier with an honest context snippet."
         },
         {
           "id": "charter-builder",
@@ -228,7 +238,8 @@
           "model": "Builder",
           "thread_name": "annex",
           "status": "working",
-          "updated_at": "2026-09-21T17:30:00Z"
+          "updated_at": "2026-09-21T17:30:00Z",
+          "last_prompt": "Continue work on annex with an honest context snippet."
         },
         {
           "id": "charter-grok",
@@ -236,7 +247,8 @@
           "model": "Grok-4.6",
           "thread_name": "review",
           "status": "idle",
-          "updated_at": "2026-09-21T09:30:00Z"
+          "updated_at": "2026-09-21T09:30:00Z",
+          "last_prompt": "Continue work on review with an honest context snippet."
         },
         {
           "id": "charter-ohmypi-sol",
@@ -244,7 +256,8 @@
           "model": "Sol",
           "thread_name": "brass-check",
           "status": "working",
-          "updated_at": "2026-09-21T14:12:00Z"
+          "updated_at": "2026-09-21T14:12:00Z",
+          "last_prompt": "Continue work on brass-check with an honest context snippet."
         }
       ]
     },
@@ -261,7 +274,8 @@
           "model": "MiniMax",
           "thread_name": "live-state",
           "status": "working",
-          "updated_at": "2026-09-20T21:40:00Z"
+          "updated_at": "2026-09-20T21:40:00Z",
+          "last_prompt": "Continue work on live-state with an honest context snippet."
         },
         {
           "id": "ops-astra",
@@ -269,7 +283,8 @@
           "model": "Astra",
           "thread_name": "notes",
           "status": "idle",
-          "updated_at": "2026-09-20T18:15:00Z"
+          "updated_at": "2026-09-20T18:15:00Z",
+          "last_prompt": "Continue work on notes with an honest context snippet."
         },
         {
           "id": "ops-kimi",
@@ -277,7 +292,8 @@
           "model": "Kimi",
           "thread_name": "relay",
           "status": "working",
-          "updated_at": "2026-09-20T22:05:00Z"
+          "updated_at": "2026-09-20T22:05:00Z",
+          "last_prompt": "Continue work on relay with an honest context snippet."
         },
         {
           "id": "ops-tankette",
@@ -285,7 +301,8 @@
           "model": "Tankette",
           "thread_name": "gate",
           "status": "idle",
-          "updated_at": "2026-09-20T17:40:00Z"
+          "updated_at": "2026-09-20T17:40:00Z",
+          "last_prompt": "Continue work on gate with an honest context snippet."
         },
         {
           "id": "ops-skiff",
@@ -293,7 +310,8 @@
           "model": "Skiff",
           "thread_name": "run",
           "status": "working",
-          "updated_at": "2026-09-20T21:10:00Z"
+          "updated_at": "2026-09-20T21:10:00Z",
+          "last_prompt": "Continue work on run with an honest context snippet."
         },
         {
           "id": "ops-medic",
@@ -301,7 +319,8 @@
           "model": "Medic",
           "thread_name": "bay",
           "status": "idle",
-          "updated_at": "2026-09-20T16:25:00Z"
+          "updated_at": "2026-09-20T16:25:00Z",
+          "last_prompt": "Continue work on bay with an honest context snippet."
         },
         {
           "id": "ops-drone",
@@ -309,7 +328,8 @@
           "model": "Drone",
           "thread_name": "scan",
           "status": "working",
-          "updated_at": "2026-09-20T20:48:00Z"
+          "updated_at": "2026-09-20T20:48:00Z",
+          "last_prompt": "Continue work on scan with an honest context snippet."
         },
         {
           "id": "ops-builder",
@@ -317,7 +337,8 @@
           "model": "Builder",
           "thread_name": "scaffold",
           "status": "idle",
-          "updated_at": "2026-09-20T15:05:00Z"
+          "updated_at": "2026-09-20T15:05:00Z",
+          "last_prompt": "Continue work on scaffold with an honest context snippet."
         },
         {
           "id": "ops-gemini",
@@ -325,7 +346,8 @@
           "model": "Gemini",
           "thread_name": "check",
           "status": "blocked",
-          "updated_at": "2026-09-20T16:00:00Z"
+          "updated_at": "2026-09-20T16:00:00Z",
+          "last_prompt": "Continue work on check with an honest context snippet."
         },
         {
           "id": "ops-sol",
@@ -333,7 +355,8 @@
           "model": "Sol",
           "thread_name": "diagram",
           "status": "working",
-          "updated_at": "2026-09-20T20:05:00Z"
+          "updated_at": "2026-09-20T20:05:00Z",
+          "last_prompt": "Continue work on diagram with an honest context snippet."
         }
       ]
     },
@@ -350,7 +373,8 @@
           "model": "Sol",
           "thread_name": "rewrite",
           "status": "working",
-          "updated_at": "2026-09-18T15:00:00Z"
+          "updated_at": "2026-09-18T15:00:00Z",
+          "last_prompt": "Continue work on rewrite with an honest context snippet."
         },
         {
           "id": "lab-luna",
@@ -358,7 +382,8 @@
           "model": "Luna",
           "thread_name": "compare",
           "status": "idle",
-          "updated_at": "2026-09-18T12:10:00Z"
+          "updated_at": "2026-09-18T12:10:00Z",
+          "last_prompt": "Continue work on compare with an honest context snippet."
         },
         {
           "id": "lab-scout",
@@ -366,7 +391,8 @@
           "model": "Scout",
           "thread_name": "samples-run",
           "status": "working",
-          "updated_at": "2026-09-19T09:20:00Z"
+          "updated_at": "2026-09-19T09:20:00Z",
+          "last_prompt": "Continue work on samples-run with an honest context snippet."
         },
         {
           "id": "lab-armed",
@@ -374,7 +400,8 @@
           "model": "Mirmi-armed",
           "thread_name": "guard",
           "status": "idle",
-          "updated_at": "2026-09-18T18:40:00Z"
+          "updated_at": "2026-09-18T18:40:00Z",
+          "last_prompt": "Continue work on guard with an honest context snippet."
         },
         {
           "id": "lab-skiff",
@@ -382,7 +409,8 @@
           "model": "Skiff",
           "thread_name": "hop",
           "status": "working",
-          "updated_at": "2026-09-19T11:05:00Z"
+          "updated_at": "2026-09-19T11:05:00Z",
+          "last_prompt": "Continue work on hop with an honest context snippet."
         },
         {
           "id": "lab-kimi",
@@ -390,7 +418,8 @@
           "model": "Kimi",
           "thread_name": "scratch",
           "status": "working",
-          "updated_at": "2026-09-19T08:45:00Z"
+          "updated_at": "2026-09-19T08:45:00Z",
+          "last_prompt": "Continue work on scratch with an honest context snippet."
         },
         {
           "id": "lab-gemini",
@@ -398,7 +427,8 @@
           "model": "Gemini",
           "thread_name": "samples",
           "status": "idle",
-          "updated_at": "2026-09-18T19:20:00Z"
+          "updated_at": "2026-09-18T19:20:00Z",
+          "last_prompt": "Continue work on samples with an honest context snippet."
         },
         {
           "id": "lab-walker",
@@ -406,7 +436,8 @@
           "model": "Walker",
           "thread_name": "loop",
           "status": "working",
-          "updated_at": "2026-09-19T10:15:00Z"
+          "updated_at": "2026-09-19T10:15:00Z",
+          "last_prompt": "Continue work on loop with an honest context snippet."
         }
       ]
     },
@@ -425,7 +456,8 @@
           "status": "working",
           "presence": "seen",
           "lifecycle": "active",
-          "updated_at": "2026-09-21T18:00:00Z"
+          "updated_at": "2026-09-21T18:00:00Z",
+          "last_prompt": "Walk the Unassigned outpost without inventing a repo."
         },
         {
           "id": "unassigned-scout",
@@ -435,7 +467,8 @@
           "status": "idle",
           "presence": "seen",
           "lifecycle": "attached",
-          "updated_at": "2026-09-21T17:00:00Z"
+          "updated_at": "2026-09-21T17:00:00Z",
+          "last_prompt": "Scout the no-repo pile for assigning."
         },
         {
           "id": "unassigned-gemini",
@@ -445,7 +478,8 @@
           "status": "working",
           "presence": "seen",
           "lifecycle": "active",
-          "updated_at": "2026-09-21T16:30:00Z"
+          "updated_at": "2026-09-21T16:30:00Z",
+          "last_prompt": "Medic the Unassigned Gemini unit."
         },
         {
           "id": "unassigned-builder",
@@ -455,7 +489,8 @@
           "status": "working",
           "presence": "seen",
           "lifecycle": "active",
-          "updated_at": "2026-09-21T16:00:00Z"
+          "updated_at": "2026-09-21T16:00:00Z",
+          "last_prompt": "Build a pad for Unassigned units."
         },
         {
           "id": "unassigned-luna",
@@ -465,7 +500,8 @@
           "status": "idle",
           "presence": "seen",
           "lifecycle": "active",
-          "updated_at": "2026-09-21T15:00:00Z"
+          "updated_at": "2026-09-21T15:00:00Z",
+          "last_prompt": "Codex Luna parked with no repo yet."
         },
         {
           "id": "unassigned-astra",
@@ -475,7 +511,8 @@
           "status": "idle",
           "presence": "offline",
           "lifecycle": "idle",
-          "updated_at": "2026-09-21T14:00:00Z"
+          "updated_at": "2026-09-21T14:00:00Z",
+          "last_prompt": "Astra offline but still has a prompt."
         },
         {
           "id": "unassigned-kimi",
@@ -485,7 +522,8 @@
           "status": "working",
           "presence": "unseen",
           "lifecycle": "archive",
-          "updated_at": "2026-09-21T13:00:00Z"
+          "updated_at": "2026-09-21T13:00:00Z",
+          "last_prompt": "Near-synonym presence should not hide this unit."
         },
         {
           "id": "unassigned-minimax",
@@ -495,7 +533,8 @@
           "status": "idle",
           "presence": "seen",
           "lifecycle": "active",
-          "updated_at": "2026-09-21T12:30:00Z"
+          "updated_at": "2026-09-21T12:30:00Z",
+          "last_prompt": "MiniMax idle in Unassigned with context."
         },
         {
           "id": "unassigned-not-seen",
@@ -505,7 +544,8 @@
           "status": "idle",
           "presence": "not-seen",
           "lifecycle": "active",
-          "updated_at": "2026-09-18T04:00:00Z"
+          "updated_at": "2026-09-18T04:00:00Z",
+          "last_prompt": "not-seen hyphen is not the noise token."
         },
         {
           "id": "unassigned-archived",
@@ -515,7 +555,8 @@
           "status": "idle",
           "presence": "seen",
           "lifecycle": "archived",
-          "updated_at": "2026-09-18T05:00:00Z"
+          "updated_at": "2026-09-18T05:00:00Z",
+          "last_prompt": "Keep archived Unassigned units in the outpost list."
         },
         {
           "id": "unassigned-detached",
@@ -525,7 +566,8 @@
           "status": "idle",
           "presence": "seen",
           "lifecycle": "detached",
-          "updated_at": "2026-09-18T06:00:00Z"
+          "updated_at": "2026-09-18T06:00:00Z",
+          "last_prompt": "Detached Unassigned tankette still carries context."
         },
         {
           "id": "unassigned-unknown",
@@ -535,7 +577,8 @@
           "status": "Unknown",
           "presence": "seen",
           "lifecycle": "active",
-          "updated_at": "2026-09-18T07:00:00Z"
+          "updated_at": "2026-09-18T07:00:00Z",
+          "last_prompt": "Unknown status with a real prompt."
         },
         {
           "id": "bc-collector",
@@ -545,7 +588,8 @@
           "status": "idle",
           "presence": "seen",
           "lifecycle": "unknown",
-          "updated_at": "2026-09-18T08:00:00Z"
+          "updated_at": "2026-09-18T08:00:00Z",
+          "last_prompt": "Repo-less Cursor collector waiting for a base."
         },
         {
           "id": "bc-collector-2",
@@ -555,7 +599,8 @@
           "status": "idle",
           "presence": "seen",
           "lifecycle": "Unknown",
-          "updated_at": "2026-09-18T08:05:00Z"
+          "updated_at": "2026-09-18T08:05:00Z",
+          "last_prompt": "Second collector sorted last in Unassigned."
         },
         {
           "id": "unassigned-codex-unknown",
@@ -565,7 +610,8 @@
           "status": "idle",
           "presence": "seen",
           "lifecycle": "unknown",
-          "updated_at": "2026-09-18T08:10:00Z"
+          "updated_at": "2026-09-18T08:10:00Z",
+          "last_prompt": "Codex unknown lifecycle with a usable prompt."
         }
       ]
     }

@@ -94,8 +94,16 @@ function emphasisRank(emphasis: Emphasis): number {
   return 0;
 }
 
+/** Last-prompt / note chain only. Thread labels alone are not a usable snippet. */
+export function hasUsableContextSnippet(unit: { hasContextSnippet?: boolean; lastPrompt?: string | null }): boolean {
+  if (unit.hasContextSnippet === true) return true;
+  if (typeof unit.lastPrompt === "string" && unit.lastPrompt.trim().length > 0) return true;
+  return false;
+}
+
 /**
- * Drops hidden units. A base with nothing left is omitted.
+ * Drops hidden units and units with no usable context snippet.
+ * A base with nothing left is omitted. Snippet hard filter wins over noise soft-keep.
  * Unassigned stays one base; callers must not fan its units out as tokens.
  */
 export function applyNoiseFilter(bases: CampaignBase[], filter: NoiseFilter): FilteredBases {
@@ -103,6 +111,10 @@ export function applyNoiseFilter(bases: CampaignBase[], filter: NoiseFilter): Fi
   const next: CampaignBase[] = [];
   for (const base of bases) {
     const visible = base.units.filter((unit) => {
+      if (!hasUsableContextSnippet(unit)) {
+        hiddenCount += 1;
+        return false;
+      }
       if (noiseReason(unit, filter)) {
         hiddenCount += 1;
         return false;
