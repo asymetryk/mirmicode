@@ -1,0 +1,1635 @@
+{
+  "source": "camp-dossiers/drafts.json + op-project-dossiers.json merge",
+  "campCount": 42,
+  "camps": [
+    {
+      "campId": "agent-operating-charter",
+      "oneLiner": "Modular markdown pack for coding-agent governance: OP WPs/Wikis, Buzz threads, North Star design gate, validation ladder, routing.",
+      "stage": "active",
+      "health": {
+        "level": "green",
+        "reason": "Public repo with substantial README; last push 2026-08-24; MIT pack installable via bootstrap URL."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Confirm which product repos have .agent_charter installed",
+        "Review CONFIG.md intake gaps for OP/Buzz locations",
+        "Check OpenProject backlog for charter updates"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/agent-operating-charter",
+        "openProject": null,
+        "buzz": null
+      }
+    },
+    {
+      "campId": "agentinfra",
+      "oneLiner": "Private/local platform stack for persistent agents: Baserow, Zulip, OmniRoute, Working Set, MCP routers, K3s deploy wiring.",
+      "stage": "active",
+      "health": {
+        "level": "green",
+        "reason": "Private repo with rich README; pushed 2026-09-22; OP mapped to coding-agent-hq."
+      },
+      "backlog": {
+        "byStatus": {
+          "In progress": 3,
+          "Ready for Howard": 2,
+          "Ready": 1,
+          "New": 1,
+          "Proposed": 1,
+          "Tested": 1,
+          "Closed": 2
+        },
+        "topItems": [
+          {
+            "id": 769,
+            "subject": "Store editable Substack draft links in Content OS",
+            "status": "In progress",
+            "priority": "High"
+          },
+          {
+            "id": 745,
+            "subject": "CAHQ pilot: stage three articles and twelve social posts for September 7–10",
+            "status": "In progress",
+            "priority": "Normal"
+          },
+          {
+            "id": 758,
+            "subject": "Allow same-project reference reads without changing session WP assignment",
+            "status": "Ready for Howard",
+            "priority": "Normal"
+          },
+          {
+            "id": 754,
+            "subject": "Update remote OMP and restore campaign editor after cluster reboot",
+            "status": "Ready",
+            "priority": "Normal"
+          },
+          {
+            "id": 751,
+            "subject": "Project-aware governance verification for Kubernetes coding agents",
+            "status": "Ready for Howard",
+            "priority": "Normal"
+          }
+        ],
+        "openTotal": 9
+      },
+      "nextActions": [
+        "Confirm Working Set OpenProject REPO_MAP ConfigMap is live on cahq",
+        "Verify Grok Bot catalog path on Mac collector",
+        "Review OpenProject backlog on coding-agent-hq"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/agentinfra",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/coding-agent-hq",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "agentos",
+      "oneLiner": "Control-plane–first AgentOS 2.0: public modular core + private adapter packs; typed provider contracts and guarded writes.",
+      "stage": "active",
+      "health": {
+        "level": "yellow",
+        "reason": "Private repo README present; last push 2026-09-17; OP mapped to repo-agentos; backlog snapshot missing."
+      },
+      "backlog": {
+        "byStatus": {
+          "In progress": 4,
+          "New": 5,
+          "Closed": 10
+        },
+        "topItems": [
+          {
+            "id": 407,
+            "subject": "Deliver AgentOS and Personal OS Command Center v1",
+            "status": "In progress",
+            "priority": "Immediate"
+          },
+          {
+            "id": 414,
+            "subject": "Run the 48-hour shadow period, graduate Green work, and rehearse rollback",
+            "status": "New",
+            "priority": "Immediate"
+          },
+          {
+            "id": 408,
+            "subject": "Gate 0 — Protect current state and establish Command Center delivery program",
+            "status": "In progress",
+            "priority": "Immediate"
+          },
+          {
+            "id": 409,
+            "subject": "Wave 1 — Land Command Center contracts and provider foundations",
+            "status": "In progress",
+            "priority": "Immediate"
+          },
+          {
+            "id": 412,
+            "subject": "Prove the contextual-reference linter through the Nas/Codex coding workflow",
+            "status": "New",
+            "priority": "High"
+          }
+        ],
+        "openTotal": 9
+      },
+      "nextActions": [
+        "Run agentos-core contract tests in personal-os-app",
+        "Confirm private adapter pack status vs demo registry",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/agentos",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/repo-agentos",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "agentvault",
+      "oneLiner": "Memory/knowledge backend for persistent agents: Markdown vault, OKF v0.2 bundles, compiled wiki layer, MCP/gateway surface.",
+      "stage": "active",
+      "health": {
+        "level": "yellow",
+        "reason": "Private README present; last push 2026-08-24; OP mapped; no OP WP snapshot."
+      },
+      "backlog": {
+        "byStatus": {
+          "New": 7,
+          "On hold": 1
+        },
+        "topItems": [
+          {
+            "id": 362,
+            "subject": "Build an AgentVault knowledge-vault GUI in AgentOS",
+            "status": "New",
+            "priority": "High"
+          },
+          {
+            "id": 220,
+            "subject": "Evidence pointer quality",
+            "status": "New",
+            "priority": "High"
+          },
+          {
+            "id": 219,
+            "subject": "Context freshness audit hardening",
+            "status": "New",
+            "priority": "High"
+          },
+          {
+            "id": 500,
+            "subject": "Spike: Cognee vs Supermemory for AgentVault",
+            "status": "On hold",
+            "priority": "Normal"
+          },
+          {
+            "id": 276,
+            "subject": "Keep keep this project page readable",
+            "status": "New",
+            "priority": "Normal"
+          }
+        ],
+        "openTotal": 8
+      },
+      "nextActions": [
+        "Validate OKF export/import staging dry-run",
+        "Confirm wiki_eligible workforce publication gates",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/agentvault",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/repo-agentvault",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "agentworkforce",
+      "oneLiner": "Organization layer for agent people/roles/personas, starter-team MVP, Command Center contracts, Intake Steward and CPO charters.",
+      "stage": "active",
+      "health": {
+        "level": "yellow",
+        "reason": "Private README; fresh-start reset documented; last push 2026-08-24; OP mapped."
+      },
+      "backlog": {
+        "byStatus": {
+          "New": 8,
+          "In progress": 2,
+          "Closed": 8
+        },
+        "topItems": [
+          {
+            "id": 497,
+            "subject": "P0: Restore Missy Gmail and Google Calendar OAuth",
+            "status": "New",
+            "priority": "Immediate"
+          },
+          {
+            "id": 491,
+            "subject": "P0: Make the Agent Workforce capable from Zulip",
+            "status": "In progress",
+            "priority": "Immediate"
+          },
+          {
+            "id": 496,
+            "subject": "P0: Invite Dan to Zulip and verify agent collaboration",
+            "status": "New",
+            "priority": "Immediate"
+          },
+          {
+            "id": 495,
+            "subject": "Add an Outlook connector owner and OAuth setup",
+            "status": "In progress",
+            "priority": "High"
+          },
+          {
+            "id": 224,
+            "subject": "Nas dispatch task packet shape",
+            "status": "New",
+            "priority": "High"
+          }
+        ],
+        "openTotal": 10
+      },
+      "nextActions": [
+        "Run make validate on starter-team + Command Center contracts",
+        "Confirm Andre 3000 / Q-Tip charter consumers",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/agentworkforce",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/repo-agentworkforce",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "agentworkforce-runtime",
+      "oneLiner": "Manifest-driven shared runtime harness (Agents SDK + OmniRoute m3); sealed Missy continuation; OP lifecycle via Agent Tools.",
+      "stage": "mvp",
+      "health": {
+        "level": "yellow",
+        "reason": "Private README; execution flags default off; last push 2026-08-26; OP mapped."
+      },
+      "backlog": {
+        "byStatus": {
+          "New": 6
+        },
+        "topItems": [
+          {
+            "id": 228,
+            "subject": "Evidence writeback and closeout markers",
+            "status": "New",
+            "priority": "High"
+          },
+          {
+            "id": 227,
+            "subject": "Bounded staged-run contract hardening",
+            "status": "New",
+            "priority": "High"
+          },
+          {
+            "id": 278,
+            "subject": "Keep keep this project page readable",
+            "status": "New",
+            "priority": "Normal"
+          },
+          {
+            "id": 230,
+            "subject": "Stress/canary dashboards",
+            "status": "New",
+            "priority": "Normal"
+          },
+          {
+            "id": 229,
+            "subject": "Harness registry integration",
+            "status": "New",
+            "priority": "Normal"
+          }
+        ],
+        "openTotal": 6
+      },
+      "nextActions": [
+        "Keep COMMAND_CENTER_RUN_EXECUTION_ENABLED false until envelope verification complete",
+        "Confirm Docker /healthz readiness with AgentInfra",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/agentworkforce-runtime",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/repo-agentworkforce-runtime",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "AI Lab Pitch",
+      "oneLiner": "Local Developer camp only; no asymetryk GitHub repo or OP map entry found.",
+      "stage": "unknown",
+      "health": {
+        "level": "unknown",
+        "reason": "No GitHub repo under asymetryk; not in live REPO_MAP; folder exists in Developer scan."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Review OpenProject backlog",
+        "Confirm repo remote on Mac"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": null,
+        "buzz": null
+      }
+    },
+    {
+      "campId": "AI Stack Observatory",
+      "oneLiner": "Personal control plane for AI stack decision intelligence: paste a GitHub URL → USE/EVALUATE/WATCH/IGNORE/REPLACE/RETIRE.",
+      "stage": "active",
+      "health": {
+        "level": "green",
+        "reason": "Public README with demo/MCP/deploy notes; pushed 2026-09-09; OP mapped to repo-ai-stack-observatory."
+      },
+      "backlog": {
+        "byStatus": {
+          "Tested": 1,
+          "New": 11
+        },
+        "topItems": [
+          {
+            "id": 747,
+            "subject": "Observatory: repository discovery, comparisons and stack guidance",
+            "status": "Tested",
+            "priority": "Normal"
+          },
+          {
+            "id": 656,
+            "subject": "AI Stack Observatory — Wave 0 foundation",
+            "status": "New",
+            "priority": "Normal"
+          },
+          {
+            "id": 666,
+            "subject": "Public launch bar",
+            "status": "New",
+            "priority": "Normal"
+          },
+          {
+            "id": 665,
+            "subject": "K3s UAT integration",
+            "status": "New",
+            "priority": "Normal"
+          },
+          {
+            "id": 664,
+            "subject": "MCP server + observatory CLI",
+            "status": "New",
+            "priority": "Normal"
+          }
+        ],
+        "openTotal": 12
+      },
+      "nextActions": [
+        "Verify K3s MCP endpoint still healthy",
+        "Refresh catalog seed / attribution if landscape updated",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/ai-stack-observatory",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/repo-ai-stack-observatory",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "AIC Kiro",
+      "oneLiner": "Infrastructure Design Platform (IDP): rack layouts, cable/power design, NL interface — FastAPI + React (AIC Kiro product).",
+      "stage": "active",
+      "health": {
+        "level": "yellow",
+        "reason": "Private repo README (IDP); last push 2026-08-24; OP mapped to repo-aic-kiro."
+      },
+      "backlog": {
+        "byStatus": {
+          "New": 6
+        },
+        "topItems": [
+          {
+            "id": 203,
+            "subject": "Topology editor",
+            "status": "New",
+            "priority": "High"
+          },
+          {
+            "id": 279,
+            "subject": "Keep keep this project page readable",
+            "status": "New",
+            "priority": "Normal"
+          },
+          {
+            "id": 206,
+            "subject": "Exports, catalog enrichment, firmware/design-state panel",
+            "status": "New",
+            "priority": "Normal"
+          },
+          {
+            "id": 205,
+            "subject": "Device catalog terminology audit",
+            "status": "New",
+            "priority": "Normal"
+          },
+          {
+            "id": 204,
+            "subject": "Rack placement editor",
+            "status": "New",
+            "priority": "Normal"
+          }
+        ],
+        "openTotal": 6
+      },
+      "nextActions": [
+        "Run backend pytest + frontend build checks",
+        "Confirm NL/LLM provider settings for local vs OpenRouter A/B",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/aic-kiro",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/repo-aic-kiro",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "aickiro-live",
+      "oneLiner": "Live/deploy camp for AIC Kiro; OP aliases to same project as aic-kiro (repo-aic-kiro). No separate GitHub repo named aickiro-live.",
+      "stage": "unknown",
+      "health": {
+        "level": "yellow",
+        "reason": "OP-mapped to repo-aic-kiro; shares asymetryk/aic-kiro codebase; live vs app boundary unclear without OP snapshot."
+      },
+      "backlog": {
+        "byStatus": {
+          "New": 6
+        },
+        "topItems": [
+          {
+            "id": 203,
+            "subject": "Topology editor",
+            "status": "New",
+            "priority": "High"
+          },
+          {
+            "id": 279,
+            "subject": "Keep keep this project page readable",
+            "status": "New",
+            "priority": "Normal"
+          },
+          {
+            "id": 206,
+            "subject": "Exports, catalog enrichment, firmware/design-state panel",
+            "status": "New",
+            "priority": "Normal"
+          },
+          {
+            "id": 205,
+            "subject": "Device catalog terminology audit",
+            "status": "New",
+            "priority": "Normal"
+          },
+          {
+            "id": 204,
+            "subject": "Rack placement editor",
+            "status": "New",
+            "priority": "Normal"
+          }
+        ],
+        "openTotal": 6
+      },
+      "nextActions": [
+        "Confirm whether aickiro-live is deploy/UAT only or separate checkout",
+        "Align Working Set repo key with aic-kiro alias",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/aic-kiro",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/repo-aic-kiro",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "Airtable Open Project",
+      "oneLiner": "Local Developer camp; no asymetryk GitHub repo and no REPO_MAP entry.",
+      "stage": "unknown",
+      "health": {
+        "level": "unknown",
+        "reason": "No public/private GitHub match; unmapped OP."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Review OpenProject backlog",
+        "Confirm repo remote on Mac"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": null,
+        "buzz": null
+      }
+    },
+    {
+      "campId": "airtable-scraper-profile",
+      "oneLiner": "Local Developer camp (browser/profile tooling inferred from name); no GitHub or OP map.",
+      "stage": "unknown",
+      "health": {
+        "level": "unknown",
+        "reason": "No asymetryk repo; unmapped OP."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Review OpenProject backlog",
+        "Confirm repo remote on Mac"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": null,
+        "buzz": null
+      }
+    },
+    {
+      "campId": "Airtable-Whiteboard",
+      "oneLiner": "Camp mapped in OP to repo-airtable-whiteboard; no asymetryk GitHub repository found under that name.",
+      "stage": "unknown",
+      "health": {
+        "level": "yellow",
+        "reason": "OP mapped but GitHub remote missing from asymetryk search; may be local-only or differently named."
+      },
+      "backlog": {
+        "byStatus": {
+          "New": 2
+        },
+        "topItems": [
+          {
+            "id": 257,
+            "subject": "Classify lifecycle and owner",
+            "status": "New",
+            "priority": "Normal"
+          },
+          {
+            "id": 109,
+            "subject": "Review repository backlog, documentation, and release status",
+            "status": "New",
+            "priority": "Normal"
+          }
+        ],
+        "openTotal": 2
+      },
+      "nextActions": [
+        "Confirm repo remote on Mac for Airtable-Whiteboard",
+        "Publish or rename remote to match OP identifier",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": "https://openproject.tail21f530.ts.net/projects/repo-airtable-whiteboard",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "airtableToXLS",
+      "oneLiner": "Local Developer camp; no asymetryk GitHub repo or OP map entry.",
+      "stage": "unknown",
+      "health": {
+        "level": "unknown",
+        "reason": "No GitHub match; unmapped OP."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Review OpenProject backlog",
+        "Confirm repo remote on Mac"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": null,
+        "buzz": null
+      }
+    },
+    {
+      "campId": "antigravity-panel",
+      "oneLiner": "OP project repo-antigravity-panel; no GitHub repo named antigravity-panel. Related archived quota-observer mentioned Antigravity quotas but is a different repo.",
+      "stage": "unknown",
+      "health": {
+        "level": "yellow",
+        "reason": "OP mapped; GitHub camp remote missing; possible relation to archived asymetryk/quota-observer not asserted as same camp."
+      },
+      "backlog": {
+        "byStatus": {
+          "New": 2
+        },
+        "topItems": [
+          {
+            "id": 325,
+            "subject": "Classify lifecycle and owner",
+            "status": "New",
+            "priority": "Normal"
+          },
+          {
+            "id": 324,
+            "subject": "Review repository backlog, documentation, and release status",
+            "status": "New",
+            "priority": "Normal"
+          }
+        ],
+        "openTotal": 2
+      },
+      "nextActions": [
+        "Confirm Mac folder remote vs OP identifier repo-antigravity-panel",
+        "Decide if quota-observer is predecessor or unrelated",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": "https://openproject.tail21f530.ts.net/projects/repo-antigravity-panel",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "availability-broker",
+      "oneLiner": "Calendar availability broker (Airtable sync / create hardening); local Mac camp — no asymetryk GitHub repo or OP map.",
+      "stage": "active",
+      "health": {
+        "level": "yellow",
+        "reason": "Workspace has broker-hardening notes (2026-09-16 PT) but no GitHub remote under asymetryk; unmapped OP."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Confirm repo remote on Mac for availability-broker",
+        "Finish SHI Events create-hardening publish if still draft",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": null,
+        "buzz": null
+      }
+    },
+    {
+      "campId": "basic-memory",
+      "oneLiner": "Likely Basic Memory knowledge consumer (referenced from AgentVault as read-only derived consumer); no asymetryk-owned GitHub camp repo found.",
+      "stage": "unknown",
+      "health": {
+        "level": "unknown",
+        "reason": "No asymetryk repo; unmapped OP; may be upstream dependency checkout."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Review OpenProject backlog",
+        "Confirm repo remote on Mac"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": null,
+        "buzz": null
+      }
+    },
+    {
+      "campId": "buzz",
+      "oneLiner": "Buzz collaboration surface (Hive/Nostr-style project channels); OP project identifier buzz exists; no asymetryk GitHub application repo found.",
+      "stage": "active",
+      "health": {
+        "level": "yellow",
+        "reason": "OP mapped to buzz; GitHub search user:asymetryk buzz returned 0 repos; service likely separate from camp folder."
+      },
+      "backlog": {
+        "byStatus": {
+          "In progress": 1
+        },
+        "topItems": [
+          {
+            "id": 676,
+            "subject": "Show thread replies inline in Buzz channels and DMs",
+            "status": "In progress",
+            "priority": "Normal"
+          }
+        ],
+        "openTotal": 1
+      },
+      "nextActions": [
+        "Confirm buzz camp folder remote on Mac",
+        "Document Buzz public hostname vs asymetryk-hive",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": "https://openproject.tail21f530.ts.net/projects/buzz",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "chrome-airtable-profile",
+      "oneLiner": "Local Developer camp (Chrome profile for Airtable work); no GitHub or OP map.",
+      "stage": "unknown",
+      "health": {
+        "level": "unknown",
+        "reason": "No asymetryk repo; unmapped OP."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Review OpenProject backlog",
+        "Confirm repo remote on Mac"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": null,
+        "buzz": null
+      }
+    },
+    {
+      "campId": "Codex",
+      "oneLiner": "Local Developer camp named Codex (harness/workspace); no dedicated asymetryk GitHub repo or OP map entry.",
+      "stage": "unknown",
+      "health": {
+        "level": "unknown",
+        "reason": "No GitHub match; unmapped OP."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Review OpenProject backlog",
+        "Confirm repo remote on Mac"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": null,
+        "buzz": null
+      }
+    },
+    {
+      "campId": "compare_solutions_csv",
+      "oneLiner": "Local Developer camp; no asymetryk GitHub repo or OP map.",
+      "stage": "unknown",
+      "health": {
+        "level": "unknown",
+        "reason": "No GitHub match; unmapped OP."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Review OpenProject backlog",
+        "Confirm repo remote on Mac"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": null,
+        "buzz": null
+      }
+    },
+    {
+      "campId": "content-os-publisher",
+      "oneLiner": "Glue service for Content OS Airtable: promote Pocket/Baserow intake and publish Platform Versions via Postiz/Substack worker.",
+      "stage": "active",
+      "health": {
+        "level": "green",
+        "reason": "Private README; live on K3s tailnet per README; pushed 2026-09-19; OP mapped."
+      },
+      "backlog": {
+        "byStatus": {
+          "In progress": 1,
+          "Closed": 1
+        },
+        "topItems": [
+          {
+            "id": 769,
+            "subject": "Store editable Substack draft links in Content OS",
+            "status": "In progress",
+            "priority": "High"
+          }
+        ],
+        "openTotal": 1
+      },
+      "nextActions": [
+        "Verify content-os-publisher.tail21f530.ts.net healthz",
+        "Confirm Postiz integration map coverage",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/content-os-publisher",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/content-os-publisher",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "dtr-app",
+      "oneLiner": "Down To Roll MVP app: Next.js + Supabase + Mapbox; sessions, chat, map discovery; Capacitor mobile shells; CF Workers deploy.",
+      "stage": "active",
+      "health": {
+        "level": "yellow",
+        "reason": "Private README with shipped feature list; last push 2026-07-19; OP mapped to repo-dtr-app."
+      },
+      "backlog": {
+        "byStatus": {
+          "In testing": 2,
+          "New": 4,
+          "Closed": 9
+        },
+        "topItems": [
+          {
+            "id": 422,
+            "subject": "Run the new-developer takeover review",
+            "status": "In testing",
+            "priority": "High"
+          },
+          {
+            "id": 235,
+            "subject": "V2 production authentication and developer handoff",
+            "status": "In testing",
+            "priority": "High"
+          },
+          {
+            "id": 516,
+            "subject": "v2 PRD",
+            "status": "New",
+            "priority": "Normal"
+          },
+          {
+            "id": 282,
+            "subject": "Keep keep this project page readable",
+            "status": "New",
+            "priority": "Normal"
+          },
+          {
+            "id": 238,
+            "subject": "Expense/admin support",
+            "status": "New",
+            "priority": "Normal"
+          }
+        ],
+        "openTotal": 6
+      },
+      "nextActions": [
+        "Confirm production app.downtoroll.com vs Workers deploy health",
+        "Review mobile beta build workflow readiness",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/dtr-app",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/repo-dtr-app",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "dtr-site",
+      "oneLiner": "Down to Roll marketing site (Next.js static → Cloudflare Pages): academies + practitioners conversion pages.",
+      "stage": "mvp",
+      "health": {
+        "level": "yellow",
+        "reason": "Private README; last push 2026-07-07; OP mapped; merch/corporate-events placeholders."
+      },
+      "backlog": {
+        "byStatus": {
+          "New": 4,
+          "In progress": 1,
+          "Closed": 1
+        },
+        "topItems": [
+          {
+            "id": 240,
+            "subject": "Merch launch path",
+            "status": "New",
+            "priority": "High"
+          },
+          {
+            "id": 239,
+            "subject": "Corporate offer one-pager",
+            "status": "New",
+            "priority": "High"
+          },
+          {
+            "id": 242,
+            "subject": "Conversion optimization",
+            "status": "New",
+            "priority": "Normal"
+          },
+          {
+            "id": 241,
+            "subject": "Post-MVP site phase 2 review",
+            "status": "In progress",
+            "priority": "Normal"
+          },
+          {
+            "id": 119,
+            "subject": "Review repository backlog, documentation, and release status",
+            "status": "New",
+            "priority": "Normal"
+          }
+        ],
+        "openTotal": 5
+      },
+      "nextActions": [
+        "Verify Cloudflare Pages contact function Airtable env",
+        "Fill merch / corporate-events placeholders or park",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/dtr-site",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/repo-dtr-site",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "goalpost",
+      "oneLiner": "OP maps to repo-goalpost-dtr-app; no separate asymetryk/goalpost GitHub repo found (may be DTR-related subcamp).",
+      "stage": "unknown",
+      "health": {
+        "level": "yellow",
+        "reason": "OP mapped; GitHub remote not found under asymetryk/goalpost; relationship to dtr-app not asserted."
+      },
+      "backlog": {
+        "byStatus": {
+          "New": 2
+        },
+        "topItems": [
+          {
+            "id": 261,
+            "subject": "Classify lifecycle and owner",
+            "status": "New",
+            "priority": "Normal"
+          },
+          {
+            "id": 126,
+            "subject": "Review repository backlog, documentation, and release status",
+            "status": "New",
+            "priority": "Normal"
+          }
+        ],
+        "openTotal": 2
+      },
+      "nextActions": [
+        "Confirm Mac remote for goalpost vs dtr-app",
+        "Clarify naming vs OP identifier repo-goalpost-dtr-app",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": "https://openproject.tail21f530.ts.net/projects/repo-goalpost-dtr-app",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "GPMO Time Tracker",
+      "oneLiner": "Airtable Daily Log → OmniRoute MiniMax parse/match → Work Log Entries; Cloudflare Tunnel to OmniRoute; no Worker required.",
+      "stage": "mvp",
+      "health": {
+        "level": "yellow",
+        "reason": "Private repo has SETUP.md (no README.md); last push 2026-06-25; OP mapped."
+      },
+      "backlog": {
+        "byStatus": {
+          "New": 2
+        },
+        "topItems": [
+          {
+            "id": 259,
+            "subject": "Classify lifecycle and owner",
+            "status": "New",
+            "priority": "Normal"
+          },
+          {
+            "id": 124,
+            "subject": "Review repository backlog, documentation, and release status",
+            "status": "New",
+            "priority": "Normal"
+          }
+        ],
+        "openTotal": 2
+      },
+      "nextActions": [
+        "Confirm OmniRoute CF tunnel still serves Airtable automation",
+        "Review Needs Review Work Log Entries",
+        "Add root README or keep SETUP.md as entrypoint"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/gpmo-time-tracker",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/repo-gpmo-time-tracker",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "homelab",
+      "oneLiner": "Core infrastructure notes/tooling: hosts, network, storage, backups, OpenBao, mission-control; agent runtime moved to sibling repos.",
+      "stage": "active",
+      "health": {
+        "level": "green",
+        "reason": "Private README; pushed 2026-09-19; OP mapped to homelab-poc."
+      },
+      "backlog": {
+        "byStatus": {
+          "New": 88,
+          "In progress": 9,
+          "On hold": 2,
+          "In testing": 1,
+          "Closed": 9
+        },
+        "topItems": [
+          {
+            "id": 295,
+            "subject": "Retire OpenBao root-token operations",
+            "status": "New",
+            "priority": "Immediate"
+          },
+          {
+            "id": 291,
+            "subject": "Run OpenProject restore drill",
+            "status": "New",
+            "priority": "Immediate"
+          },
+          {
+            "id": 289,
+            "subject": "Create first OpenProject execution cycle",
+            "status": "New",
+            "priority": "Immediate"
+          },
+          {
+            "id": 181,
+            "subject": "Configurable natural-language model routing in settings",
+            "status": "In progress",
+            "priority": "Immediate"
+          },
+          {
+            "id": 180,
+            "subject": "Provider setup and model discovery/allowlist",
+            "status": "In progress",
+            "priority": "Immediate"
+          }
+        ],
+        "openTotal": 120
+      },
+      "nextActions": [
+        "Run check_runtime_residue.py before push",
+        "Keep agent runtime out of this repo boundary",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/homelab",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/homelab-poc",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "homelab-atlas",
+      "oneLiner": "Live physical/logical homelab map: React Flow + Fastify, K8s/TrueNAS read-only adapters, inventory authoring, attention feed.",
+      "stage": "active",
+      "health": {
+        "level": "yellow",
+        "reason": "Private README; last push 2026-08-26; no OP map entry for homelab-atlas."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Confirm K3s UAT deploy status",
+        "Decide whether to add OP project + REPO_MAP alias",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/homelab-atlas",
+        "openProject": null,
+        "buzz": null
+      }
+    },
+    {
+      "campId": "kept",
+      "oneLiner": "Local Developer camp; no asymetryk GitHub repo or OP map.",
+      "stage": "unknown",
+      "health": {
+        "level": "unknown",
+        "reason": "No GitHub match; unmapped OP."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Review OpenProject backlog",
+        "Confirm repo remote on Mac"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": null,
+        "buzz": null
+      }
+    },
+    {
+      "campId": "langley-halls",
+      "oneLiner": "Multi-agent voice meeting room POC: LiveKit + ElevenLabs TTS + OmniRoute; interactive demo path supported, ConvAI run parked.",
+      "stage": "mvp",
+      "health": {
+        "level": "yellow",
+        "reason": "Public README; ConvAI path parked (WS 3001); interactive path dogfoodable; last push 2026-09-17; no OP map."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Dogfood interactive demo + validate secrets",
+        "Decide ConvAI revive vs drop",
+        "Consider adding OP project if tracking continues"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/langley-halls",
+        "openProject": null,
+        "buzz": null
+      }
+    },
+    {
+      "campId": "mirmicode",
+      "oneLiner": "Bird’s-eye RTS-style map of agent campaigns: bases=repos, factions=harnesses, units=agents; private tailnet + public BIP.",
+      "stage": "active",
+      "health": {
+        "level": "green",
+        "reason": "Public README; pushed 2026-09-22; deploy scripts for asym-k3s; camp catalog from Developer scan."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Verify private vs public PUBLIC_MODE scrubbing",
+        "Refresh developer camps scan on Mac",
+        "Wire camp dossiers into UnitPopover when ready"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/mirmicode",
+        "openProject": null,
+        "buzz": null
+      }
+    },
+    {
+      "campId": "omp-remote",
+      "oneLiner": "Native iPhone companion for live Oh My Pi sessions: notifications, Q&A, permission approvals; public authenticated relay planned.",
+      "stage": "idea",
+      "health": {
+        "level": "yellow",
+        "reason": "Private repo is bootstrap/handoff docs only (no app yet); description present; pushed 2026-09-22; OP mapped; WP #771."
+      },
+      "backlog": {
+        "byStatus": {
+          "Validating": 1,
+          "In progress": 1,
+          "Ready for Howard": 4
+        },
+        "topItems": [
+          {
+            "id": 779,
+            "subject": "Foreground native iPhone original-session control and TestFlight UAT",
+            "status": "Validating",
+            "priority": "Normal"
+          },
+          {
+            "id": 771,
+            "subject": "OMP Remote — native iPhone session control and actionable notifications",
+            "status": "In progress",
+            "priority": "Normal"
+          },
+          {
+            "id": 776,
+            "subject": "POC credential expiry and independent recovery readiness",
+            "status": "Ready for Howard",
+            "priority": "Normal"
+          },
+          {
+            "id": 775,
+            "subject": "Recommended native design package and Apple access readiness",
+            "status": "Ready for Howard",
+            "priority": "Normal"
+          },
+          {
+            "id": 774,
+            "subject": "Live-session technical proof and isolated secure relay",
+            "status": "Ready for Howard",
+            "priority": "Normal"
+          }
+        ],
+        "openTotal": 6
+      },
+      "nextActions": [
+        "Locate Apple team / APNs for hjshaw@gmail.com",
+        "Generate North Star mockups for human lock before UI code",
+        "Provision OP Wiki (currently temporary WP record)"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/omp-remote",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/omp-remote",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "open-project-wiki-api",
+      "oneLiner": "Local Developer camp for OpenProject Wiki API work; no asymetryk GitHub repo or OP map entry.",
+      "stage": "unknown",
+      "health": {
+        "level": "unknown",
+        "reason": "No GitHub match; unmapped OP."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Review OpenProject backlog",
+        "Confirm repo remote on Mac"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": null,
+        "buzz": null
+      }
+    },
+    {
+      "campId": "OpenProject",
+      "oneLiner": "Homelab OpenProject instance / ops camp (not an asymetryk application repo); REPO_MAP has no OpenProject camp key.",
+      "stage": "active",
+      "health": {
+        "level": "unknown",
+        "reason": "Service referenced widely; no owned GitHub app repo; camp unmapped in REPO_MAP (do not invent)."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Confirm OP inventory via Abby snapshot",
+        "Keep REPO_MAP identifiers accurate without inventing matches",
+        "Confirm repo remote on Mac if this is a config checkout"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": null,
+        "buzz": null
+      }
+    },
+    {
+      "campId": "Policy Sentinel",
+      "oneLiner": "GPMO Airtable Enterprise policy watchdog: hourly ingest, policy evaluation, findings + Interfaces UX.",
+      "stage": "mvp",
+      "health": {
+        "level": "yellow",
+        "reason": "Private README: scaffolding + PRD; implementation pending Approved for Dev; pushed 2026-09-22; OP mapped."
+      },
+      "backlog": {
+        "byStatus": {
+          "In progress": 10,
+          "Developing": 2,
+          "New": 38,
+          "Closed": 1
+        },
+        "topItems": [
+          {
+            "id": 599,
+            "subject": "PS-002 Define portable system architecture",
+            "status": "In progress",
+            "priority": "High"
+          },
+          {
+            "id": 641,
+            "subject": "PS-027 Deploy Cloudflare Worker(s) from Airtable base",
+            "status": "Developing",
+            "priority": "High"
+          },
+          {
+            "id": 610,
+            "subject": "PS-013 Implement external-share policy",
+            "status": "New",
+            "priority": "High"
+          },
+          {
+            "id": 639,
+            "subject": "PS-025 Build Airtable operator Interfaces (Setup, Dashboard, Remediation)",
+            "status": "Developing",
+            "priority": "High"
+          },
+          {
+            "id": 618,
+            "subject": "PS-021 Execute 10-workspace pilot",
+            "status": "In progress",
+            "priority": "High"
+          }
+        ],
+        "openTotal": 50
+      },
+      "nextActions": [
+        "Get WPs Approved for Dev / leave plan mode",
+        "Implement per docs/prd/PRD.md",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/policy-sentinel",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/repo-policy-sentinel",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "Proposal Generator",
+      "oneLiner": "Integrated Rack Proposal Generator: RAC visuals + SOW builder on Cloudflare Workers/D1/R2; SHI Presentation Builder aesthetic.",
+      "stage": "active",
+      "health": {
+        "level": "yellow",
+        "reason": "Private README with live Worker URL; last push 2026-08-25; OP mapped."
+      },
+      "backlog": {
+        "byStatus": {
+          "Developing": 1,
+          "In progress": 5,
+          "Ready for Howard": 2,
+          "New": 3,
+          "Closed": 48
+        },
+        "topItems": [
+          {
+            "id": 773,
+            "subject": "Proposal Studio v1.1 — isolated interface and workflow refresh",
+            "status": "Developing",
+            "priority": "Normal"
+          },
+          {
+            "id": 766,
+            "subject": "Quote ingestion evaluation and saved rack pricing scenarios in native Proposal Studio",
+            "status": "In progress",
+            "priority": "Normal"
+          },
+          {
+            "id": 767,
+            "subject": "Customer proposal assembly and native Office exports",
+            "status": "In progress",
+            "priority": "Normal"
+          },
+          {
+            "id": 761,
+            "subject": "Replace Canvas frontend with maintained custom Airtable interfaces",
+            "status": "In progress",
+            "priority": "Normal"
+          },
+          {
+            "id": 753,
+            "subject": "Repair native extraction for Chris's six SHI quotes",
+            "status": "In progress",
+            "priority": "Normal"
+          }
+        ],
+        "openTotal": 11
+      },
+      "nextActions": [
+        "Verify Worker + D1 migrations still healthy",
+        "Optional OPENAI_API_KEY for LLM normalize",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/proposal-generator",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/repo-proposal-generator",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "ROI Calculator",
+      "oneLiner": "Local Developer camp; no asymetryk GitHub repo or OP map.",
+      "stage": "unknown",
+      "health": {
+        "level": "unknown",
+        "reason": "No GitHub match; unmapped OP."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Review OpenProject backlog",
+        "Confirm repo remote on Mac"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": null,
+        "buzz": null
+      }
+    },
+    {
+      "campId": "shi-account-strategy-workspace",
+      "oneLiner": "Internal SHI account-strategy and stakeholder-mapping workspace (GitHub description); repository is empty on GitHub.",
+      "stage": "idea",
+      "health": {
+        "level": "red",
+        "reason": "Private empty GitHub repo (size 0); OP mapped; description only; no README."
+      },
+      "backlog": {
+        "byStatus": {
+          "On hold": 1,
+          "Ready for Howard": 1,
+          "New": 1
+        },
+        "topItems": [
+          {
+            "id": 762,
+            "subject": "Recover Wells Fargo contacts into Airtable SAM",
+            "status": "On hold",
+            "priority": "Normal"
+          },
+          {
+            "id": 678,
+            "subject": "MVP — Foundation, identity, and Account Strategy Map",
+            "status": "Ready for Howard",
+            "priority": "Normal"
+          },
+          {
+            "id": 677,
+            "subject": "Repository bootstrap and charter setup",
+            "status": "New",
+            "priority": "Normal"
+          }
+        ],
+        "openTotal": 3
+      },
+      "nextActions": [
+        "Push initial docs/schema from Mac checkout if present",
+        "Confirm empty remote vs local-only content",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/shi-account-strategy-workspace",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/repo-shi-account-strategy-workspace",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "shi-onboarding",
+      "oneLiner": "RICOS: SHI Rack Integration Customer Onboarding System — Airtable template docs, schema, operating model handoff.",
+      "stage": "mvp",
+      "health": {
+        "level": "yellow",
+        "reason": "Private README documentation repo; last push 2026-08-03; OP mapped."
+      },
+      "backlog": {
+        "byStatus": {
+          "In testing": 1,
+          "In progress": 1,
+          "Developed": 1,
+          "New": 5,
+          "Closed": 16
+        },
+        "topItems": [
+          {
+            "id": 490,
+            "subject": "Why SHI: Searchable capability topic navigator",
+            "status": "In testing",
+            "priority": "High"
+          },
+          {
+            "id": 467,
+            "subject": "Why SHI: Upload evidence visuals directly in Presentation Builder",
+            "status": "In progress",
+            "priority": "High"
+          },
+          {
+            "id": 466,
+            "subject": "Why SHI: Invite-only location-aware Post-it feedback",
+            "status": "Developed",
+            "priority": "High"
+          },
+          {
+            "id": 255,
+            "subject": "Interface/visual strategy refinement",
+            "status": "New",
+            "priority": "High"
+          },
+          {
+            "id": 254,
+            "subject": "Schema/docs sync after base changes",
+            "status": "New",
+            "priority": "High"
+          }
+        ],
+        "openTotal": 8
+      },
+      "nextActions": [
+        "Review agent-handoff/agent-brief.md for next schema improvements",
+        "Keep boundary clear vs Presentation Builder",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/shi-onboarding",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/repo-shi-onboarding",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "shi-presentation-builder",
+      "oneLiner": "Why SHI for Infrastructure Presentation Builder: Vinext/Workers app with D1 editing, Baserow feedback mode, R2 assets.",
+      "stage": "active",
+      "health": {
+        "level": "green",
+        "reason": "Private README; pushed 2026-09-22; production Worker documented; OP mapped."
+      },
+      "backlog": {
+        "byStatus": {
+          "Developing": 2,
+          "In progress": 1
+        },
+        "topItems": [
+          {
+            "id": 781,
+            "subject": "Restore AMD story order and infrastructure case studies",
+            "status": "Developing",
+            "priority": "Normal"
+          },
+          {
+            "id": 780,
+            "subject": "Refresh infrastructure deck against approved native North Stars",
+            "status": "Developing",
+            "priority": "Normal"
+          },
+          {
+            "id": 530,
+            "subject": "Plan-first presentation navigation map (sparse From here)",
+            "status": "In progress",
+            "priority": "Normal"
+          }
+        ],
+        "openTotal": 3
+      },
+      "nextActions": [
+        "Confirm deploy:dry-run / check green",
+        "Keep production D1 migrations explicitly authorized",
+        "Review OpenProject backlog"
+      ],
+      "links": {
+        "repo": "https://github.com/asymetryk/shi-presentation-builder",
+        "openProject": "https://openproject.tail21f530.ts.net/projects/repo-shi-presentation-builder",
+        "buzz": null
+      }
+    },
+    {
+      "campId": "strata-kickstarter-site",
+      "oneLiner": "STRATA Kickstarter campaign package (portable power desk for MacBook Pro): locked MVP copy kit; site assets still needed.",
+      "stage": "idea",
+      "health": {
+        "level": "yellow",
+        "reason": "Local workspace package README present (2026-09-13); no asymetryk GitHub repo found; unmapped OP."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Lock open pricing/MagSafe/RAID decisions",
+        "Commission design/prototype assets per 08-asset-checklist",
+        "Confirm repo remote on Mac / create GitHub if desired"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": null,
+        "buzz": null
+      }
+    },
+    {
+      "campId": "tin-man",
+      "oneLiner": "Local Developer camp; no asymetryk GitHub repo or OP map.",
+      "stage": "unknown",
+      "health": {
+        "level": "unknown",
+        "reason": "No GitHub match; unmapped OP."
+      },
+      "backlog": {
+        "byStatus": {},
+        "topItems": []
+      },
+      "nextActions": [
+        "Review OpenProject backlog",
+        "Confirm repo remote on Mac"
+      ],
+      "links": {
+        "repo": null,
+        "openProject": null,
+        "buzz": null
+      }
+    }
+  ]
+}

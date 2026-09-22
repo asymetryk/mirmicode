@@ -7,12 +7,14 @@ import {
   readStartupWorkingSetUrl,
   resolveSnapshot,
 } from "./adapters/source";
+import campDossiers from "./data/camp-dossiers.json";
+import { CampDossierPanel } from "./components/CampDossierPanel";
 import { MapStage } from "./components/MapStage";
 import { SelectionPopover } from "./components/SelectionPopover";
 import { SideRail } from "./components/SideRail";
 import { positionBases } from "./layout";
 import { DEFAULT_NOISE_FILTER, applyNoiseFilter, type NoiseFilter } from "./mapNoise";
-import type { MapSnapshot } from "./types";
+import type { CampDossier, MapSnapshot } from "./types";
 
 const HIDE_NOISE_KEY = "mirmicode.hideNoise";
 const HIDE_DETACHED_KEY = "mirmicode.hideDetached";
@@ -31,6 +33,14 @@ export function App() {
   const [filter, setFilter] = useState<NoiseFilter>(readNoiseFilter);
   const [railOpen, setRailOpen] = useState(readRailOpen);
   const requestVersion = useRef(0);
+
+  const dossierByCampId = useMemo(() => {
+    const map = new Map<string, CampDossier>();
+    for (const dossier of campDossiers.camps) {
+      map.set(dossier.campId, dossier);
+    }
+    return map;
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -202,6 +212,11 @@ export function App() {
                 setSelectedBaseId(baseId);
                 setSelectedUnitId(unitId);
               }}
+            />
+            <CampDossierPanel
+              base={selected}
+              dossier={selected ? dossierByCampId.get(selected.id) ?? null : null}
+              onClose={onClearSelection}
             />
           </MapStage>
           {railOpen ? null : (

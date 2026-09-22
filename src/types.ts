@@ -1,5 +1,8 @@
 export type MapSource = "fixture" | "working-set";
 
+/** Camp lifecycle stage from the camp dossier. */
+export type CampStage = "idea" | "mvp" | "active" | "parked" | "archive" | "unknown";
+
 /** One agent on a base. The harness is its faction. The model is its unit type. */
 export type Unit = {
   id: string;
@@ -53,6 +56,8 @@ export type CampaignBase = {
    * Presentation only. Working Set records do not need it.
    */
   place: { x: number; y: number } | null;
+  /** Camp lifecycle stage. Defaults to "unknown" when missing or invalid. */
+  stage: CampStage;
   units: Unit[];
 };
 
@@ -69,4 +74,43 @@ export type ViewState = {
   x: number;
   y: number;
   scale: number;
+};
+
+export type CampBacklogItem = {
+  id: number;
+  subject: string;
+  status: string;
+  priority: string;
+};
+
+export type CampDossier = {
+  campId: string;
+  oneLiner: string;
+  stage: string;
+  health: {
+    level: string;
+    reason: string;
+  };
+  backlog: {
+    byStatus: Record<string, number | undefined>;
+    topItems: CampBacklogItem[];
+    openTotal?: number;
+    note?: string;
+    opIdentifier?: string;
+    opUpdatedAt?: string;
+    milestones?: unknown;
+  };
+  nextActions: string[];
+  links: {
+    repo: string | null;
+    openProject: string | null;
+    buzz: string | null;
+  };
+};
+
+export type CampDossierCatalog = {
+  source: string;
+  enrichedAt?: string;
+  campCount: number;
+  camps: CampDossier[];
 };

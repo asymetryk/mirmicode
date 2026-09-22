@@ -59,6 +59,18 @@ export type UnitRole = (typeof UNIT_ROLES)[number];
 export const BUILDING_KINDS = ["pad", "depot", "turret", "refinery", "barracks", "lab"] as const;
 export type BuildingKind = (typeof BUILDING_KINDS)[number];
 
+export const CAMP_STAGES = ["idea", "mvp", "active", "parked", "archive", "unknown"] as const;
+export type CampStage = (typeof CAMP_STAGES)[number];
+
+const STAGE_BUILDING_SET: Record<CampStage, BuildingKind[]> = {
+  idea: ["pad"],
+  mvp: ["pad", "depot", "turret"],
+  active: ["pad", "depot", "turret", "refinery", "barracks", "lab"],
+  parked: ["pad", "depot", "turret", "refinery", "barracks", "lab"],
+  archive: ["pad", "depot", "turret", "refinery", "barracks", "lab"],
+  unknown: ["pad", "depot", "turret", "refinery", "barracks", "lab"],
+};
+
 export const RESOURCE_KINDS = ["crystal", "biomass", "scrap"] as const;
 export type ResourceKind = (typeof RESOURCE_KINDS)[number];
 
@@ -155,6 +167,24 @@ export function roleLabel(role: UnitRole): string {
 
 export function buildingLabel(kind: BuildingKind): string {
   return BUILDING_LABEL[kind];
+}
+
+/** Normalizes an incoming stage string to a known camp stage. */
+export function stageFromString(value: string | null | undefined): CampStage {
+  const stage = (value ?? "").toLowerCase().trim();
+  if (CAMP_STAGES.includes(stage as CampStage)) return stage as CampStage;
+  return "unknown";
+}
+
+/** CSS class suffix for the camp stage, safe for `data-stage` attributes. */
+export function stageClassName(stage: CampStage): string {
+  return stage;
+}
+
+/** Which building kinds are drawn around the pad for this camp stage. */
+export function buildingSetForStage(stage: CampStage | null | undefined): BuildingKind[] {
+  const key = stageFromString(stage);
+  return STAGE_BUILDING_SET[key];
 }
 
 export function resourceLabel(kind: ResourceKind): string {

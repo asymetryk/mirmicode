@@ -4,11 +4,12 @@ import { postureOf, postureSignal, factionName } from "../factions";
 import { drawsUnitTokens, unitEmphasis } from "../mapNoise";
 import { harnessSlug, unitContext } from "../format";
 import {
-  BUILDING_KINDS,
+  buildingSetForStage,
   buildingSrc,
   dominantFaction,
   resourceSrc,
   roleLabel,
+  stageClassName,
   unitRole,
 } from "../rtsArt";
 import {
@@ -231,12 +232,14 @@ export function MapStage({
               key={base.id}
               className="base-site"
               data-unassigned={unassigned ? "true" : "false"}
-              data-camp={bare ? "empty" : "army"}
+              data-stage={stageClassName(base.stage)}
               style={{ left: base.x, top: base.y }}
             >
               {unassigned || bare
                 ? null
-                : BUILDING_KINDS.filter((kind) => kind !== "pad").map((kind) => {
+                : buildingSetForStage(base.stage)
+                    .filter((kind) => kind !== "pad")
+                    .map((kind) => {
                 const src = buildingSrc(faction, kind);
                 const slot = BUILDING_OFFSET[kind];
                 if (!src) return null;
@@ -282,7 +285,7 @@ export function MapStage({
                 }
                 onClick={() => onTokenClick(base.id, null)}
               >
-                <Outpost faction={faction} selected={baseSelected} attached={baseSelected && attached} />
+                <Outpost faction={faction} stage={base.stage} selected={baseSelected} attached={baseSelected && attached} />
                 <span className="outpost-name">{unassigned ? "Unassigned" : base.repo}</span>
                 {unassigned ? <span className="unassigned-count">{base.units.length}</span> : null}
               </button>

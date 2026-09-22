@@ -3,11 +3,12 @@ import { Cutout } from "./Cutout";
 
 type OutpostProps = {
   faction: string | null;
+  stage?: import("../types").CampStage;
   selected: boolean;
   attached: boolean;
 };
 
-export function Outpost({ faction, selected, attached }: OutpostProps) {
+export function Outpost({ faction, stage = "unknown", selected, attached }: OutpostProps) {
   const src =
     buildingSrc(faction, "pad") ??
     (faction ? outpostSrc(faction) : null) ??
@@ -17,7 +18,7 @@ export function Outpost({ faction, selected, attached }: OutpostProps) {
     .join(" ");
 
   return (
-    <span className={className} data-faction={faction ?? "other"}>
+    <span className={className} data-faction={faction ?? "other"} data-stage={stage}>
       {selected ? <span className="ring" /> : null}
       {src ? <Cutout src={src} /> : <span className="outpost-fallback" />}
     </span>
