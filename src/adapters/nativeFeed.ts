@@ -1,3 +1,4 @@
+import feedV0Snapshot from "../../fixtures/feed-v0-snapshot.json";
 import { repoKey as canonicalRepoKey } from "../repos";
 import { stageFromString } from "../rtsArt";
 import type { CampaignBase, MapSnapshot, OpenProjectSummary, Unit } from "../types";
@@ -14,8 +15,8 @@ import type { CampaignBase, MapSnapshot, OpenProjectSummary, Unit } from "../typ
 
 export const NATIVE_FEED_SOURCE = "native-feed" as const;
 
-/** Path resolved relative to the adapter module by Vite at build. */
-export const NATIVE_FEED_FIXTURE_PATH = "../../fixtures/feed-v0-snapshot.json" as const;
+/** Parsed snapshot bundled into the build (no runtime fetch). */
+export const NATIVE_FEED_FIXTURE_PAYLOAD = feedV0Snapshot;
 
 export type NativeFeedCamp = {
   repo_key?: string;
@@ -169,16 +170,10 @@ export function loadNativeFeed(
 
 /** Module-baked fixture used by App when VITE_FEED_SOURCE=native. */
 export async function loadNativeFeedFixture(
-  fetchImpl: typeof fetch = fetch,
+  _fetchImpl?: typeof fetch,
   now: Date = new Date(),
 ): Promise<MapSnapshot> {
-  const url = new URL(NATIVE_FEED_FIXTURE_PATH, import.meta.url).toString();
-  const response = await fetchImpl(url, { cache: "no-store" });
-  if (!response.ok) {
-    throw new NativeFeedError(`Native feed fixture responded ${response.status}.`);
-  }
-  const payload = (await response.json()) as unknown;
-  return loadNativeFeed(payload, now).snapshot;
+  return loadNativeFeed(NATIVE_FEED_FIXTURE_PAYLOAD, now).snapshot;
 }
 
 function normalizeRepoKey(value: unknown): string | null {
