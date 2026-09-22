@@ -9,7 +9,12 @@ export type Unit = {
   label: string | null;
   /** Genuine prompt aliases or annotation.note; never a task label. */
   lastPrompt: string | null;
+  /** annotation.status, then flat status. Not copied from lifecycle or presence. */
   status: string | null;
+  /** observed.lifecycle, then a flat or annotation lifecycle. Null when the field is absent. */
+  lifecycle: string | null;
+  /** observed.presence, then a flat or annotation presence. Null when the field is absent. */
+  presence: string | null;
   /** ISO-8601 timestamp, or "unknown" when the payload omitted it. */
   updatedAt: string;
 };

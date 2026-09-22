@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import cahqSample from "../data/cahq-working-set.sample.json";
 import sampleBases from "../data/sample-bases.json";
-import { postureOf } from "../factions";
+import { postureOf, postureSignal } from "../factions";
 import { unitContext } from "../format";
 import { BUILDING_OFFSET, fitView, positionBases, resourcePlacements, unitSlot } from "../layout";
 import {
@@ -136,6 +136,8 @@ describe("normalizeWorkingSetPayload", () => {
         lastPrompt: null,
         updatedAt: "2026-09-21T10:00:00Z",
         status: "blocked",
+        lifecycle: "idle",
+        presence: "offline",
       },
     ]);
   });
@@ -190,7 +192,9 @@ describe("normalizeWorkingSetPayload", () => {
         model: "observed-model",
         label: "Flat label",
         updatedAt: "2026-09-21T08:00:00Z",
-        status: "idle",
+        status: "flat-status",
+        lifecycle: "idle",
+        presence: "offline",
       }),
       expect.objectContaining({
         id: "presence-fallback",
@@ -198,7 +202,9 @@ describe("normalizeWorkingSetPayload", () => {
         model: "flat-model",
         label: "snake-thread",
         updatedAt: "2026-09-21T09:00:00Z",
-        status: "working",
+        status: "flat-status",
+        lifecycle: null,
+        presence: "working",
       }),
       expect.objectContaining({
         id: "flat-fallback",
@@ -206,6 +212,8 @@ describe("normalizeWorkingSetPayload", () => {
         label: "camel-thread",
         updatedAt: "2026-09-21T10:00:00Z",
         status: "blocked",
+        lifecycle: null,
+        presence: null,
       }),
     ]);
   });
@@ -680,6 +688,10 @@ describe("posture", () => {
     expect(postureOf("blocked")).toBe("blocked");
     expect(postureOf("queued")).toBe("blocked");
     expect(postureOf(null)).toBe("idle");
+    expect(postureOf(postureSignal("working", "archived"))).toBe("working");
+    expect(postureOf(postureSignal(null, "active"))).toBe("working");
+    expect(postureOf(postureSignal("  ", "blocked"))).toBe("blocked");
+    expect(postureOf(postureSignal(null, null))).toBe("idle");
   });
 });
 

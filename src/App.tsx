@@ -10,7 +10,11 @@ import { Inspector } from "./components/Inspector";
 import { Legend } from "./components/Legend";
 import { MapStage } from "./components/MapStage";
 import { positionBases } from "./layout";
+import { DEFAULT_NOISE_FILTER, applyNoiseFilter, type NoiseFilter } from "./mapNoise";
 import type { MapSnapshot } from "./types";
+
+const HIDE_NOISE_KEY = "mirmicode.hideNoise";
+const HIDE_UNKNOWN_KEY = "mirmicode.hideUnknownStatus";
 
 export function App() {
   const [urlDraft, setUrlDraft] = useState(readStartupUrl);
@@ -21,6 +25,7 @@ export function App() {
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [attached, setAttached] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  const [filter, setFilter] = useState<NoiseFilter>(readNoiseFilter);
   const requestVersion = useRef(0);
 
   useEffect(() => {
@@ -50,9 +55,14 @@ export function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  const filtered = useMemo(
+    () => applyNoiseFilter(snapshot?.bases ?? [], filter),
+    [snapshot, filter],
+  );
+
   useEffect(() => {
     if (!snapshot || !selectedBaseId) return;
-    const base = snapshot.bases.find((entry) => entry.id === selectedBaseId);
+    const base = filtered.bases.find((entry) => entry.id === selectedBaseId);
     if (!base) {
       setSelectedBaseId(null);
       setSelectedUnitId(null);
@@ -62,11 +72,11 @@ export function App() {
     if (selectedUnitId && !base.units.some((unit) => unit.id === selectedUnitId)) {
       setSelectedUnitId(null);
     }
-  }, [snapshot, selectedBaseId, selectedUnitId]);
+  }, [snapshot, filtered.bases, selectedBaseId, selectedUnitId]);
 
   const positioned = useMemo(
-    () => positionBases(snapshot?.bases ?? []),
-    [snapshot],
+    () => positionBases(filtered.bases),
+    [filtered],
   );
   const selected = positioned.find((base) => base.id === selectedBaseId) ?? null;
   const selectedUnit = selected?.units.find((unit) => unit.id === selectedUnitId) ?? null;
@@ -103,7 +113,17 @@ export function App() {
     setAttached((value) => !value);
   }
 
-  const status = statusLine(snapshot, loading);
+  const status = statusLine(snapshot, loading, positioned, filtered.hiddenCount);
+
+  function onHideNoise(value: boolean) {
+    setFilter((current) => ({ ...current, hideNoise: value }));
+    writeFlag(HIDE_NOISE_KEY, value);
+  }
+
+  function onHideUnknownStatus(value: boolean) {
+    setFilter((current) => ({ ...current, hideUnknownStatus: value }));
+    writeFlag(HIDE_UNKNOWN_KEY, value);
+  }
   const banner = fallbackReason ?? snapshot?.notice ?? null;
 
   return (
@@ -125,7 +145,14 @@ export function App() {
           </p>
         ) : null}
       </header>
-      <Legend bases={positioned} />
+      <Legend
+        bases={positioned}
+        hideNoise={filter.hideNoise}
+        hideUnknownStatus={filter.hideUnknownStatus}
+        hiddenCount={filtered.hiddenCount}
+        onHideNoise={onHideNoise}
+        onHideUnknownStatus={onHideUnknownStatus}
+      />
       <MapStage
         key={`${snapshot?.source ?? "pending"}:${snapshot?.fetchedAt ?? "0"}`}
         bases={positioned}
@@ -163,14 +190,46 @@ export function App() {
   );
 }
 
-function statusLine(snapshot: MapSnapshot | null, loading: boolean): string {
+function statusLine(
+  snapshot: MapSnapshot | null,
+  loading: boolean,
+  visible: { units: unknown[] }[],
+  hiddenCount: number,
+): string {
   if (loading && !snapshot) return "Loading bases…";
   if (!snapshot) return "No snapshot";
-  const units = snapshot.bases.reduce((sum, base) => sum + base.units.length, 0);
-  const count = `${snapshot.bases.length} ${snapshot.bases.length === 1 ? "base" : "bases"} · ${units} units`;
+  const units = visible.reduce((sum, base) => sum + base.units.length, 0);
+  const hidden = hiddenCount > 0 ? ` · ${hiddenCount} hidden` : "";
+  const count = `${visible.length} ${visible.length === 1 ? "base" : "bases"} · ${units} units${hidden}`;
   if (loading) return `Loading… · ${count}`;
   if (snapshot.source === "working-set") return `Live Working Set · ${count}`;
   return `Fixture · sample data · ${count}`;
+}
+
+function readNoiseFilter(): NoiseFilter {
+  return {
+    hideNoise: readFlag(HIDE_NOISE_KEY, DEFAULT_NOISE_FILTER.hideNoise),
+    hideUnknownStatus: readFlag(HIDE_UNKNOWN_KEY, DEFAULT_NOISE_FILTER.hideUnknownStatus),
+  };
+}
+
+function readFlag(key: string, fallback: boolean): boolean {
+  try {
+    const value = localStorage.getItem(key);
+    if (value === "0") return false;
+    if (value === "1") return true;
+    return fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeFlag(key: string, value: boolean): void {
+  try {
+    localStorage.setItem(key, value ? "1" : "0");
+  } catch {
+    // Storage can be blocked. The current view still updates in memory.
+  }
 }
 
 async function apply(

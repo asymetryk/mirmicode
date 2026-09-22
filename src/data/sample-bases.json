@@ -14,6 +14,8 @@
           "thread_name": "bases-map",
           "lastPrompt": "Add an honest last-prompt line to the unit HUD while preserving map pan, zoom, selection, and glow.",
           "status": "working",
+          "presence": "seen",
+          "lifecycle": "active",
           "updated_at": "2026-09-21T19:05:00Z"
         },
         {
@@ -89,6 +91,56 @@
           "thread_name": "patch",
           "status": "working",
           "updated_at": "2026-09-21T18:02:00Z"
+        },
+        {
+          "id": "mirmicode-not-seen",
+          "harness": "cursor",
+          "model": "Scout",
+          "thread_name": "stale-watch",
+          "status": "idle",
+          "presence": "not_seen",
+          "lifecycle": "active",
+          "updated_at": "2026-09-18T01:00:00Z"
+        },
+        {
+          "id": "mirmicode-not-seen-spaced",
+          "harness": "codex",
+          "model": "Worker",
+          "thread_name": "spelling",
+          "status": "idle",
+          "presence": "Not Seen",
+          "lifecycle": "active",
+          "updated_at": "2026-09-18T01:05:00Z"
+        },
+        {
+          "id": "mirmicode-archived",
+          "harness": "codex",
+          "model": "Luna",
+          "thread_name": "old-readme",
+          "status": "idle",
+          "presence": "seen",
+          "lifecycle": "archived",
+          "updated_at": "2026-09-17T01:00:00Z"
+        },
+        {
+          "id": "mirmicode-detached",
+          "harness": "ohmypi",
+          "model": "Kimi",
+          "thread_name": "left-base",
+          "status": "idle",
+          "presence": "seen",
+          "lifecycle": "Detached",
+          "updated_at": "2026-09-17T02:00:00Z"
+        },
+        {
+          "id": "mirmicode-unknown-status",
+          "harness": "cursor",
+          "model": "Drone",
+          "thread_name": "unlabeled",
+          "status": "unknown",
+          "presence": "seen",
+          "lifecycle": "active",
+          "updated_at": "2026-09-17T03:00:00Z"
         }
       ]
     },
@@ -332,6 +384,135 @@
           "thread_name": "loop",
           "status": "working",
           "updated_at": "2026-09-19T10:15:00Z"
+        }
+      ]
+    },
+    {
+      "id": "unassigned",
+      "repo": "Unassigned",
+      "label": "No repo",
+      "x": 0.5,
+      "y": 0.48,
+      "units": [
+        {
+          "id": "unassigned-walker",
+          "harness": "cursor",
+          "model": "Grok-4.6",
+          "thread_name": "no-repo-walker",
+          "status": "working",
+          "presence": "seen",
+          "lifecycle": "active",
+          "updated_at": "2026-09-21T18:00:00Z"
+        },
+        {
+          "id": "unassigned-scout",
+          "harness": "cursor",
+          "model": "Scout",
+          "thread_name": "no-repo-scout",
+          "status": "idle",
+          "presence": "seen",
+          "lifecycle": "attached",
+          "updated_at": "2026-09-21T17:00:00Z"
+        },
+        {
+          "id": "unassigned-gemini",
+          "harness": "cursor",
+          "model": "Gemini",
+          "thread_name": "no-repo-medic",
+          "status": "working",
+          "presence": "seen",
+          "lifecycle": "active",
+          "updated_at": "2026-09-21T16:30:00Z"
+        },
+        {
+          "id": "unassigned-builder",
+          "harness": "cursor",
+          "model": "Builder",
+          "thread_name": "no-repo-builder",
+          "status": "working",
+          "presence": "seen",
+          "lifecycle": "active",
+          "updated_at": "2026-09-21T16:00:00Z"
+        },
+        {
+          "id": "unassigned-luna",
+          "harness": "codex",
+          "model": "Luna",
+          "thread_name": "no-repo-worker",
+          "status": "idle",
+          "presence": "seen",
+          "lifecycle": "active",
+          "updated_at": "2026-09-21T15:00:00Z"
+        },
+        {
+          "id": "unassigned-astra",
+          "harness": "codex",
+          "model": "Astra",
+          "thread_name": "still-offline",
+          "status": "idle",
+          "presence": "offline",
+          "lifecycle": "idle",
+          "updated_at": "2026-09-21T14:00:00Z"
+        },
+        {
+          "id": "unassigned-kimi",
+          "harness": "ohmypi",
+          "model": "Kimi",
+          "thread_name": "near-synonym",
+          "status": "working",
+          "presence": "unseen",
+          "lifecycle": "archive",
+          "updated_at": "2026-09-21T13:00:00Z"
+        },
+        {
+          "id": "unassigned-minimax",
+          "harness": "ohmypi",
+          "model": "MiniMax",
+          "thread_name": "no-repo-mirmi",
+          "status": "idle",
+          "presence": "seen",
+          "lifecycle": "active",
+          "updated_at": "2026-09-21T12:30:00Z"
+        },
+        {
+          "id": "unassigned-not-seen",
+          "harness": "cursor",
+          "model": "Drone",
+          "thread_name": "not-on-map",
+          "status": "idle",
+          "presence": "not-seen",
+          "lifecycle": "active",
+          "updated_at": "2026-09-18T04:00:00Z"
+        },
+        {
+          "id": "unassigned-archived",
+          "harness": "codex",
+          "model": "Sol",
+          "thread_name": "boxed",
+          "status": "idle",
+          "presence": "seen",
+          "lifecycle": "archived",
+          "updated_at": "2026-09-18T05:00:00Z"
+        },
+        {
+          "id": "unassigned-detached",
+          "harness": "ohmypi",
+          "model": "Tankette",
+          "thread_name": "unplugged",
+          "status": "idle",
+          "presence": "seen",
+          "lifecycle": "detached",
+          "updated_at": "2026-09-18T06:00:00Z"
+        },
+        {
+          "id": "unassigned-unknown",
+          "harness": "cursor",
+          "model": "Worker",
+          "thread_name": "no-status",
+          "status": "Unknown",
+          "presence": "seen",
+          "lifecycle": "active",
+          "updated_at": "2026-09-18T07:00:00Z"
         }
       ]
     }

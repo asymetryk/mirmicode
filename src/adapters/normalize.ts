@@ -1,3 +1,4 @@
+import { UNASSIGNED_REPO } from "../mapNoise";
 import type { CampaignBase, Unit } from "../types";
 
 const TEXT_LIMIT = 180;
@@ -147,11 +148,16 @@ function readUnit(
       readString(record.prompt) ??
       readString(record.input) ??
       readString(annotation?.note),
-    status: bound(
-      readString(annotation?.status) ??
-        readString(observed?.lifecycle) ??
-        readString(observed?.presence) ??
-        readString(record.status),
+    status: bound(readString(annotation?.status) ?? readString(record.status)),
+    lifecycle: bound(
+      readString(observed?.lifecycle) ??
+        readString(record.lifecycle) ??
+        readString(annotation?.lifecycle),
+    ),
+    presence: bound(
+      readString(observed?.presence) ??
+        readString(record.presence) ??
+        readString(annotation?.presence),
     ),
     updatedAt: readUpdatedAt(record),
   };
@@ -175,7 +181,7 @@ function readRecords(
 function readRepo(record: Record<string, unknown>): string | null {
   if ("observed" in record || "annotation" in record) {
     const observed = readObject(record.observed);
-    return readString(observed?.repo_name) ?? readString(observed?.repo) ?? "Unassigned";
+    return readString(observed?.repo_name) ?? readString(observed?.repo) ?? UNASSIGNED_REPO;
   }
   for (const key of ["repo_name", "repo", "repository", "project", "full_name"] as const) {
     const value = readString(record[key]);

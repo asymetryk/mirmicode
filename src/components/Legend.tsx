@@ -15,7 +15,23 @@ import type { CampaignBase } from "../types";
 import { Cutout } from "./Cutout";
 import { UnitFigure } from "./UnitFigure";
 
-export function Legend({ bases }: { bases: CampaignBase[] }) {
+type LegendProps = {
+  bases: CampaignBase[];
+  hideNoise: boolean;
+  hideUnknownStatus: boolean;
+  hiddenCount: number;
+  onHideNoise: (value: boolean) => void;
+  onHideUnknownStatus: (value: boolean) => void;
+};
+
+export function Legend({
+  bases,
+  hideNoise,
+  hideUnknownStatus,
+  hiddenCount,
+  onHideNoise,
+  onHideUnknownStatus,
+}: LegendProps) {
   const harnesses = bases.flatMap((base) => base.units.map((unit) => unit.harness));
   const factions = legendFactions(harnesses);
   const extras = extraTypes(bases);
@@ -55,6 +71,26 @@ export function Legend({ bases }: { bases: CampaignBase[] }) {
           const harness = FACTION_ORDER[index % FACTION_ORDER.length] ?? "cursor";
           return <Thumb key={kind} src={resourceSrc(harness, kind)} label={resourceLabel(kind)} />;
         })}
+      </div>
+      <div className="legend-row noise-filters">
+        <span className="legend-kicker">Noise</span>
+        <label>
+          <input
+            type="checkbox"
+            checked={hideNoise}
+            onChange={(event) => onHideNoise(event.target.checked)}
+          />
+          Hide not seen, archived, detached
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={hideUnknownStatus}
+            onChange={(event) => onHideUnknownStatus(event.target.checked)}
+          />
+          Hide unknown status
+        </label>
+        <span className="noise-count">{hiddenCount === 0 ? "Nothing hidden" : `${hiddenCount} hidden`}</span>
       </div>
       {extras.length > 0 ? (
         <div className="legend-row">

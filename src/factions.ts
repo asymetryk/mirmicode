@@ -41,6 +41,16 @@ export function factionName(harness: string): string {
 
 export type Posture = "idle" | "working" | "blocked";
 
+/**
+ * Glow and the blocked slash follow annotation/flat status when that field is set.
+ * Lifecycle is used only when status is missing, so a live item still has a posture.
+ */
+export function postureSignal(status: string | null, lifecycle: string | null): string | null {
+  if (status && status.trim()) return status;
+  if (lifecycle && lifecycle.trim()) return lifecycle;
+  return null;
+}
+
 export function postureOf(status: string | null): Posture {
   const key = (status ?? "").toLowerCase();
   if (key === "working" || key === "active" || key === "busy") return "working";
