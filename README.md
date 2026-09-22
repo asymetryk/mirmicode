@@ -101,7 +101,7 @@ Startup URL precedence: a saved “use fixture” choice, then a URL saved in th
 
 ### Point a tailnet machine at the live host
 
-1. Join the tailnet so MagicDNS resolves `working-set.tail21f530.ts.net`.
+1. Join the tailnet so MagicDNS resolves `cahq.tail21f530.ts.net`.
 2. Create an uncommitted `.env.local`:
 
    ```dotenv
@@ -111,17 +111,19 @@ Startup URL precedence: a saved “use fixture” choice, then a URL saved in th
 3. Start the same-origin development proxy from this Mac:
 
    ```bash
-   WORKING_SET_PROXY_TARGET=https://working-set.tail21f530.ts.net npm run dev
+   WORKING_SET_PROXY_TARGET=https://cahq.tail21f530.ts.net npm run dev
    ```
 
 4. Open **http://127.0.0.1:5173** (the hostname must match the configured URL). Vite forwards `/working-set/api/v1/working-set` to the tailnet API, removing `/working-set`. If this browser saved a fixture choice or an old URL, paste `http://127.0.0.1:5173/working-set/api/v1/working-set` into **Data source** and press **Load** to override it.
 
+Tailscale Serve can proxy this dev server at a MagicDNS name such as `howards-macbook-pro.tail21f530.ts.net`. `server.allowedHosts` is `[".tail21f530.ts.net"]`, so Vite 6 accepts that name and any other host on the same tailnet suffix.
+
 With an origin that permits your browser via CORS, either direct setting works:
 
 ```dotenv
-VITE_WORKING_SET_URL=https://working-set.tail21f530.ts.net
+VITE_WORKING_SET_URL=https://cahq.tail21f530.ts.net
 # Equivalent explicit endpoint:
-# VITE_WORKING_SET_URL=https://working-set.tail21f530.ts.net/api/v1/working-set
+# VITE_WORKING_SET_URL=https://cahq.tail21f530.ts.net/api/v1/working-set
 ```
 
 Restart Vite after changing environment variables. `VITE_` values are public and embedded at build time. For a production build, set `VITE_WORKING_SET_URL` to an absolute API URL reachable by the browser through CORS or your deployment's same-origin reverse proxy, then run `npm run build`. The Vite development proxy is not included in the static build.
@@ -131,7 +133,7 @@ To check transport without printing private response bodies:
 ```bash
 curl --silent --show-error --output /dev/null \
   --write-out 'HTTP %{http_code}; content type %{content_type}; TLS verify %{ssl_verify_result}\n' \
-  https://working-set.tail21f530.ts.net/api/v1/working-set
+  https://cahq.tail21f530.ts.net/api/v1/working-set
 ```
 
 There is no auth header or transcript fetch. Do not put cookies, tokens, or userinfo in URLs or `VITE_` variables. If authentication is needed, terminate it on a proxy you control.
