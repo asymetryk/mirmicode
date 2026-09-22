@@ -1,0 +1,15 @@
+mirmicode RTS sprite pack
+Generated through omniroute-imagegen CLI using codex/gpt-5.6-sol.
+All files: 1024x1024 PNG, RGBA, verified transparent background.
+Shared art direction: three-quarter isometric view, soft upper-left key light, faction-coordinated materials.
+Import framing: heroes and buildings fit within 800x700 pixels with nominal bottom anchor y=850; glyphs fit within 560x560 pixels and are centered. Aspect ratios preserved.
+
+hero-cursor-angular.png — Angular cyan-slate crystalline hero with faceted armor and articulated blade limbs. Background transparent: yes.
+hero-codex-organic.png — Amber-green biomorphic hero with flowing leaf armor, root limbs and luminous seed core. Background transparent: yes.
+hero-ohmypi-mechanical.png — Brass-and-steel servo hero with flywheel shoulders, manipulator claw and hammer arm. Background transparent: yes.
+glyph-model-a.png — Interlocking cyan geometric glyph with triangular negative space and amber inset. Background transparent: yes.
+glyph-model-b.png — Curving moss-green lobes surrounding a warm amber seed glyph. Background transparent: yes.
+glyph-model-c.png — Brass mechanical hub glyph with steel radial lugs and orange inset core. Background transparent: yes.
+building-outpost-cursor.png — Slate crystalline outpost with angular roof, cyan buttresses and recessed entrance. Background transparent: yes.
+building-outpost-codex.png — Living amber-green outpost with leaf-shell canopy, glowing chamber and root foundation. Background transparent: yes.
+building-outpost-ohmypi.png — Industrial brass-orange and steel outpost with flywheel, exhaust stacks and maintenance arm. Background transparent: yes.
