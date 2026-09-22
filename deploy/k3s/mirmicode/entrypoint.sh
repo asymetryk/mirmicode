@@ -11,6 +11,31 @@ export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-/tmp/caddy-config}"
 export XDG_DATA_HOME="${XDG_DATA_HOME:-/tmp/caddy-data}"
 mkdir -p "${XDG_CONFIG_HOME}" "${XDG_DATA_HOME}"
 
+# Optional public BIP knob for CF Tunnel deploys. Leave unset on the tailnet pod.
+# When set, rewrite /srv/runtime-config.js so the static map scrubs prompts
+# without rebuilding the image. Unset keys leave bake-time VITE_PUBLIC_* alone.
+write_runtime_config() {
+  flag_js() {
+    case "${1:-}" in
+      1|true|TRUE|yes|YES|on|ON) printf 'true' ;;
+      0|false|FALSE|no|NO|off|OFF) printf 'false' ;;
+      *) printf 'undefined' ;;
+    esac
+  }
+  public_js="$(flag_js "${PUBLIC_MODE:-}")"
+  full_js="$(flag_js "${PUBLIC_FULL_LIVE:-}")"
+  if [ "${public_js}" = "undefined" ] && [ "${full_js}" = "undefined" ]; then
+    return 0
+  fi
+  cat > /srv/runtime-config.js <<EOF
+window.__MIRMICODE__ = {
+  publicMode: ${public_js},
+  fullLive: ${full_js}
+};
+EOF
+}
+write_runtime_config
+
 token_file="${WORKING_SET_TOKEN_FILE:-/run/secrets/working-set/token}"
 auth_line=""
 if [ -f "${token_file}" ]; then

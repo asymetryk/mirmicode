@@ -1,10 +1,13 @@
+import { shouldScrubPrompts } from "./publicMode";
 import type { Unit } from "./types";
 
 /** Shared honest context; preserve full text for native title tooltips. */
 export function unitContext(unit: Unit, truncate = false): string | null {
-  const text = unit.lastPrompt ?? unit.label ?? unit.threadName;
+  // Public BIP omits Last prompt entirely; Thread label/name still show.
+  const prompt = shouldScrubPrompts() ? null : unit.lastPrompt;
+  const text = prompt ?? unit.label ?? unit.threadName;
   if (!text) return null;
-  const prefix = unit.lastPrompt ? "Last prompt" : "Thread";
+  const prefix = prompt ? "Last prompt" : "Thread";
   const oneLine = text.replace(/\s+/g, " ");
   const value = truncate && oneLine.length > 140 ? `${oneLine.slice(0, 139)}…` : oneLine;
   return `${prefix}: ${value}`;

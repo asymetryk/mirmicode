@@ -59,6 +59,14 @@ spec:
               value: 127.0.0.1:8443
             - name: WORKING_SET_TOKEN_FILE
               value: /run/secrets/working-set/token
+            # Public BIP (mirmicode.asymetryk.com / CF Tunnel only): set to "1"
+            # so the map scrubs lastUserPrompt and prompt aliases. Leave unset
+            # (or "0") on this tailnet deploy so private prompts still show.
+            # - name: PUBLIC_MODE
+            #   value: "1"
+            # Optional escape hatch when PUBLIC_MODE=1: keep prompts visible.
+            # - name: PUBLIC_FULL_LIVE
+            #   value: "1"
           ports:
             - name: http
               containerPort: 8080
