@@ -32,6 +32,51 @@ import {
 } from "./source";
 
 describe("normalizeWorkingSetPayload", () => {
+  it("prefers observed last-user-prompt fields and keeps the older honesty fallback", () => {
+    const published = "Review the map filters. ".repeat(10).trim();
+    expect(published.length).toBeLessThanOrEqual(240);
+    expect(published.length).toBeGreaterThan(180);
+    const { bases } = normalizeWorkingSetPayload({
+      items: [
+        {
+          item_id: "camel",
+          observed: {
+            repo: "example/demo",
+            lastUserPrompt: " Camel prompt ",
+            last_user_prompt: "snake prompt",
+          },
+          annotation: { label: "Thread title", note: "note text" },
+          last_prompt: "flat prompt",
+        },
+        {
+          item_id: "snake",
+          observed: { repo: "example/demo", lastUserPrompt: " ", last_user_prompt: published },
+          annotation: { label: "Thread title", note: "note text" },
+        },
+        {
+          item_id: "note",
+          observed: { repo: "example/demo", lastUserPrompt: {}, last_user_prompt: "" },
+          annotation: { label: "Thread title", note: " Actual note " },
+        },
+        {
+          item_id: "label-only",
+          observed: { repo: "example/demo" },
+          annotation: { label: "Thread title" },
+        },
+      ],
+    });
+    const [camel, snake, note, labelOnly] = bases[0]!.units;
+    if (!camel || !snake || !note || !labelOnly) throw new Error("Missing normalized units");
+    expect(camel.lastPrompt).toBe("Camel prompt");
+    expect(unitContext(camel)).toBe("Last prompt: Camel prompt");
+    expect(snake.lastPrompt).toBe(published);
+    expect(unitContext(snake)).toBe(`Last prompt: ${published}`);
+    expect(unitContext(snake, true)).toBe(`Last prompt: ${published.slice(0, 139)}…`);
+    expect(unitContext(note)).toBe("Last prompt: Actual note");
+    expect(labelOnly.lastPrompt).toBeNull();
+    expect(unitContext(labelOnly)).toBe("Thread: Thread title");
+  });
+
   it("keeps label-only items honest and skips blank or non-string prompts", () => {
     const { bases } = normalizeWorkingSetPayload({ items: [
       { observed: { repo: "example/demo" }, annotation: { label: "Thread title", note: " " }, prompt: {} },

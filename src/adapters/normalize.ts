@@ -149,6 +149,8 @@ function readUnit(
     threadName,
     label: bound(readString(annotation?.label) ?? readString(record.label) ?? threadName),
     lastPrompt:
+      readString(observed?.lastUserPrompt) ??
+      readString(observed?.last_user_prompt) ??
       readString(record.last_prompt) ??
       readString(record.lastPrompt) ??
       readString(record.last_user_message) ??
