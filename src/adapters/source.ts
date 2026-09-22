@@ -8,9 +8,11 @@ import { normalizeWorkingSetPayload } from "./normalize";
  * Live bases and units are an unauthenticated GET of a JSON document:
  * `VITE_WORKING_SET_URL` at startup, or a URL pasted in the data-source panel.
  * The deployed map bakes a same-origin path. Caddy on the pod proxies that
- * path to CAHQ. This module never fabricates a live snapshot. DNS, HTTP,
- * JSON, and empty-payload failures return the committed sample fixture plus
- * a fallback reason.
+ * path to CAHQ at https://cahq.tail21f530.ts.net. A root URL with no query
+ * still resolves to `/api/v1/working-set`. `working-set.tail21f530.ts.net`
+ * is a deprecated stale host and is not the default. This module never
+ * fabricates a live snapshot. DNS, HTTP, JSON, and empty-payload failures
+ * return the committed sample fixture plus a fallback reason.
  */
 export const CAHQ_WORKING_SET_ORIGIN = "https://cahq.tail21f530.ts.net";
 

@@ -1,31 +1,38 @@
-import type { CampaignBase, Unit } from "./types";
+import type { CampaignBase } from "./types";
 
 /** Repo name used when a nested Working Set item has no observed repo. */
 export const UNASSIGNED_REPO = "Unassigned";
 
 export type NoiseFilter = {
-  /** Hide `presence` not_seen and `lifecycle` archived or detached. */
+  /**
+   * Hide presence `not_seen`, lifecycle `archived` or `detached`,
+   * and Cursor units with lifecycle `unknown` and no repo.
+   */
   hideNoise: boolean;
-  /** Hide units whose status field is the string unknown. */
-  hideUnknownStatus: boolean;
 };
 
 export const DEFAULT_NOISE_FILTER: NoiseFilter = {
   hideNoise: true,
-  hideUnknownStatus: true,
 };
 
-export type NoiseReason = "not_seen" | "archived" | "detached" | "unknown";
+export type NoiseReason = "not_seen" | "archived" | "detached" | "cursor_collector";
+
+export type NoiseSubject = {
+  presence: string | null;
+  lifecycle: string | null;
+  harness?: string | null;
+};
 
 export type FilteredBases = {
   bases: CampaignBase[];
   hiddenCount: number;
 };
 
-const NOT_SEEN = "notseen";
+const NOT_SEEN = "not_seen";
 const ARCHIVED = "archived";
 const DETACHED = "detached";
 const UNKNOWN = "unknown";
+const CURSOR = "cursor";
 
 export function isUnassignedRepo(repo: string): boolean {
   return repo.trim().toLowerCase() === UNASSIGNED_REPO.toLowerCase();
@@ -37,27 +44,32 @@ export function drawsUnitTokens(repo: string): boolean {
 }
 
 /**
- * Letters and digits only, lowercased.
+ * Trimmed, lowercased field text.
  * Missing, blank, and non-string values are null so a hide rule can be skipped.
- * `not_seen`, `not-seen`, and `not seen` all become `notseen`.
- * `offline`, `unseen`, `archive`, and `detach` stay distinct.
+ * Live hide values are the exact strings `not_seen`, `archived`, `detached`, and `unknown`.
+ * `not-seen`, `unseen`, `archive`, and `detach` stay distinct.
  */
-export function compactField(value: unknown): string | null {
+export function exactToken(value: unknown): string | null {
   if (typeof value !== "string") return null;
-  const compact = value.toLowerCase().replace(/[^a-z0-9]+/g, "");
-  return compact.length > 0 ? compact : null;
+  const token = value.trim().toLowerCase();
+  return token.length > 0 ? token : null;
 }
 
 /** Why this unit is hidden, or null when it stays on the map. */
-export function noiseReason(unit: Pick<Unit, "presence" | "lifecycle" | "status">, filter: NoiseFilter): NoiseReason | null {
-  if (filter.hideNoise) {
-    const presence = compactField(unit.presence);
-    if (presence === NOT_SEEN) return "not_seen";
-    const lifecycle = compactField(unit.lifecycle);
-    if (lifecycle === ARCHIVED) return "archived";
-    if (lifecycle === DETACHED) return "detached";
+export function noiseReason(unit: NoiseSubject, filter: NoiseFilter, repo = ""): NoiseReason | null {
+  if (!filter.hideNoise) return null;
+  const presence = exactToken(unit.presence);
+  if (presence === NOT_SEEN) return "not_seen";
+  const lifecycle = exactToken(unit.lifecycle);
+  if (lifecycle === ARCHIVED) return "archived";
+  if (lifecycle === DETACHED) return "detached";
+  if (
+    lifecycle === UNKNOWN &&
+    exactToken(unit.harness) === CURSOR &&
+    isUnassignedRepo(repo)
+  ) {
+    return "cursor_collector";
   }
-  if (filter.hideUnknownStatus && compactField(unit.status) === UNKNOWN) return "unknown";
   return null;
 }
 
@@ -70,7 +82,7 @@ export function applyNoiseFilter(bases: CampaignBase[], filter: NoiseFilter): Fi
   const next: CampaignBase[] = [];
   for (const base of bases) {
     const units = base.units.filter((unit) => {
-      if (noiseReason(unit, filter)) {
+      if (noiseReason(unit, filter, base.repo)) {
         hiddenCount += 1;
         return false;
       }

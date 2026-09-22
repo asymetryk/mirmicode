@@ -14,7 +14,6 @@ import { DEFAULT_NOISE_FILTER, applyNoiseFilter, type NoiseFilter } from "./mapN
 import type { MapSnapshot } from "./types";
 
 const HIDE_NOISE_KEY = "mirmicode.hideNoise";
-const HIDE_UNKNOWN_KEY = "mirmicode.hideUnknownStatus";
 
 export function App() {
   const [urlDraft, setUrlDraft] = useState(readStartupUrl);
@@ -120,10 +119,6 @@ export function App() {
     writeFlag(HIDE_NOISE_KEY, value);
   }
 
-  function onHideUnknownStatus(value: boolean) {
-    setFilter((current) => ({ ...current, hideUnknownStatus: value }));
-    writeFlag(HIDE_UNKNOWN_KEY, value);
-  }
   const banner = fallbackReason ?? snapshot?.notice ?? null;
 
   return (
@@ -148,10 +143,8 @@ export function App() {
       <Legend
         bases={positioned}
         hideNoise={filter.hideNoise}
-        hideUnknownStatus={filter.hideUnknownStatus}
         hiddenCount={filtered.hiddenCount}
         onHideNoise={onHideNoise}
-        onHideUnknownStatus={onHideUnknownStatus}
       />
       <MapStage
         key={`${snapshot?.source ?? "pending"}:${snapshot?.fetchedAt ?? "0"}`}
@@ -209,7 +202,6 @@ function statusLine(
 function readNoiseFilter(): NoiseFilter {
   return {
     hideNoise: readFlag(HIDE_NOISE_KEY, DEFAULT_NOISE_FILTER.hideNoise),
-    hideUnknownStatus: readFlag(HIDE_UNKNOWN_KEY, DEFAULT_NOISE_FILTER.hideUnknownStatus),
   };
 }
 

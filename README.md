@@ -88,7 +88,7 @@ npm run preview
 
 Drag to pan. Scroll to zoom. **Select** a unit to read its harness, model, thread, status, and lifecycle in the HUD. **Attach** locks the view on that unit’s base. The **minimap** jumps the view. Escape detaches. These are view controls. The map does not send orders to agents.
 
-The **Noise** row starts with both switches on. It hides units whose presence is not seen, whose lifecycle is archived or detached, and whose status is unknown. **Unassigned** is one outpost with a count. Select it to open that list in the HUD. Counts come from the loaded snapshot. They are not a fixed demo size.
+The **Noise** switch starts on. It hides units whose presence is `not_seen`, whose lifecycle is `archived` or `detached`, and Cursor units with lifecycle `unknown` and no repo. **Unassigned** is one outpost with a count. Select it to open that list in the HUD. Counts come from the loaded snapshot. They are not a fixed demo size.
 
 The legend under the title groups the atlas: faction bodies, the ten unit types, and the field (buildings and resource props). It does not list every file in the pack.
 
@@ -150,7 +150,7 @@ Each base carries a mixed squad, not one hero. `asymetryk/mirmicode` is a Cursor
 
 CAHQ Working Set is the live source of truth: metadata only, for Cursor, Codex, OhMyPi, and OpenCode surfaces. This client does not vendor that service. OpenCode still renders as its own faction color if a payload names it.
 
-The live upstream is `https://cahq.tail21f530.ts.net/api/v1/working-set`. CAHQ does not send CORS. The deployed map therefore calls the same-origin path `/working-set/api/v1/working-set`, and Caddy on the pod proxies that to CAHQ. `working-set.tail21f530.ts.net` is a stale hostname.
+The live upstream is `https://cahq.tail21f530.ts.net/api/v1/working-set`. CAHQ does not send CORS. The deployed map therefore calls the same-origin path `/working-set/api/v1/working-set`, and Caddy on the pod proxies that to CAHQ. A pasted root URL with no query still resolves to `/api/v1/working-set`. `working-set.tail21f530.ts.net` is a stale hostname. Do not point the client at it.
 
 ### What the client does
 
@@ -272,14 +272,15 @@ When the live payload uses different names, extend the alias lists in `normalize
 
 ![Unassigned drilldown list](docs/unassigned-list.png)
 
-Both switches on the **Noise** row default to on. This browser remembers the choice (`mirmicode.hideNoise`, `mirmicode.hideUnknownStatus`). The status line counts visible bases and units, then adds a hidden count when the filter removed any.
+The **Noise** switch defaults to on. This browser remembers the choice (`mirmicode.hideNoise`). The status line counts visible bases and units, then adds a hidden count when the filter removed any.
 
-| Switch | Default | Hides a unit when |
+| Rule | Default | Hides a unit when |
 | --- | --- | --- |
-| Hide not seen, archived, detached | On | `presence` compacts to `notseen`, or `lifecycle` compacts to `archived` or `detached` |
-| Hide unknown status | On | `status` compacts to `unknown` |
+| Not seen | On | `presence` is `not_seen` after trim and case fold |
+| Archived or detached | On | `lifecycle` is `archived` or `detached` after trim and case fold |
+| Repo-less Cursor unknown | On | harness is Cursor, `lifecycle` is `unknown`, and the unit has no repo |
 
-Compacting lowercases the text and drops every character that is not a letter or digit. `not_seen`, `not-seen`, and `not seen` are the same presence value. `ARCHIVED` and `Detached` match. A missing, blank, or non-string field skips that rule and the unit stays. The filter does not treat `offline`, `unseen`, `idle`, `archive`, or `detach` as those values.
+These are the live Working Set strings. A missing, blank, or non-string field skips that rule and the unit stays. `not-seen`, `unseen`, `offline`, `archive`, `detach`, and `idle` do not match. A Cursor unit with `lifecycle` `unknown` on a real repo stays on that base. A Codex unit with `lifecycle` `unknown` and no repo stays in the Unassigned list. `status` `unknown` is not itself a hide rule.
 
 Hidden units remain in the snapshot. Turning a switch off draws them on their repo again. A base whose units are all hidden leaves the map until one of them passes.
 

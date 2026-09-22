@@ -18,19 +18,15 @@ import { UnitFigure } from "./UnitFigure";
 type LegendProps = {
   bases: CampaignBase[];
   hideNoise: boolean;
-  hideUnknownStatus: boolean;
   hiddenCount: number;
   onHideNoise: (value: boolean) => void;
-  onHideUnknownStatus: (value: boolean) => void;
 };
 
 export function Legend({
   bases,
   hideNoise,
-  hideUnknownStatus,
   hiddenCount,
   onHideNoise,
-  onHideUnknownStatus,
 }: LegendProps) {
   const harnesses = bases.flatMap((base) => base.units.map((unit) => unit.harness));
   const factions = legendFactions(harnesses);
@@ -80,15 +76,7 @@ export function Legend({
             checked={hideNoise}
             onChange={(event) => onHideNoise(event.target.checked)}
           />
-          Hide not seen, archived, detached
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={hideUnknownStatus}
-            onChange={(event) => onHideUnknownStatus(event.target.checked)}
-          />
-          Hide unknown status
+          Hide not seen, archived, detached, and repo-less Cursor unknowns
         </label>
         <span className="noise-count">{hiddenCount === 0 ? "Nothing hidden" : `${hiddenCount} hidden`}</span>
       </div>

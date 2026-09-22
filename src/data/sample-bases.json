@@ -108,7 +108,7 @@
           "model": "Worker",
           "thread_name": "spelling",
           "status": "idle",
-          "presence": "Not Seen",
+          "presence": "NOT_SEEN",
           "lifecycle": "active",
           "updated_at": "2026-09-18T01:05:00Z"
         },
@@ -141,6 +141,16 @@
           "presence": "seen",
           "lifecycle": "active",
           "updated_at": "2026-09-17T03:00:00Z"
+        },
+        {
+          "id": "mirmicode-cursor-unknown",
+          "harness": "cursor",
+          "model": "Scout",
+          "thread_name": "known-repo",
+          "status": "idle",
+          "presence": "seen",
+          "lifecycle": "unknown",
+          "updated_at": "2026-09-17T04:00:00Z"
         }
       ]
     },
@@ -513,6 +523,36 @@
           "presence": "seen",
           "lifecycle": "active",
           "updated_at": "2026-09-18T07:00:00Z"
+        },
+        {
+          "id": "bc-collector",
+          "harness": "cursor",
+          "model": "Scout",
+          "thread_name": "bc-collector",
+          "status": "idle",
+          "presence": "seen",
+          "lifecycle": "unknown",
+          "updated_at": "2026-09-18T08:00:00Z"
+        },
+        {
+          "id": "bc-collector-2",
+          "harness": "cursor",
+          "model": "Walker",
+          "thread_name": "bc-other",
+          "status": "idle",
+          "presence": "seen",
+          "lifecycle": "Unknown",
+          "updated_at": "2026-09-18T08:05:00Z"
+        },
+        {
+          "id": "unassigned-codex-unknown",
+          "harness": "codex",
+          "model": "Terra",
+          "thread_name": "codex-unknown",
+          "status": "idle",
+          "presence": "seen",
+          "lifecycle": "unknown",
+          "updated_at": "2026-09-18T08:10:00Z"
         }
       ]
     }

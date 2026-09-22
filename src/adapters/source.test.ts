@@ -561,6 +561,13 @@ describe("resolveSnapshot", () => {
     expect(JSON.stringify(result)).not.toContain("synthetic-private-response");
   });
 
+  it("points the default origin at the live CAHQ host", () => {
+    expect(CAHQ_WORKING_SET_ORIGIN).toBe("https://cahq.tail21f530.ts.net");
+    expect(parseWorkingSetUrl(CAHQ_WORKING_SET_ORIGIN).toString()).toBe(
+      "https://cahq.tail21f530.ts.net/api/v1/working-set",
+    );
+  });
+
   it.each([
     ["https://working-set.example", "https://working-set.example/api/v1/working-set"],
     ["http://working-set.example:8080/", "http://working-set.example:8080/api/v1/working-set"],
