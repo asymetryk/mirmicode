@@ -86,7 +86,9 @@ npm run preview
 
 `preview` serves the static build at http://127.0.0.1:4173. A production `npm run build` without the Docker `ARG` does not bake the same-origin path; the image build does.
 
-Drag to pan. Scroll to zoom. **Select** a unit to read its harness, model, thread, and status in the HUD. **Attach** locks the view on that unit’s base. The **minimap** jumps the view. Escape detaches. These are view controls. The map does not send orders to agents.
+Drag to pan. Scroll to zoom. **Select** a unit to read its harness, model, thread, status, and lifecycle in the HUD. **Attach** locks the view on that unit’s base. The **minimap** jumps the view. Escape detaches. These are view controls. The map does not send orders to agents.
+
+The **Noise** switch starts on. It hides `presence` `not_seen` and `annotation.hidden` true. `archived` and `detached` stay on the map dimmer until **Hide archived** or **Hide detached** is turned on. `unknown` stays visible and dimmer. A Cursor unit with `lifecycle` `unknown` and no repo is dimmed further inside Unassigned. **Unassigned** is one outpost with a count. Select it to open that list in the HUD. Counts come from the loaded snapshot. They are not a fixed demo size.
 
 The legend under the title groups the atlas: faction bodies, the ten unit types, and the field (buildings and resource props). It does not list every file in the pack.
 
@@ -140,7 +142,7 @@ v1 crests, used only on that fallback:
 
 `src/data/sample-bases.json` is the map fallback: synthetic metadata so the map runs with nothing else reachable. `example/*` repos are not live telemetry. The status line says `Fixture · sample data`.
 
-Each base carries a mixed squad, not one hero. `asymetryk/mirmicode` is a Cursor majority (Grok-4.6 walker, Gemini medic, plus scout, drone, builder, and tankette) with Codex Luna and Skiff and OhMyPi Kimi and Medic. The other bases are a Codex charter, an OhMyPi ops board, and a Codex prompt lab. Together the fixture fields every v2 silhouette.
+Each base carries a mixed squad, not one hero. `asymetryk/mirmicode` is a Cursor majority (Grok-4.6 walker, Gemini medic, plus scout, drone, builder, and tankette) with Codex Luna and Skiff and OhMyPi Kimi and Medic. The other bases are a Codex charter, an OhMyPi ops board, and a Codex prompt lab. Together the fixture fields every v2 silhouette. It also includes hidden noise rows and one Unassigned outpost so the filters and the drilldown work with no network.
 
 `src/data/cahq-working-set.sample.json` is a separate flat `agents` document in the Working Set field shape (several units sharing a repo). It is also synthetic. It is not a capture from the tailnet host. Tests run it through the same normalizer the live fetch uses.
 
@@ -148,7 +150,7 @@ Each base carries a mixed squad, not one hero. `asymetryk/mirmicode` is a Cursor
 
 CAHQ Working Set is the live source of truth: metadata only, for Cursor, Codex, OhMyPi, and OpenCode surfaces. This client does not vendor that service. OpenCode still renders as its own faction color if a payload names it.
 
-The live upstream is `https://cahq.tail21f530.ts.net/api/v1/working-set`. CAHQ does not send CORS. The deployed map therefore calls the same-origin path `/working-set/api/v1/working-set`, and Caddy on the pod proxies that to CAHQ. `working-set.tail21f530.ts.net` is a stale hostname.
+The live upstream is `https://cahq.tail21f530.ts.net/api/v1/working-set`. CAHQ does not send CORS. The deployed map therefore calls the same-origin path `/working-set/api/v1/working-set`, and Caddy on the pod proxies that to CAHQ. A pasted root URL with no query still resolves to `/api/v1/working-set`. `working-set.tail21f530.ts.net` is a stale hostname. Do not point the client at it.
 
 ### What the client does
 
@@ -226,13 +228,18 @@ Flat rows do not invent a second unit from a parent harness when `units` or `age
 | Faction / harness | `observed.surface`, `observed.harness`, then flat `harness` or `surface` | Lowercased. `oh-my-pi` and `open-code` fold onto `ohmypi` and `opencode`. Missing becomes `unknown`. |
 | Unit type / model | `observed.model`, then flat `model` | Blank or missing becomes `unknown`. |
 | Thread | `thread_name` or `threadName` | Empty renders as an em dash. |
-| Status | `annotation.status`, `observed.lifecycle`, `observed.presence`, then flat `status` | First nonblank string wins. `working`, `active`, and `busy` glow; `blocked`, `queued`, `stuck`, and `error` take the blocked slash. Other values are idle. |
+| Status | `annotation.status`, then flat `status` | Operator triage. Live values are `open` and `done`. Shown as Status, never as lifecycle. `open` and `done` do not drive the glow. `working`, `active`, and `busy` still glow; `blocked`, `queued`, `stuck`, and `error` take the blocked slash. |
+| Lifecycle | `observed.lifecycle`, then flat `lifecycle`, then `annotation.lifecycle` | Live values are `idle`, `detached`, `archived`, and `unknown`. Shown on its own HUD line. |
+| Presence | `observed.presence`, then flat `presence`, then `annotation.presence` | Live values are `present` and `not_seen`. Shown on its own HUD line. |
+| Freshness | `observed.freshness`, then flat `freshness` | Relative string. The literal `unknown` is kept and shown. Missing stays an em dash. It does not hide the unit. |
+| Operator hidden | `annotation.hidden`, then flat `hidden` | Boolean `true` hides the unit. Any other value, including the string `"true"`, does not. |
+| Stale snapshot | `snapshot.stale` | Boolean `true` shows a refresh-failed banner. It does not hide units. Missing or non-boolean stays quiet. |
 | Unit label | `annotation.label`, flat `label`, then `thread_name` / `threadName` | First nonblank string wins. |
-| Last prompt | Flat `last_prompt`, `lastPrompt`, `last_user_message`, `lastUserMessage`, `user_prompt`, `userPrompt`, `prompt`, `input`, then `annotation.note` | First nonblank string wins; non-string values are ignored. Never derived from `annotation.label`. |
+| Last prompt | `observed.lastUserPrompt`, then `observed.last_user_prompt`, then flat `last_prompt`, `lastPrompt`, `last_user_message`, `lastUserMessage`, `user_prompt`, `userPrompt`, `prompt`, `input`, then `annotation.note` | First nonblank string wins; non-string and blank values are skipped. The published observed prompt is at most 240 characters and is kept in full for the tooltip. Never derived from `annotation.label`. |
 | Last touched | `annotation.updated_at`, `observed.updated_at`, then flat `updated_at`, `updatedAt`, `last_touched`, or `lastTouched` | The base shows the latest valid unit time. |
 | Placement | `x`, `y` on the base | Optional numbers in `0..1`. Map presentation only. Ignored when out of range. |
 
-Unknown fields and transcript bodies are ignored. Display metadata is capped at 180 characters, except prompt text, which is retained for full native `title` tooltips. The HUD and roster show `Last prompt:` with prompt text shortened to 140 characters; without a prompt they show `Thread:` using the unit label/thread name. Map-unit titles use the same honest prefix with full prompt text. The live API currently has no dedicated last-user-prompt field; an annotation note is the supported nested fallback. Both sample fixtures include fictional prompt text and label-only units. A grouped fixture record looks like this:
+Unknown fields and transcript bodies are ignored. Display metadata is capped at 180 characters, except prompt text, which is retained for full native `title` tooltips. The HUD and roster show `Last prompt:` with prompt text shortened to 140 characters; without a prompt they show `Thread:` using the unit label/thread name. Map-unit titles use the same honest prefix with full prompt text. When the feed includes `observed.lastUserPrompt` or `observed.last_user_prompt`, that text is the Last prompt line. Older prompt aliases and `annotation.note` remain the fallback. `annotation.label` alone stays `Thread:`. Both sample fixtures include fictional prompt text and label-only units. A grouped fixture record looks like this:
 
 ```json
 {
@@ -250,6 +257,8 @@ Unknown fields and transcript bodies are ignored. Display metadata is capped at 
           "model": "Grok-4.6",
           "thread_name": "bases-map",
           "status": "working",
+          "presence": "seen",
+          "lifecycle": "active",
           "updated_at": "2026-09-21T19:05:00Z"
         }
       ]
@@ -259,6 +268,36 @@ Unknown fields and transcript bodies are ignored. Display metadata is capped at 
 ```
 
 When the live payload uses different names, extend the alias lists in `normalize.ts`. The UI only renders `CampaignBase` and `Unit` (`src/types.ts`).
+
+## Map noise
+
+![Filtered map with the Unassigned count and lifecycle in the HUD](docs/map-noise.png)
+
+![Unassigned drilldown list](docs/unassigned-list.png)
+
+**Hide not seen and operator-hidden** defaults to on (`mirmicode.hideNoise`). **Hide archived** defaults to off (`mirmicode.hideArchived`). **Hide detached** defaults to off (`mirmicode.hideDetached`). This browser remembers each switch. The status line counts visible bases and units, then adds a hidden count when a filter removed any. Those counts are computed from the snapshot.
+
+| Rule | Default | Effect |
+| --- | --- | --- |
+| Not seen | On | Hide when `presence` is `not_seen` |
+| Operator hidden | On | Hide when `annotation.hidden` is boolean `true` |
+| Archived | Dim, hide optional | Stay on the map, drawn dimmer. **Hide archived** removes them |
+| Detached | Dim, hide optional | Stay on the map, drawn dimmer. **Hide detached** removes them |
+| Unknown lifecycle | Dim | Stay visible, drawn dimmer. Unclear or cold, not dead |
+| Repo-less Cursor unknown | Demote | Dimmed further and listed last in the Unassigned drilldown. Not removed |
+| Stale snapshot | Banner | `snapshot.stale` true shows “Working Set refresh failed. This snapshot is stale.” Units stay |
+
+Comparison is trim and case fold on those exact strings. A missing, blank, or non-string field skips that rule. `not-seen`, `archive`, `idle`, and freshness `unknown` do not hide a unit. `annotation.status` `open` or `done` is triage in the HUD and is not labeled as lifecycle.
+
+An item is Unassigned only when `observed.repo` and `observed.repo_name` are both missing or blank. One of those fields is enough to place it on that repo.
+
+Hidden units remain in the snapshot. Turning the noise switch off draws `not_seen` and operator-hidden units again. Archived stays dim unless **Hide archived** is on. Unknown stays dim either way. A base whose units are all hidden leaves the map until one of them passes.
+
+### Unassigned
+
+Nested items with both `observed.repo` and `observed.repo_name` missing or blank share one base named Unassigned. The map draws that base as a single outpost and a count of the units that passed the filter. It does not place a token per unit. Select the outpost to open the list in the HUD, then select a unit. The HUD shows lifecycle, presence, freshness, and status on separate lines, plus the honest Last prompt or Thread line. Assigned repos keep one token per visible unit. Repo-less Cursor units whose lifecycle is `unknown` sit at the end of that list, dimmer than the rest.
+
+The sample fixture’s noise rows and Unassigned outpost are synthetic. They demonstrate the filter offline. Live counts follow whatever the Working Set returns.
 
 ## Lore
 

@@ -312,6 +312,39 @@ summary:focus-visible {
   border-radius: 2px;
 }
 
+.unassigned-count {
+  position: relative;
+  z-index: 4;
+  margin-top: 6px;
+  min-width: 2.4rem;
+  padding: 0.12rem 0.55rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #1a1d12;
+  font-family: ui-monospace, "Cascadia Code", "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.noise-filters label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text);
+  font-size: 0.78rem;
+}
+
+.noise-filters input {
+  accent-color: var(--accent);
+}
+
+.noise-count {
+  color: var(--faint);
+  font-size: 0.78rem;
+}
+
 .unit {
   position: absolute;
   z-index: 3;
@@ -328,6 +361,11 @@ summary:focus-visible {
 }
 
 .unit.is-selected { z-index: 5; }
+
+.unit[data-emphasis="dim"] { opacity: 0.62; }
+.unit[data-emphasis="collector"] { opacity: 0.4; }
+.unit.is-selected[data-emphasis="dim"],
+.unit.is-selected[data-emphasis="collector"] { opacity: 1; }
 
 .unit[data-faction="cursor"] { color: var(--cursor); }
 .unit[data-faction="codex"] { color: var(--codex); }
@@ -705,7 +743,9 @@ summary:focus-visible {
 .roster-meta { display: block; color: var(--muted); font-size: 0.72rem; }
 .unit-context { color: var(--text); font-size: 0.85rem; line-height: 1.5; overflow-wrap: anywhere; }
 .roster-meta { overflow-wrap: anywhere; }
-.roster-unit.is-selected { border-color: var(--accent); }
+.roster-unit[data-emphasis="dim"] { opacity: 0.72; }
+.roster-unit[data-emphasis="collector"] { opacity: 0.48; }
+.roster-unit.is-selected { border-color: var(--accent); opacity: 1; }
 
 .fetched { margin-bottom: 0; }
 

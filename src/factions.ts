@@ -41,6 +41,20 @@ export function factionName(harness: string): string {
 
 export type Posture = "idle" | "working" | "blocked";
 
+const TRIAGE_STATUS = new Set(["open", "done"]);
+
+/**
+ * Glow follows a posture word on status, such as working or blocked.
+ * annotation.status open and done are operator triage, so they do not replace lifecycle.
+ */
+export function postureSignal(status: string | null, lifecycle: string | null): string | null {
+  const statusText = status?.trim() ?? "";
+  if (statusText && !TRIAGE_STATUS.has(statusText.toLowerCase())) return statusText;
+  const life = lifecycle?.trim() ?? "";
+  if (life) return life;
+  return statusText || null;
+}
+
 export function postureOf(status: string | null): Posture {
   const key = (status ?? "").toLowerCase();
   if (key === "working" || key === "active" || key === "busy") return "working";

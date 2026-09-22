@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { postureOf, factionName } from "../factions";
+import { postureOf, postureSignal, factionName } from "../factions";
+import { drawsUnitTokens, unitEmphasis } from "../mapNoise";
 import { harnessSlug, unitContext } from "../format";
 import {
   BUILDING_KINDS,
@@ -218,9 +219,17 @@ export function MapStage({
         {bases.map((base, baseIndex) => {
           const baseSelected = base.id === selectedBaseId;
           const faction = dominantFaction(base.units);
+          const unassigned = !drawsUnitTokens(base.repo);
           return (
-            <div key={base.id} className="base-site" style={{ left: base.x, top: base.y }}>
-              {BUILDING_KINDS.filter((kind) => kind !== "pad").map((kind) => {
+            <div
+              key={base.id}
+              className="base-site"
+              data-unassigned={unassigned ? "true" : "false"}
+              style={{ left: base.x, top: base.y }}
+            >
+              {unassigned
+                ? null
+                : BUILDING_KINDS.filter((kind) => kind !== "pad").map((kind) => {
                 const src = buildingSrc(faction, kind);
                 const slot = BUILDING_OFFSET[kind];
                 if (!src) return null;
@@ -235,7 +244,9 @@ export function MapStage({
                   </span>
                 );
               })}
-              {resourcePlacements(baseIndex).map((prop) => {
+              {unassigned
+                ? null
+                : resourcePlacements(baseIndex).map((prop) => {
                 const slot = RESOURCE_OFFSETS[prop.slot];
                 if (!slot) return null;
                 return (
@@ -253,13 +264,18 @@ export function MapStage({
                 type="button"
                 className="outpost"
                 data-base-id={base.id}
+                data-count={unassigned ? base.units.length : undefined}
                 aria-pressed={baseSelected && selectedUnitId === null}
+                aria-label={unassigned ? `Unassigned, ${base.units.length} units` : undefined}
                 onClick={() => onTokenClick(base.id, null)}
               >
                 <Outpost faction={faction} selected={baseSelected} attached={baseSelected && attached} />
-                <span className="outpost-name">{base.repo}</span>
+                <span className="outpost-name">{unassigned ? "Unassigned" : base.repo}</span>
+                {unassigned ? <span className="unassigned-count">{base.units.length}</span> : null}
               </button>
-              {base.units.map((unit, index) => {
+              {unassigned
+                ? null
+                : base.units.map((unit, index) => {
                 const slot = unitSlot(index, base.units.length);
                 const selected = unit.id === selectedUnitId;
                 const role = unitRole(unit.model);
@@ -268,6 +284,7 @@ export function MapStage({
                   role && typeLabel.toLowerCase() !== unit.model.toLowerCase()
                     ? `${typeLabel} (${unit.model})`
                     : unit.model;
+                const posture = postureSignal(unit.status, unit.lifecycle);
                 return (
                   <button
                     key={unit.id}
@@ -275,8 +292,9 @@ export function MapStage({
                     className={selected ? "unit is-selected" : "unit"}
                     data-base-id={base.id}
                     data-unit-id={unit.id}
+                    data-emphasis={unitEmphasis(unit, base.repo)}
                     data-faction={harnessSlug(unit.harness)}
-                    data-posture={postureOf(unit.status)}
+                    data-posture={postureOf(posture)}
                     data-role={role ?? "other"}
                     aria-pressed={selected}
                     aria-label={`${factionName(unit.harness)} ${typeBit}, ${unit.status ?? "idle"}, on ${base.repo}`}
@@ -288,7 +306,7 @@ export function MapStage({
                       <UnitFigure
                         harness={unit.harness}
                         model={unit.model}
-                        status={unit.status}
+                        status={posture}
                         selected={selected}
                         showMarker
                       />

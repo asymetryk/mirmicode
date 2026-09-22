@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import cahqSample from "../data/cahq-working-set.sample.json";
 import sampleBases from "../data/sample-bases.json";
-import { postureOf } from "../factions";
+import { postureOf, postureSignal } from "../factions";
 import { unitContext } from "../format";
 import { BUILDING_OFFSET, fitView, positionBases, resourcePlacements, unitSlot } from "../layout";
 import {
@@ -24,6 +24,7 @@ import { normalizeWorkingSetPayload } from "./normalize";
 import {
   CAHQ_WORKING_SET_ORIGIN,
   SAME_ORIGIN_WORKING_SET_PATH,
+  STALE_SNAPSHOT_BANNER,
   loadFixture,
   parseWorkingSetUrl,
   readStartupWorkingSetUrl,
@@ -31,6 +32,51 @@ import {
 } from "./source";
 
 describe("normalizeWorkingSetPayload", () => {
+  it("prefers observed last-user-prompt fields and keeps the older honesty fallback", () => {
+    const published = "Review the map filters. ".repeat(10).trim();
+    expect(published.length).toBeLessThanOrEqual(240);
+    expect(published.length).toBeGreaterThan(180);
+    const { bases } = normalizeWorkingSetPayload({
+      items: [
+        {
+          item_id: "camel",
+          observed: {
+            repo: "example/demo",
+            lastUserPrompt: " Camel prompt ",
+            last_user_prompt: "snake prompt",
+          },
+          annotation: { label: "Thread title", note: "note text" },
+          last_prompt: "flat prompt",
+        },
+        {
+          item_id: "snake",
+          observed: { repo: "example/demo", lastUserPrompt: " ", last_user_prompt: published },
+          annotation: { label: "Thread title", note: "note text" },
+        },
+        {
+          item_id: "note",
+          observed: { repo: "example/demo", lastUserPrompt: {}, last_user_prompt: "" },
+          annotation: { label: "Thread title", note: " Actual note " },
+        },
+        {
+          item_id: "label-only",
+          observed: { repo: "example/demo" },
+          annotation: { label: "Thread title" },
+        },
+      ],
+    });
+    const [camel, snake, note, labelOnly] = bases[0]!.units;
+    if (!camel || !snake || !note || !labelOnly) throw new Error("Missing normalized units");
+    expect(camel.lastPrompt).toBe("Camel prompt");
+    expect(unitContext(camel)).toBe("Last prompt: Camel prompt");
+    expect(snake.lastPrompt).toBe(published);
+    expect(unitContext(snake)).toBe(`Last prompt: ${published}`);
+    expect(unitContext(snake, true)).toBe(`Last prompt: ${published.slice(0, 139)}…`);
+    expect(unitContext(note)).toBe("Last prompt: Actual note");
+    expect(labelOnly.lastPrompt).toBeNull();
+    expect(unitContext(labelOnly)).toBe("Thread: Thread title");
+  });
+
   it("keeps label-only items honest and skips blank or non-string prompts", () => {
     const { bases } = normalizeWorkingSetPayload({ items: [
       { observed: { repo: "example/demo" }, annotation: { label: "Thread title", note: " " }, prompt: {} },
@@ -136,6 +182,10 @@ describe("normalizeWorkingSetPayload", () => {
         lastPrompt: null,
         updatedAt: "2026-09-21T10:00:00Z",
         status: "blocked",
+        lifecycle: "idle",
+        presence: "offline",
+        freshness: null,
+        hidden: false,
       },
     ]);
   });
@@ -190,7 +240,9 @@ describe("normalizeWorkingSetPayload", () => {
         model: "observed-model",
         label: "Flat label",
         updatedAt: "2026-09-21T08:00:00Z",
-        status: "idle",
+        status: "flat-status",
+        lifecycle: "idle",
+        presence: "offline",
       }),
       expect.objectContaining({
         id: "presence-fallback",
@@ -198,7 +250,9 @@ describe("normalizeWorkingSetPayload", () => {
         model: "flat-model",
         label: "snake-thread",
         updatedAt: "2026-09-21T09:00:00Z",
-        status: "working",
+        status: "flat-status",
+        lifecycle: null,
+        presence: "working",
       }),
       expect.objectContaining({
         id: "flat-fallback",
@@ -206,6 +260,8 @@ describe("normalizeWorkingSetPayload", () => {
         label: "camel-thread",
         updatedAt: "2026-09-21T10:00:00Z",
         status: "blocked",
+        lifecycle: null,
+        presence: null,
       }),
     ]);
   });
@@ -553,6 +609,52 @@ describe("resolveSnapshot", () => {
     expect(JSON.stringify(result)).not.toContain("synthetic-private-response");
   });
 
+  it("reads snapshot.stale as a banner flag and keeps freshness and hidden apart from lifecycle", () => {
+    const normalized = normalizeWorkingSetPayload({
+      snapshot: { stale: true },
+      items: [
+        {
+          item_id: "open-item",
+          observed: {
+            repo_name: "example/live",
+            lifecycle: "idle",
+            presence: "present",
+            freshness: "unknown",
+          },
+          annotation: { status: "open", hidden: false },
+        },
+        {
+          item_id: "hid",
+          observed: { repo_name: "example/live", lifecycle: "idle", presence: "present" },
+          annotation: { status: "done", hidden: true },
+        },
+        {
+          item_id: "string-hidden",
+          observed: { repo_name: "example/live", lifecycle: "detached" },
+          annotation: { hidden: "true", status: "open" },
+        },
+      ],
+    });
+
+    expect(normalized.stale).toBe(true);
+    expect(STALE_SNAPSHOT_BANNER).toMatch(/refresh failed/i);
+    expect(normalized.bases[0]?.units.map((unit) => [unit.id, unit.status, unit.lifecycle, unit.hidden, unit.freshness])).toEqual([
+      ["open-item", "open", "idle", false, "unknown"],
+      ["hid", "done", "idle", true, null],
+      ["string-hidden", "open", "detached", false, null],
+    ]);
+    expect(normalizeWorkingSetPayload({ snapshot: { stale: "yes" }, items: [{ repo: "example/ok" }] }).stale).toBe(false);
+    expect(normalizeWorkingSetPayload({ items: [{ repo: "example/ok" }] }).stale).toBe(false);
+    expect(loadFixture().stale).toBe(false);
+  });
+
+  it("points the default origin at the live CAHQ host", () => {
+    expect(CAHQ_WORKING_SET_ORIGIN).toBe("https://cahq.tail21f530.ts.net");
+    expect(parseWorkingSetUrl(CAHQ_WORKING_SET_ORIGIN).toString()).toBe(
+      "https://cahq.tail21f530.ts.net/api/v1/working-set",
+    );
+  });
+
   it.each([
     ["https://working-set.example", "https://working-set.example/api/v1/working-set"],
     ["http://working-set.example:8080/", "http://working-set.example:8080/api/v1/working-set"],
@@ -680,6 +782,12 @@ describe("posture", () => {
     expect(postureOf("blocked")).toBe("blocked");
     expect(postureOf("queued")).toBe("blocked");
     expect(postureOf(null)).toBe("idle");
+    expect(postureOf(postureSignal("working", "archived"))).toBe("working");
+    expect(postureOf(postureSignal("open", "idle"))).toBe("idle");
+    expect(postureOf(postureSignal("done", "idle"))).toBe("idle");
+    expect(postureOf(postureSignal(null, "active"))).toBe("working");
+    expect(postureOf(postureSignal("  ", "blocked"))).toBe("blocked");
+    expect(postureOf(postureSignal(null, null))).toBe("idle");
   });
 });
 

@@ -15,7 +15,27 @@ import type { CampaignBase } from "../types";
 import { Cutout } from "./Cutout";
 import { UnitFigure } from "./UnitFigure";
 
-export function Legend({ bases }: { bases: CampaignBase[] }) {
+type LegendProps = {
+  bases: CampaignBase[];
+  hideNoise: boolean;
+  hideDetached: boolean;
+  hideArchived: boolean;
+  hiddenCount: number;
+  onHideNoise: (value: boolean) => void;
+  onHideDetached: (value: boolean) => void;
+  onHideArchived: (value: boolean) => void;
+};
+
+export function Legend({
+  bases,
+  hideNoise,
+  hideDetached,
+  hideArchived,
+  hiddenCount,
+  onHideNoise,
+  onHideDetached,
+  onHideArchived,
+}: LegendProps) {
   const harnesses = bases.flatMap((base) => base.units.map((unit) => unit.harness));
   const factions = legendFactions(harnesses);
   const extras = extraTypes(bases);
@@ -55,6 +75,34 @@ export function Legend({ bases }: { bases: CampaignBase[] }) {
           const harness = FACTION_ORDER[index % FACTION_ORDER.length] ?? "cursor";
           return <Thumb key={kind} src={resourceSrc(harness, kind)} label={resourceLabel(kind)} />;
         })}
+      </div>
+      <div className="legend-row noise-filters">
+        <span className="legend-kicker">Noise</span>
+        <label>
+          <input
+            type="checkbox"
+            checked={hideNoise}
+            onChange={(event) => onHideNoise(event.target.checked)}
+          />
+          Hide not seen and operator-hidden
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={hideArchived}
+            onChange={(event) => onHideArchived(event.target.checked)}
+          />
+          Hide archived
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={hideDetached}
+            onChange={(event) => onHideDetached(event.target.checked)}
+          />
+          Hide detached
+        </label>
+        <span className="noise-count">{hiddenCount === 0 ? "Nothing hidden" : `${hiddenCount} hidden`}</span>
       </div>
       {extras.length > 0 ? (
         <div className="legend-row">

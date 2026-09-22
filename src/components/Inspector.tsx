@@ -1,7 +1,8 @@
 import type { FormEvent } from "react";
 import { CAHQ_WORKING_SET_ORIGIN, SAME_ORIGIN_WORKING_SET_PATH } from "../adapters/source";
-import { factionName, postureLabel, postureOf } from "../factions";
+import { factionName, postureLabel, postureOf, postureSignal } from "../factions";
 import { formatAbsolute, formatLastTouched, harnessSlug, unitContext } from "../format";
+import { isUnassignedRepo, unitEmphasis } from "../mapNoise";
 import { roleLabel, unitRole } from "../rtsArt";
 import type { CampaignBase, Unit } from "../types";
 import { UnitFigure } from "./UnitFigure";
@@ -40,29 +41,33 @@ export function Inspector({
   const touched = unit?.updatedAt ?? base?.updatedAt ?? null;
   const absolute = touched ? formatAbsolute(touched) : null;
   const role = unit ? unitRole(unit.model) : null;
+  const unassigned = base ? isUnassignedRepo(base.repo) : false;
+  const posture = unit ? postureSignal(unit.status, unit.lifecycle) : null;
 
   return (
     <aside className="inspector" aria-label="Unit">
       <div className="inspector-body">
         <p className="kicker">
-          {unit ? `${factionName(unit.harness)} unit` : base ? "Base" : "Nothing selected"}
+          {unit ? `${factionName(unit.harness)} unit` : unassigned ? "Unassigned" : base ? "Base" : "Nothing selected"}
         </p>
-        <h2>{unit ? unit.model : base ? base.repo : "Select a unit"}</h2>
+        <h2>
+          {unit ? unit.model : unassigned ? `${base?.units.length ?? 0} units` : base ? base.repo : "Select a unit"}
+        </h2>
         {unit && base ? (
           <>
             <div
               className="hud-figure"
               data-faction={harnessSlug(unit.harness)}
-              data-posture={postureOf(unit.status)}
+              data-posture={postureOf(posture)}
             >
               <UnitFigure
                 harness={unit.harness}
                 model={unit.model}
-                status={unit.status}
+                status={posture}
                 selected
                 showMarker
               />
-              <p>{postureLabel(postureOf(unit.status))}</p>
+              <p>{postureLabel(postureOf(posture))}</p>
             </div>
             {unitContext(unit) ? (
               <p className="unit-context" title={unitContext(unit) ?? undefined}>
@@ -75,17 +80,28 @@ export function Inspector({
               {role ? <Fact label="Type" value={roleLabel(role)} /> : null}
               <Fact label="Thread" value={unit.threadName ?? "—"} />
               <Fact label="Status" value={unit.status ?? "—"} />
-              <Fact label="Base" value={base.repo} />
+              <Fact label="Lifecycle" value={unit.lifecycle ?? "—"} />
+              <Fact label="Presence" value={unit.presence ?? "—"} />
+              <Fact label="Freshness" value={unit.freshness ?? "—"} />
+              <Fact label="Base" value={unassigned ? "Unassigned" : base.repo} />
               <Fact label="Last touched" value={formatLastTouched(unit.updatedAt, now)} detail={absolute} />
             </dl>
           </>
         ) : base ? (
-          <dl className="facts">
-            <Fact label="Repo" value={base.repo} />
-            <Fact label="Label" value={base.label ?? "—"} />
-            <Fact label="Last touched" value={formatLastTouched(base.updatedAt, now)} detail={absolute} />
-            <Fact label="Units" value={String(base.units.length)} />
-          </dl>
+          <>
+            {unassigned ? (
+              <p className="lede">
+                These units have no repo. They stay in this list. The map shows one outpost and the
+                count, not a token for each unit.
+              </p>
+            ) : null}
+            <dl className="facts">
+              <Fact label="Repo" value={unassigned ? "Unassigned" : base.repo} />
+              <Fact label="Label" value={base.label ?? "—"} />
+              <Fact label="Last touched" value={formatLastTouched(base.updatedAt, now)} detail={absolute} />
+              <Fact label="Units" value={String(base.units.length)} />
+            </dl>
+          </>
         ) : (
           <p className="lede">
             Select a unit on a base. A base is a repo. A faction is a harness. The model is the unit
@@ -100,17 +116,23 @@ export function Inspector({
                   type="button"
                   className={entry.id === unit?.id ? "roster-unit is-selected" : "roster-unit"}
                   data-faction={harnessSlug(entry.harness)}
-                  data-posture={postureOf(entry.status)}
+                  data-emphasis={unitEmphasis(entry, base.repo)}
+                  data-posture={postureOf(postureSignal(entry.status, entry.lifecycle))}
                   aria-pressed={entry.id === unit?.id}
                   title={unitContext(entry) ?? undefined}
                   onClick={() => onSelectUnit(base.id, entry.id)}
                 >
-                  <UnitFigure harness={entry.harness} model={entry.model} status={entry.status} />
+                  <UnitFigure
+                    harness={entry.harness}
+                    model={entry.model}
+                    status={postureSignal(entry.status, entry.lifecycle)}
+                  />
                   <span>
                     <strong>{entry.model}</strong>
                     <span className="roster-meta">
                       {factionName(entry.harness)}
                       {entry.status ? ` · ${entry.status}` : ""}
+                      {entry.lifecycle ? ` · ${entry.lifecycle}` : ""}
                     </span>
                     {unitContext(entry) ? (
                       <span className="roster-meta" title={unitContext(entry) ?? undefined}>
@@ -167,7 +189,7 @@ export function Inspector({
 
 function Fact({ label, value, detail }: { label: string; value: string; detail?: string | null }) {
   return (
-    <div>
+    <div data-fact={label}>
       <dt>{label}</dt>
       <dd>
         <span className={value === "unknown" || value === "—" ? "is-empty" : undefined}>{value}</span>

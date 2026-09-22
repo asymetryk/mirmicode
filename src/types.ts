@@ -7,9 +7,18 @@ export type Unit = {
   model: string;
   threadName: string | null;
   label: string | null;
-  /** Genuine prompt aliases or annotation.note; never a task label. */
+  /** observed.lastUserPrompt, then observed.last_user_prompt, then prompt aliases or annotation.note. Never a task label. */
   lastPrompt: string | null;
+  /** annotation.status, then flat status. Operator triage such as open or done. Not lifecycle. */
   status: string | null;
+  /** observed.lifecycle. Live values: idle, detached, archived, unknown. Null when absent. */
+  lifecycle: string | null;
+  /** observed.presence. Live values: present, not_seen. Null when absent. */
+  presence: string | null;
+  /** observed.freshness, a relative string. The literal "unknown" is kept. Null when absent. */
+  freshness: string | null;
+  /** True only when annotation.hidden is boolean true. */
+  hidden: boolean;
   /** ISO-8601 timestamp, or "unknown" when the payload omitted it. */
   updatedAt: string;
 };
@@ -34,6 +43,8 @@ export type MapSnapshot = {
   fetchedAt: string;
   bases: CampaignBase[];
   notice: string | null;
+  /** True when snapshot.stale is boolean true. A banner only; units stay. */
+  stale: boolean;
 };
 
 export type ViewState = {
