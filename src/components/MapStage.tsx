@@ -101,7 +101,7 @@ export function MapStage({
       if ((event.target as HTMLElement | null)?.closest(".minimap, .legend, .selection-popover")) return;
       const current = viewRef.current;
       const rect = el.getBoundingClientRect();
-      const nextScale = clamp(current.scale * (event.deltaY > 0 ? 0.92 : 1.08), 0.35, 2);
+      const nextScale = clamp(current.scale * (event.deltaY > 0 ? 0.92 : 1.08), 0.2, 2);
       const locked = attachedRef.current ? focusRef.current : null;
       if (locked) {
         setView({

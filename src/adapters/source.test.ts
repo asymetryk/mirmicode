@@ -6,7 +6,7 @@ import cahqSample from "../data/cahq-working-set.sample.json";
 import sampleBases from "../data/sample-bases.json";
 import { factionName, postureOf, postureSignal } from "../factions";
 import { harnessSlug, unitContext } from "../format";
-import { BUILDING_OFFSET, fitView, positionBases, resourcePlacements, unitSlot } from "../layout";
+import { BUILDING_OFFSET, fitView, positionBases, resourcePlacements, unitSlot, WORLD } from "../layout";
 import {
   BUILDING_KINDS,
   RESOURCE_KINDS,
@@ -1032,11 +1032,12 @@ describe("layout", () => {
     for (const base of positioned) {
       expect(base.x).toBeGreaterThan(0);
       expect(base.y).toBeGreaterThan(0);
-      expect(base.x).toBeLessThan(2400);
-      expect(base.y).toBeLessThan(1600);
+      expect(base.x).toBeLessThan(WORLD.width);
+      expect(base.y).toBeLessThan(WORLD.height);
     }
     const fitted = fitView(positioned, 1280, 720);
-    expect(fitted.scale).toBeGreaterThan(0.3);
+    expect(fitted.scale).toBeGreaterThan(0.15);
+    expect(fitted.scale).toBeLessThanOrEqual(1.6);
     expect(Number.isFinite(fitted.x)).toBe(true);
     expect(Number.isFinite(fitted.y)).toBe(true);
   });
