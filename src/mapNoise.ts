@@ -6,13 +6,16 @@ export const UNASSIGNED_REPO = "Unassigned";
 export type NoiseFilter = {
   /** Hide presence `not_seen`, lifecycle `archived`, and annotation.hidden true. */
   hideNoise: boolean;
+  /** Optional. Detached stays dimmed when this is off. */
+  hideDetached: boolean;
 };
 
 export const DEFAULT_NOISE_FILTER: NoiseFilter = {
   hideNoise: true,
+  hideDetached: false,
 };
 
-export type NoiseReason = "not_seen" | "archived" | "hidden";
+export type NoiseReason = "not_seen" | "archived" | "hidden" | "detached";
 
 export type Emphasis = "normal" | "dim" | "collector";
 
@@ -60,10 +63,12 @@ export function exactToken(value: unknown): string | null {
  * snapshot.stale is not a hide signal.
  */
 export function noiseReason(unit: NoiseSubject, filter: NoiseFilter): NoiseReason | null {
-  if (!filter.hideNoise) return null;
-  if (unit.hidden === true) return "hidden";
-  if (exactToken(unit.presence) === NOT_SEEN) return "not_seen";
-  if (exactToken(unit.lifecycle) === ARCHIVED) return "archived";
+  if (filter.hideNoise) {
+    if (unit.hidden === true) return "hidden";
+    if (exactToken(unit.presence) === NOT_SEEN) return "not_seen";
+    if (exactToken(unit.lifecycle) === ARCHIVED) return "archived";
+  }
+  if (filter.hideDetached && exactToken(unit.lifecycle) === DETACHED) return "detached";
   return null;
 }
 

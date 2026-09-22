@@ -88,7 +88,7 @@ npm run preview
 
 Drag to pan. Scroll to zoom. **Select** a unit to read its harness, model, thread, status, and lifecycle in the HUD. **Attach** locks the view on that unit’s base. The **minimap** jumps the view. Escape detaches. These are view controls. The map does not send orders to agents.
 
-The **Noise** switch starts on. It hides `presence` `not_seen`, `lifecycle` `archived`, and `annotation.hidden` true. `detached` and `unknown` stay visible at lower emphasis. A Cursor unit with `lifecycle` `unknown` and no repo is dimmed further inside Unassigned. **Unassigned** is one outpost with a count. Select it to open that list in the HUD. Counts come from the loaded snapshot. They are not a fixed demo size.
+The **Noise** switch starts on. It hides `presence` `not_seen`, `lifecycle` `archived`, and `annotation.hidden` true. `detached` stays on the map dimmer until **Hide detached** is turned on. `unknown` stays visible and dimmer. A Cursor unit with `lifecycle` `unknown` and no repo is dimmed further inside Unassigned. **Unassigned** is one outpost with a count. Select it to open that list in the HUD. Counts come from the loaded snapshot. They are not a fixed demo size.
 
 The legend under the title groups the atlas: faction bodies, the ten unit types, and the field (buildings and resource props). It does not list every file in the pack.
 
@@ -275,25 +275,27 @@ When the live payload uses different names, extend the alias lists in `normalize
 
 ![Unassigned drilldown list](docs/unassigned-list.png)
 
-The **Noise** switch defaults to on. This browser remembers the choice (`mirmicode.hideNoise`). The status line counts visible bases and units, then adds a hidden count when the filter removed any.
+**Hide not seen, archived, and operator-hidden** defaults to on (`mirmicode.hideNoise`). **Hide detached** defaults to off (`mirmicode.hideDetached`). This browser remembers both. The status line counts visible bases and units, then adds a hidden count when a filter removed any. Those counts are computed from the snapshot.
 
 | Rule | Default | Effect |
 | --- | --- | --- |
 | Not seen | On | Hide when `presence` is `not_seen` |
 | Archived | On | Hard-hide when `lifecycle` is `archived` |
 | Operator hidden | On | Hide when `annotation.hidden` is boolean `true` |
-| Detached | Always | Stay on the map, drawn dimmer. `lifecycle` `detached` is not a hard hide |
-| Unknown lifecycle | Always | Stay visible, drawn dimmer. Unclear or cold, not dead |
-| Repo-less Cursor unknown | Always | Same unit, dimmed further and listed last in the Unassigned drilldown. Not removed |
+| Detached | Dim, hide optional | Stay on the map, drawn dimmer. **Hide detached** removes them |
+| Unknown lifecycle | Dim | Stay visible, drawn dimmer. Unclear or cold, not dead |
+| Repo-less Cursor unknown | Demote | Dimmed further and listed last in the Unassigned drilldown. Not removed |
 | Stale snapshot | Banner | `snapshot.stale` true shows “Working Set refresh failed. This snapshot is stale.” Units stay |
 
 Comparison is trim and case fold on those exact strings. A missing, blank, or non-string field skips that rule. `not-seen`, `archive`, `idle`, and freshness `unknown` do not hide a unit. `annotation.status` `open` or `done` is triage in the HUD and is not labeled as lifecycle.
 
-Hidden units remain in the snapshot. Turning the switch off draws `not_seen`, `archived`, and operator-hidden units again. Detached and unknown stay dim either way. A base whose units are all hidden leaves the map until one of them passes.
+An item is Unassigned only when `observed.repo` and `observed.repo_name` are both missing or blank. One of those fields is enough to place it on that repo.
+
+Hidden units remain in the snapshot. Turning the noise switch off draws `not_seen`, `archived`, and operator-hidden units again. Unknown stays dim either way. A base whose units are all hidden leaves the map until one of them passes.
 
 ### Unassigned
 
-Nested items with no `observed.repo_name` or `observed.repo` share one base named Unassigned. The map draws that base as a single outpost and a count of the units that passed the filter. It does not place a token per unit. Select the outpost to open the list in the HUD, then select a unit. The HUD shows lifecycle, presence, freshness, and status on separate lines, plus the honest Last prompt or Thread line. Assigned repos keep one token per visible unit. Repo-less Cursor units whose lifecycle is `unknown` sit at the end of that list, dimmer than the rest.
+Nested items with both `observed.repo` and `observed.repo_name` missing or blank share one base named Unassigned. The map draws that base as a single outpost and a count of the units that passed the filter. It does not place a token per unit. Select the outpost to open the list in the HUD, then select a unit. The HUD shows lifecycle, presence, freshness, and status on separate lines, plus the honest Last prompt or Thread line. Assigned repos keep one token per visible unit. Repo-less Cursor units whose lifecycle is `unknown` sit at the end of that list, dimmer than the rest.
 
 The sample fixture’s noise rows and Unassigned outpost are synthetic. They demonstrate the filter offline. Live counts follow whatever the Working Set returns.
 

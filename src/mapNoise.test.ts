@@ -43,7 +43,8 @@ describe("noiseReason", () => {
     expect(noiseReason({ presence: "present", lifecycle: "idle" }, on)).toBeNull();
     expect(noiseReason({ presence: "not-seen", lifecycle: "idle" }, on)).toBeNull();
     expect(noiseReason({ presence: null, lifecycle: null }, on)).toBeNull();
-    expect(noiseReason({ presence: "not_seen", lifecycle: "archived", hidden: true }, { hideNoise: false })).toBeNull();
+    expect(noiseReason({ presence: "present", lifecycle: "detached" }, { hideNoise: true, hideDetached: true })).toBe("detached");
+    expect(noiseReason({ presence: "not_seen", lifecycle: "archived", hidden: true }, { hideNoise: false, hideDetached: false })).toBeNull();
 
     const { bases, stale } = normalizeWorkingSetPayload({
       snapshot: { stale: true },
@@ -138,5 +139,108 @@ describe("sample fixture noise", () => {
       freshness: "2h",
     });
     expect(grok?.lastPrompt).toMatch(/last-prompt/i);
+
+    const withoutDetached = applyNoiseFilter(snapshot.bases, { hideNoise: true, hideDetached: true });
+    const stillVisible = withoutDetached.bases.flatMap((base) => base.units.map((unit) => unit.id));
+    expect(stillVisible).not.toContain("mirmicode-detached");
+    expect(stillVisible).not.toContain("unassigned-detached");
+    expect(withoutDetached.hiddenCount).toBeGreaterThan(filtered.hiddenCount);
   });
 });
+
+describe("live feed shape", () => {
+  /**
+   * Marginal counts from the confirmed cahq snapshot.
+   * They describe the payload shape in this test only. The map computes its own counts.
+   */
+  const SHAPE = {
+    items: 150,
+    present: 98,
+    notSeen: 52,
+    idle: 84,
+    detached: 36,
+    unknown: 23,
+    archived: 7,
+    unassigned: 135,
+  } as const;
+
+  it("collapses null repo and repo_name into one Unassigned base and filters the live vocabulary", () => {
+    const items = liveShapeItems();
+    expect(items).toHaveLength(SHAPE.items);
+    expect(items.filter((item) => item.observed.presence === "present")).toHaveLength(SHAPE.present);
+    expect(items.filter((item) => item.observed.presence === "not_seen")).toHaveLength(SHAPE.notSeen);
+    expect(items.filter((item) => item.observed.lifecycle === "idle")).toHaveLength(SHAPE.idle);
+    expect(items.filter((item) => item.observed.lifecycle === "detached")).toHaveLength(SHAPE.detached);
+    expect(items.filter((item) => item.observed.lifecycle === "unknown")).toHaveLength(SHAPE.unknown);
+    expect(items.filter((item) => item.observed.lifecycle === "archived")).toHaveLength(SHAPE.archived);
+    expect(items.filter((item) => item.observed.repo === null && item.observed.repo_name === null)).toHaveLength(
+      SHAPE.unassigned,
+    );
+
+    const normalized = normalizeWorkingSetPayload({ snapshot: { stale: false }, items });
+    expect(normalized.stale).toBe(false);
+    const unassignedRaw = normalized.bases.filter((base) => !drawsUnitTokens(base.repo));
+    expect(unassignedRaw).toHaveLength(1);
+    expect(unassignedRaw[0]?.units).toHaveLength(SHAPE.unassigned);
+    expect(normalized.bases.filter((base) => drawsUnitTokens(base.repo)).reduce((sum, base) => sum + base.units.length, 0)).toBe(
+      SHAPE.items - SHAPE.unassigned,
+    );
+
+    const filtered = applyNoiseFilter(normalized.bases, DEFAULT_NOISE_FILTER);
+    const visible = filtered.bases.flatMap((base) => base.units);
+    expect(visible.some((unit) => unit.presence === "not_seen" || unit.lifecycle === "archived")).toBe(false);
+    expect(visible.some((unit) => unit.lifecycle === "detached")).toBe(true);
+    expect(visible.some((unit) => unit.lifecycle === "unknown")).toBe(true);
+    expect(filtered.bases.filter((base) => !drawsUnitTokens(base.repo))).toHaveLength(1);
+    expect(drawsUnitTokens(filtered.bases.find((base) => base.repo === "Unassigned")?.repo ?? "")).toBe(false);
+
+    const kept = filtered.bases.find((base) => base.repo === "example/kept");
+    expect(kept && drawsUnitTokens(kept.repo)).toBe(true);
+    expect(kept?.units.length).toBeGreaterThan(0);
+
+    const unassigned = filtered.bases.find((base) => base.repo === "Unassigned");
+    const collectors = unassigned?.units.filter((unit) => unitEmphasis(unit, "Unassigned") === "collector") ?? [];
+    expect(collectors.length).toBeGreaterThan(0);
+    expect(collectors.every((unit) => unit.harness === "cursor" && unit.lifecycle === "unknown")).toBe(true);
+    expect(unassigned?.units.slice(-collectors.length).every((unit) => unitEmphasis(unit, "Unassigned") === "collector")).toBe(true);
+    expect(visible.length + filtered.hiddenCount).toBe(SHAPE.items);
+
+    const detachedHidden = applyNoiseFilter(normalized.bases, { hideNoise: true, hideDetached: true });
+    expect(detachedHidden.bases.flatMap((base) => base.units).some((unit) => unit.lifecycle === "detached")).toBe(false);
+    expect(detachedHidden.hiddenCount).toBe(filtered.hiddenCount + SHAPE.detached);
+  });
+});
+
+type ShapeItem = {
+  item_id: string;
+  observed: {
+    surface: string;
+    lifecycle: string;
+    presence: string;
+    repo: string | null;
+    repo_name: string | null;
+  };
+  annotation: { status: "open" };
+};
+
+function liveShapeItems(): ShapeItem[] {
+  return Array.from({ length: 150 }, (_, index) => {
+    const lifecycle =
+      index < 7 ? "archived" : index < 30 ? "unknown" : index < 66 ? "detached" : "idle";
+    const presence = index < 98 ? "present" : "not_seen";
+    const assigned = index % 10 === 0;
+    const unassigned = !assigned;
+    const surface = lifecycle === "unknown" && unassigned ? "cursor" : "codex";
+    return {
+      item_id: `shape-${index}`,
+      observed: {
+        surface,
+        lifecycle,
+        presence,
+        repo: null,
+        repo_name: assigned ? "example/kept" : null,
+      },
+      annotation: { status: "open" },
+    };
+  });
+}
