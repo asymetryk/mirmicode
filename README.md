@@ -2,7 +2,7 @@
 
 **Macro the project. Micro the agents.**
 
-Bird’s-eye map of an agent campaign. A **base** is a repo outpost. A **faction** is a harness, and each faction has its own painted body — Cursor angular, Codex organic, OhMyPi mechanical. A **unit** is one agent on that outpost, a Mirmi. The **model picks the silhouette** from the v2 atlas: scout, worker, drone, tankette, walker, medic, mirmi, armed, skiff, or builder. The same model wears the same silhouette on whichever faction body it stands on. Idle and working add a ground marker. Blocked adds a red slash. The repo name and last touch stay in the HUD.
+Bird’s-eye map of an agent campaign. A **base** is a repo outpost. A **faction** is a harness. Cursor, Codex, and OhMyPi each have a painted body — angular, organic, and mechanical. **Grok Bot** (`grokbot`) is a first-class faction on the same legend, rail, and HUD. No grokbot paint was staged, so it wears the neutral v2 body with a bone-white wash. A **unit** is one agent on that outpost, a Mirmi. The **model picks the silhouette** from the v2 atlas: scout, worker, drone, tankette, walker, medic, mirmi, armed, skiff, or builder. The same model wears the same silhouette on whichever faction body it stands on. Idle and working add a ground marker. Blocked adds a red slash. The repo name and last touch stay in the HUD.
 
 Build in public. Not monetized. No accounts, no payments, no analytics.
 
@@ -141,9 +141,11 @@ A known model always picks one silhouette. A type word in the model string (`Sco
 | Skiff | Skiff | `skiff-08` |
 | Builder | Builder | `builder-bot-10` |
 
-The file is `units/{cursor|codex|ohmypi}-{stem}.png`. OpenCode and other harnesses use the neutral body when that file was staged.
+The file is `units/{cursor|codex|ohmypi}-{stem}.png`. OpenCode and other unpainted harnesses use the neutral body when that file was staged.
 
-Each base also shows a v2 outpost kit for the plurality faction: pad (the clickable base), depot, turret, refinery, barracks, and lab, plus crystal, biomass, and scrap props. A tie still breaks toward Cursor, then Codex, then OhMyPi. In the sample fixture that is Cursor on `asymetryk/mirmicode`, Codex on `example/charter` and `example/prompt-lab`, and OhMyPi on `example/ops-board`.
+**Grok Bot art.** There is no `grokbot-*` sprite in `public/rts-art/` or `public/rts-art-v2/STAGED.txt`. Grok Bot uses the staged neutral sheet, the same files an unpainted harness gets: `units/neutral-{stem}.png`, neutral buildings (no neutral pad), neutral resources, and neutral idle/work markers. The Grok model silhouette is the walker, `units/neutral-walker-07.png`, the same role map as MiniMax → mirmi and Grok* → walker. The legend faction chip draws that walker. CSS (`--grokbot`, bone `#f6f1e7`, plus a grayscale brightness wash on the sprite) keeps it off the Cursor, Codex, and OhMyPi bodies and off the raw gray-teal neutral used by OpenCode. A camp that is mostly Grok Bot still claims the outpost, and that kit is the neutral sheet. Ties still break toward Cursor, then Codex, then OhMyPi, then Grok Bot.
+
+Each base also shows a v2 outpost kit for the plurality faction: pad (the clickable base), depot, turret, refinery, barracks, and lab, plus crystal, biomass, and scrap props. A tie still breaks toward Cursor, then Codex, then OhMyPi, then Grok Bot. In the sample fixture that is Cursor on `asymetryk/mirmicode`, Codex on `example/charter` and `example/prompt-lab`, and OhMyPi on `example/ops-board`. Grok Bot units in that fixture are a minority on those repos, plus one walker on Unassigned.
 
 Working units get `fx/{faction}-work-marker-02.png`. Idle units get `fx/{faction}-idle-marker-01.png`. Selection is still a ring. Working still adds a faction-colored glow. Blocked still adds a red slash. Idle still dims the sprite.
 
@@ -172,13 +174,13 @@ v1 crests, used only on that fallback:
 
 `src/data/sample-bases.json` is the map fallback: synthetic metadata so the map runs with nothing else reachable. `example/*` repos are not live telemetry. The status line says `Fixture · sample data`.
 
-Each base carries a mixed squad, not one hero. `asymetryk/mirmicode` is a Cursor majority (Grok-4.6 walker, Gemini medic, plus scout, drone, builder, and tankette) with Codex Luna and Skiff and OhMyPi Kimi and Medic. The other bases are a Codex charter, an OhMyPi ops board, and a Codex prompt lab. Together the fixture fields every v2 silhouette. It also includes hidden noise rows and one Unassigned outpost so the filters and the drilldown work with no network.
+Each base carries a mixed squad, not one hero. `asymetryk/mirmicode` is a Cursor majority (Grok-4.6 walker, Gemini medic, plus scout, drone, builder, and tankette) with Codex Luna and Skiff, OhMyPi Kimi and Medic, and one Grok Bot walker. The other bases are a Codex charter (plus one Grok Bot walker), an OhMyPi ops board, and a Codex prompt lab. Together the fixture fields every v2 silhouette. It also includes hidden noise rows and one Unassigned outpost, including one Grok Bot with no repo, so the filters and the drilldown work with no network. Those three Grok Bot units each have a context snippet. A Grok Bot row with no snippet is omitted by the same hard filter as the other factions.
 
 `src/data/cahq-working-set.sample.json` is a separate flat `agents` document in the Working Set field shape (several units sharing a repo). It is also synthetic. It is not a capture from the tailnet host. Tests run it through the same normalizer the live fetch uses.
 
 ## Live Working Set vs fixture
 
-CAHQ Working Set is the live source of truth: metadata only, for Cursor, Codex, OhMyPi, and OpenCode surfaces. This client does not vendor that service. OpenCode still renders as its own faction color if a payload names it.
+CAHQ Working Set is the live source of truth: metadata only, for Cursor, Codex, OhMyPi, Grok Bot, and OpenCode surfaces. This client does not vendor that service. OpenCode still renders as its own faction color if a payload names it. Grok Bot renders when a row names `grokbot` (see the faction field below). Live rows need an agentinfra Grok Bot producer; until that lands, the sample fixture is the offline demo.
 
 The live upstream is `https://cahq.tail21f530.ts.net/api/v1/working-set`. CAHQ does not send CORS. The deployed map therefore calls the same-origin path `/working-set/api/v1/working-set`, and Caddy on the pod proxies that to CAHQ. A pasted root URL with no query still resolves to `/api/v1/working-set`. `working-set.tail21f530.ts.net` is a stale hostname. Do not point the client at it.
 
@@ -255,7 +257,7 @@ Flat rows do not invent a second unit from a parent harness when `units` or `age
 | Base id | `id` on a grouped base | Optional. Derived from the repo when omitted. Duplicate base ids get a numeric suffix. On a flat row, `id` belongs to the unit. |
 | Base label | `label` on a grouped base | Human name for the repo. Flat-row `label` stays on the unit. |
 | Units | `units` or `agents` | Array of unit objects. Omit it and the record itself is one unit. |
-| Faction / harness | `observed.surface`, `observed.harness`, then flat `harness` or `surface` | Lowercased. `omp`, `oh-my-pi`, and `OhMyPi` fold onto the painted id `ohmypi` and display as **OhMyPi**. `open-code` folds onto `opencode`. Missing becomes `unknown`. The UI does not show the bare `omp` token. |
+| Faction / harness | `observed.surface`, then `observed.harness`, then `observed.faction`, then flat `harness`, `surface`, or `faction`. A `source` value is used only when it names a known faction (`cursor`, `codex`, `ohmypi`, `opencode`, `grokbot`) and the fields above are blank. | Lowercased. `omp`, `oh-my-pi`, and `OhMyPi` fold onto the painted id `ohmypi` and display as **OhMyPi**. `grok-bot`, `grok_bot`, and `Grok Bot` fold onto `grokbot` and display as **Grok Bot**. `open-code` folds onto `opencode`. Missing becomes `unknown`. The UI does not show the bare `omp` token. `source_label` is still not a base key and is not read as a faction. A `source` string that is not a known faction is ignored. |
 | Unit type / model | `observed.model`, then flat `model` | Blank or missing becomes `unknown`. |
 | Thread | `thread_name` or `threadName` | Empty renders as an em dash. |
 | Status | `annotation.status`, then flat `status` | Operator triage. Live values are `open` and `done`. Shown as Status, never as lifecycle. `open` and `done` do not drive the glow. `working`, `active`, and `busy` still glow; `blocked`, `queued`, `stuck`, and `error` take the blocked slash. |

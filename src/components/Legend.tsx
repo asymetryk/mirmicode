@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 import { CAHQ_WORKING_SET_ORIGIN, SAME_ORIGIN_WORKING_SET_PATH } from "../adapters/source";
-import { FACTION_ORDER, factionName, legendFactions } from "../factions";
+import { FACTION_ORDER, canonicalHarness, factionName, legendFactions } from "../factions";
 import { formatAbsolute, harnessSlug } from "../format";
 import {
   BUILDING_KINDS,
@@ -63,7 +63,7 @@ export function Legend({
         <div className="legend-stack">
           {factions.map((harness) => (
             <span key={harness} className="legend-faction" data-faction={harnessSlug(harness)}>
-              <UnitFigure harness={harness} model="Scout" status="idle" />
+              <UnitFigure harness={harness} model={legendFactionModel(harness)} status="idle" />
               <span>{factionName(harness)}</span>
             </span>
           ))}
@@ -188,6 +188,11 @@ function Thumb({ src, label }: { src: string; label: string }) {
       <span>{label}</span>
     </span>
   );
+}
+
+/** Grok Bot has no painted scout. The legend shows the walker, the Grok silhouette. */
+function legendFactionModel(harness: string): string {
+  return canonicalHarness(harness) === "grokbot" ? "Walker" : "Scout";
 }
 
 function extraTypes(bases: CampaignBase[]): Array<{ harness: string; model: string }> {

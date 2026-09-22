@@ -12,6 +12,7 @@
   --cursor: #9ec1ff;
   --codex: #e6b15c;
   --ohmypi: #e0b0f5;
+  --grokbot: #f6f1e7;
   --opencode: #8dceae;
   --shadow: 0 18px 36px rgba(0, 0, 0, 0.32);
   font-family: system-ui, sans-serif;
@@ -380,6 +381,7 @@ summary:focus-visible {
 .unit[data-faction="cursor"] { color: var(--cursor); }
 .unit[data-faction="codex"] { color: var(--codex); }
 .unit[data-faction="ohmypi"] { color: var(--ohmypi); }
+.unit[data-faction="grokbot"] { color: var(--grokbot); }
 .unit[data-faction="opencode"] { color: var(--opencode); }
 
 .unit-sprite {
@@ -479,6 +481,22 @@ summary:focus-visible {
   filter: drop-shadow(0 0 6px #e15b4a) saturate(0.75);
 }
 
+/* Grok Bot reuses the staged neutral body. A bone wash keeps it off Cursor, Codex, OhMyPi, and raw neutral. */
+.unit-sprite[data-faction="grokbot"] .hero,
+.unit-sprite[data-faction="grokbot"] .fx-marker {
+  filter: grayscale(0.72) brightness(1.34) contrast(1.08);
+}
+
+.unit-sprite[data-faction="grokbot"][data-posture="working"] .hero,
+.unit-sprite[data-faction="grokbot"][data-posture="working"] .hero-fallback {
+  filter: grayscale(0.72) brightness(1.34) contrast(1.08) drop-shadow(0 0 7px currentColor);
+}
+
+.unit-sprite[data-faction="grokbot"][data-posture="blocked"] .hero,
+.unit-sprite[data-faction="grokbot"][data-posture="blocked"] .hero-fallback {
+  filter: grayscale(0.45) brightness(1.12) contrast(1.05) drop-shadow(0 0 6px #e15b4a);
+}
+
 .dressing {
   position: absolute;
   width: 0;
@@ -524,6 +542,7 @@ summary:focus-visible {
 .legend [data-faction="cursor"] { color: var(--cursor); }
 .legend [data-faction="codex"] { color: var(--codex); }
 .legend [data-faction="ohmypi"] { color: var(--ohmypi); }
+.legend [data-faction="grokbot"] { color: var(--grokbot); }
 .legend [data-faction="opencode"] { color: var(--opencode); }
 .legend .legend-faction span,
 .legend .legend-type span { color: var(--text); }
@@ -753,6 +772,7 @@ summary:focus-visible {
 .roster-unit[data-faction="cursor"] { color: var(--cursor); }
 .roster-unit[data-faction="codex"] { color: var(--codex); }
 .roster-unit[data-faction="ohmypi"] { color: var(--ohmypi); }
+.roster-unit[data-faction="grokbot"] { color: var(--grokbot); }
 .roster-unit[data-faction="opencode"] { color: var(--opencode); }
 
 .hud-figure {
@@ -770,6 +790,7 @@ summary:focus-visible {
 .hud-figure[data-faction="cursor"] { color: var(--cursor); }
 .hud-figure[data-faction="codex"] { color: var(--codex); }
 .hud-figure[data-faction="ohmypi"] { color: var(--ohmypi); }
+.hud-figure[data-faction="grokbot"] { color: var(--grokbot); }
 .hud-figure[data-faction="opencode"] { color: var(--opencode); }
 .hud-figure p {
   margin: 0;
@@ -947,6 +968,8 @@ summary:focus-visible {
   color: var(--text);
   font-size: 0.84rem;
 }
+
+.faction-group summary[data-faction="grokbot"] { color: var(--grokbot); }
 
 .faction-count {
   color: var(--faint);

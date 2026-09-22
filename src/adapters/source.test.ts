@@ -822,6 +822,7 @@ describe("sample fixture", () => {
     expect(harnesses.has("cursor")).toBe(true);
     expect(harnesses.has("codex")).toBe(true);
     expect(harnesses.has("ohmypi")).toBe(true);
+    expect(harnesses.has("grokbot")).toBe(true);
   });
 });
 
@@ -955,6 +956,8 @@ describe("rts sprites", () => {
       ]),
     ).toBe("cursor");
     expect(dominantFaction([{ harness: "opencode" }])).toBeNull();
+    expect(dominantFaction([{ harness: "grokbot" }, { harness: "grok-bot" }])).toBe("grokbot");
+    expect(dominantFaction([{ harness: "cursor" }, { harness: "grokbot" }])).toBe("cursor");
     expect(dominantFaction([{ harness: "omp" }, { harness: "omp" }, { harness: "cursor" }])).toBe("ohmypi");
 
     for (const base of loadFixture().bases) {

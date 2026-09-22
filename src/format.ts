@@ -49,7 +49,7 @@ export function formatAbsolute(iso: string): string | null {
 
 export function harnessSlug(harness: string): string {
   const key = canonicalHarness(harness);
-  if (key === "cursor" || key === "codex" || key === "ohmypi" || key === "opencode") {
+  if (key === "cursor" || key === "codex" || key === "ohmypi" || key === "grokbot" || key === "opencode") {
     return key;
   }
   return "other";

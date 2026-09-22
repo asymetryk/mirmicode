@@ -1,4 +1,4 @@
-import { canonicalHarness } from "../factions";
+import { canonicalHarness, knownSourceFaction } from "../factions";
 import { UNASSIGNED_REPO } from "../mapNoise";
 import {
   aggregateOpenProject,
@@ -262,12 +262,24 @@ function readRepo(record: Record<string, unknown>): string | null {
 
 function readHarness(record: Record<string, unknown>): string {
   const observed = readObject(record.observed);
+  // Precedence matches the Working Set contract: surface, then harness, then faction.
+  // `source` is only a faction when it names a known harness (grokbot, cursor, …).
+  // Session strings and source_label are not a base and are not a faction.
   const value =
     readString(observed?.surface) ??
     readString(observed?.harness) ??
+    readString(observed?.faction) ??
     readString(record.harness) ??
-    readString(record.surface);
+    readString(record.surface) ??
+    readString(record.faction) ??
+    readKnownSource(observed?.source) ??
+    readKnownSource(record.source);
   return value ? canonicalHarness(value) : "unknown";
+}
+
+function readKnownSource(value: unknown): string | null {
+  const text = readString(value);
+  return text ? knownSourceFaction(text) : null;
 }
 
 function readModel(record: Record<string, unknown>): string {
