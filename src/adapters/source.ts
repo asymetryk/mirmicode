@@ -2,10 +2,43 @@ import sampleBases from "../data/sample-bases.json";
 import type { MapSnapshot } from "../types";
 import { normalizeWorkingSetPayload } from "./normalize";
 
+/**
+ * CAHQ Working Set adapter.
+ *
+ * Live bases and units are an unauthenticated GET of a JSON document:
+ * `VITE_WORKING_SET_URL` at startup, or a URL pasted in the data-source panel.
+ * The tailnet host below is the intended target. This module never fabricates
+ * a live snapshot. DNS, HTTP, JSON, and empty-payload failures return the
+ * committed sample fixture plus a fallback reason.
+ */
+export const CAHQ_WORKING_SET_ORIGIN = "https://working-set.tail21f530.ts.net";
+
+export const WORKING_SET_URL_KEY = "mirmicode.workingSetUrl";
+export const WORKING_SET_SOURCE_KEY = "mirmicode.dataSource";
+
 export type ResolveResult = {
   snapshot: MapSnapshot;
   fallbackReason: string | null;
 };
+
+/**
+ * Startup URL precedence: a saved “use fixture” choice, then a URL saved in
+ * this browser, then `VITE_WORKING_SET_URL`, then empty (fixture, no fetch).
+ */
+export function readStartupWorkingSetUrl(
+  envUrl: string | null | undefined,
+  storage: Pick<Storage, "getItem"> | null,
+): string {
+  const fromEnv = envUrl?.trim() ?? "";
+  if (!storage) return fromEnv;
+  try {
+    if (storage.getItem(WORKING_SET_SOURCE_KEY) === "fixture") return "";
+    const stored = storage.getItem(WORKING_SET_URL_KEY)?.trim() ?? "";
+    return stored || fromEnv;
+  } catch {
+    return fromEnv;
+  }
+}
 
 export function loadFixture(now = new Date()): MapSnapshot {
   const normalized = normalizeWorkingSetPayload(sampleBases);
@@ -29,6 +62,7 @@ export async function loadWorkingSet(
     headers: { Accept: "application/json" },
     referrerPolicy: "no-referrer",
     credentials: "omit",
+    cache: "no-store",
   });
   if (!response.ok) {
     throw new Error(`Working Set responded ${response.status}.`);
@@ -70,8 +104,23 @@ export async function resolveSnapshot(
   } catch (error) {
     return {
       snapshot: loadFixture(now),
-      fallbackReason: `${readableReason(error)} Showing the local fixture.`,
+      fallbackReason: fallbackReasonFor(error, trimmed),
     };
+  }
+}
+
+function fallbackReasonFor(error: unknown, url: string): string {
+  const detail = readableReason(error).replace(/\.+$/, "");
+  const host = hostnameOf(url);
+  const where = host ? ` at ${host}` : "";
+  return `Fixture fallback. ${detail}${where}.`;
+}
+
+function hostnameOf(url: string): string | null {
+  try {
+    return new URL(url).hostname || null;
+  } catch {
+    return null;
   }
 }
 

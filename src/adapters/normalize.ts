@@ -147,15 +147,15 @@ function readRecords(
     return { ok: false, issue: "Payload was not a JSON object or array." };
   }
   const record = payload as Record<string, unknown>;
-  for (const key of ["bases", "items", "records"] as const) {
+  for (const key of ["bases", "items", "records", "agents", "units"] as const) {
     const value = record[key];
     if (Array.isArray(value)) return { ok: true, value };
   }
-  return { ok: false, issue: "Payload had no bases, items, or records array." };
+  return { ok: false, issue: "Payload had no bases, items, records, agents, or units array." };
 }
 
 function readRepo(record: Record<string, unknown>): string | null {
-  for (const key of ["repo", "repository", "project"] as const) {
+  for (const key of ["repo", "repository", "project", "full_name"] as const) {
     const value = readString(record[key]);
     if (value) return value;
   }
@@ -173,7 +173,17 @@ function readRepo(record: Record<string, unknown>): string | null {
 
 function readHarness(record: Record<string, unknown>): string {
   const value = readString(record.harness) ?? readString(record.surface);
-  return value ? value.toLowerCase() : "unknown";
+  return value ? canonicalHarness(value) : "unknown";
+}
+
+/** Fold spelling variants onto the painted faction ids. Unknown harnesses stay lowercase. */
+function canonicalHarness(value: string): string {
+  const compact = value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  if (compact === "cursor") return "cursor";
+  if (compact === "codex") return "codex";
+  if (compact === "ohmypi") return "ohmypi";
+  if (compact === "opencode") return "opencode";
+  return value.toLowerCase();
 }
 
 function readModel(record: Record<string, unknown>): string {

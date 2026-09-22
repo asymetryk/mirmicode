@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { resolveSnapshot } from "./adapters/source";
+import {
+  WORKING_SET_SOURCE_KEY,
+  WORKING_SET_URL_KEY,
+  readStartupWorkingSetUrl,
+  resolveSnapshot,
+} from "./adapters/source";
 import { Inspector } from "./components/Inspector";
 import { Legend } from "./components/Legend";
 import { MapStage } from "./components/MapStage";
 import { positionBases } from "./layout";
 import type { MapSnapshot } from "./types";
-
-const URL_KEY = "mirmicode.workingSetUrl";
-const SOURCE_KEY = "mirmicode.dataSource";
 
 export function App() {
   const [urlDraft, setUrlDraft] = useState(readStartupUrl);
@@ -111,7 +113,11 @@ export function App() {
           </p>
           <p className="public-note">Build in public. Not monetized.</p>
         </div>
-        {banner ? <p className="banner">{banner}</p> : null}
+        {banner ? (
+          <p className="banner" role={fallbackReason ? "alert" : "status"}>
+            {banner}
+          </p>
+        ) : null}
       </header>
       <Legend bases={positioned} />
       <MapStage
@@ -170,25 +176,23 @@ async function apply(
 }
 
 function readStartupUrl(): string {
-  const envUrl = import.meta.env.VITE_WORKING_SET_URL?.trim() ?? "";
+  const envUrl = import.meta.env.VITE_WORKING_SET_URL;
   try {
-    if (localStorage.getItem(SOURCE_KEY) === "fixture") return "";
-    const stored = localStorage.getItem(URL_KEY)?.trim() ?? "";
-    return stored || envUrl;
+    return readStartupWorkingSetUrl(envUrl, localStorage);
   } catch {
-    return envUrl;
+    return readStartupWorkingSetUrl(envUrl, null);
   }
 }
 
 function remember(url: string): void {
   try {
     if (url.trim()) {
-      localStorage.setItem(URL_KEY, url.trim());
-      localStorage.setItem(SOURCE_KEY, "working-set");
+      localStorage.setItem(WORKING_SET_URL_KEY, url.trim());
+      localStorage.setItem(WORKING_SET_SOURCE_KEY, "working-set");
       return;
     }
-    localStorage.removeItem(URL_KEY);
-    localStorage.setItem(SOURCE_KEY, "fixture");
+    localStorage.removeItem(WORKING_SET_URL_KEY);
+    localStorage.setItem(WORKING_SET_SOURCE_KEY, "fixture");
   } catch {
     // Storage can be blocked. The current view still updates in memory.
   }

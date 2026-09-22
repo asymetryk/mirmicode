@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import cahqSample from "../data/cahq-working-set.sample.json";
 import sampleBases from "../data/sample-bases.json";
 import { postureOf } from "../factions";
 import { BUILDING_OFFSET, fitView, positionBases, resourcePlacements, unitSlot } from "../layout";
@@ -19,7 +20,13 @@ import {
   unitSrc,
 } from "../rtsArt";
 import { normalizeWorkingSetPayload } from "./normalize";
-import { loadFixture, parseWorkingSetUrl, resolveSnapshot } from "./source";
+import {
+  CAHQ_WORKING_SET_ORIGIN,
+  loadFixture,
+  parseWorkingSetUrl,
+  readStartupWorkingSetUrl,
+  resolveSnapshot,
+} from "./source";
 
 describe("normalizeWorkingSetPayload", () => {
   it("reads the canonical contract", () => {
@@ -168,6 +175,21 @@ describe("normalizeWorkingSetPayload", () => {
     expect(fromRecords.bases[0]?.units[0]?.label).toBeNull();
   });
 
+  it("reads a top-level units array of flat rows that share a repo", () => {
+    const normalized = normalizeWorkingSetPayload({
+      units: [
+        { repo: "example/shared", surface: "cursor", model: "Gemini", status: "working" },
+        { repo: "example/shared", harness: "codex", model: "Terra", status: "idle" },
+      ],
+    });
+    expect(normalized.issues).toEqual([]);
+    expect(normalized.bases).toHaveLength(1);
+    expect(normalized.bases[0]?.units.map((unit) => [unit.harness, unit.model])).toEqual([
+      ["cursor", "Gemini"],
+      ["codex", "Terra"],
+    ]);
+  });
+
   it("drops records without a repo and reports an empty payload", () => {
     const dropped = normalizeWorkingSetPayload({
       bases: [{ label: "no repo" }, { repo: "example/kept", label: "kept" }],
@@ -177,7 +199,7 @@ describe("normalizeWorkingSetPayload", () => {
     expect(dropped.bases.map((base) => base.repo)).toEqual(["example/kept"]);
     expect(dropped.issues[0]).toMatch(/missing repo\/base/);
     expect(empty.bases).toEqual([]);
-    expect(empty.issues[0]).toMatch(/no bases, items, or records/);
+    expect(empty.issues[0]).toMatch(/no bases, items, records, agents, or units/);
   });
 
   it("ignores placement outside 0–1 and suffixes duplicate ids", () => {
@@ -267,7 +289,9 @@ describe("resolveSnapshot", () => {
     };
     const result = await resolveSnapshot("https://working-set.example/bases", fetchImpl);
     expect(result.snapshot.source).toBe("fixture");
-    expect(result.fallbackReason).toBe("Could not resolve host. Showing the local fixture.");
+    expect(result.fallbackReason).toBe(
+      "Fixture fallback. Could not resolve host at working-set.example.",
+    );
   });
 
   it("turns a network TypeError into a readable fallback", async () => {
@@ -277,13 +301,106 @@ describe("resolveSnapshot", () => {
     const result = await resolveSnapshot("https://working-set.example/bases", fetchImpl);
     expect(result.snapshot.source).toBe("fixture");
     expect(result.fallbackReason).toBe(
-      "Working Set could not be reached. Showing the local fixture.",
+      "Fixture fallback. Working Set could not be reached at working-set.example.",
     );
   });
 
   it("rejects credentials and non-http URLs", () => {
     expect(() => parseWorkingSetUrl("https://user:pw@example.com/bases")).toThrow(/credentials/);
     expect(() => parseWorkingSetUrl("file:///tmp/bases.json")).toThrow(/http or https/);
+  });
+
+  it("falls back when the tailnet host cannot be reached", async () => {
+    const fetchImpl: typeof fetch = async () => {
+      throw new TypeError("Failed to fetch");
+    };
+    const result = await resolveSnapshot(CAHQ_WORKING_SET_ORIGIN, fetchImpl);
+    expect(result.snapshot.source).toBe("fixture");
+    expect(result.snapshot.bases.length).toBeGreaterThanOrEqual(3);
+    expect(result.fallbackReason).toBe(
+      "Fixture fallback. Working Set could not be reached at working-set.tail21f530.ts.net.",
+    );
+  });
+
+  it("falls back when the live document has no bases", async () => {
+    const fetchImpl: typeof fetch = async () =>
+      new Response(JSON.stringify({ agents: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    const result = await resolveSnapshot(`${CAHQ_WORKING_SET_ORIGIN}/agents`, fetchImpl);
+    expect(result.snapshot.source).toBe("fixture");
+    expect(result.fallbackReason).toMatch(/Fixture fallback/);
+    expect(result.fallbackReason).toMatch(/no bases/);
+    expect(result.fallbackReason).toMatch(/working-set\.tail21f530\.ts\.net/);
+  });
+
+  it("reads startup URL precedence for VITE_WORKING_SET_URL", () => {
+    const storage = new Map<string, string>();
+    const read = {
+      getItem: (key: string) => storage.get(key) ?? null,
+    };
+    expect(readStartupWorkingSetUrl(CAHQ_WORKING_SET_ORIGIN, read)).toBe(CAHQ_WORKING_SET_ORIGIN);
+    expect(readStartupWorkingSetUrl("  ", read)).toBe("");
+    storage.set("mirmicode.workingSetUrl", "https://working-set.example/agents");
+    expect(readStartupWorkingSetUrl(CAHQ_WORKING_SET_ORIGIN, read)).toBe(
+      "https://working-set.example/agents",
+    );
+    storage.set("mirmicode.dataSource", "fixture");
+    expect(readStartupWorkingSetUrl(CAHQ_WORKING_SET_ORIGIN, read)).toBe("");
+    expect(readStartupWorkingSetUrl(CAHQ_WORKING_SET_ORIGIN, null)).toBe(CAHQ_WORKING_SET_ORIGIN);
+  });
+});
+
+describe("cahq working set sample", () => {
+  it("maps a flat multi-unit agents document onto bases, factions, crests, and glow", () => {
+    const normalized = normalizeWorkingSetPayload(cahqSample);
+    expect(normalized.issues).toEqual([]);
+    expect(normalized.bases.map((base) => base.repo)).toEqual([
+      "asymetryk/mirmicode",
+      "example/charter",
+      "example/ops-board",
+    ]);
+
+    const mirmicode = normalized.bases[0];
+    expect(mirmicode?.units.map((unit) => [unit.harness, unit.model, unit.threadName, postureOf(unit.status)])).toEqual([
+      ["cursor", "Grok-4.6", "bases-map", "working"],
+      ["codex", "Luna", "readme-faction", "working"],
+      ["ohmypi", "Kimi", "copy-pass", "blocked"],
+    ]);
+    expect(mirmicode?.updatedAt).toBe("2026-09-21T19:05:00Z");
+    expect(mirmicode?.units.map((unit) => glyphId(unit.model))).toEqual(["b", "b", "b"]);
+    expect(mirmicode?.units.map((unit) => heroSrc(unit.harness))).toEqual([
+      "/rts-art/hero-cursor-angular.png",
+      "/rts-art/hero-codex-organic.png",
+      "/rts-art/hero-ohmypi-mechanical.png",
+    ]);
+
+    const charter = normalized.bases[1];
+    expect(charter?.units.map((unit) => [unit.harness, postureOf(unit.status), unit.updatedAt])).toEqual([
+      ["codex", "working", "2026-09-21T13:10:00Z"],
+      ["cursor", "idle", "2026-09-21T11:00:00Z"],
+    ]);
+    expect(charter?.units[1]?.label).toBe("Review");
+
+    const ops = normalized.bases[2];
+    expect(ops?.units.map((unit) => unit.model)).toEqual(["MiniMax", "Sol"]);
+    expect(ops?.units.map((unit) => glyphId(unit.model))).toEqual(["a", "a"]);
+    expect(JSON.stringify(normalized)).not.toMatch(/transcript|secret/i);
+  });
+
+  it("loads that document through the live fetch path", async () => {
+    const fetchImpl: typeof fetch = async () =>
+      new Response(JSON.stringify(cahqSample), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    const result = await resolveSnapshot(`${CAHQ_WORKING_SET_ORIGIN}/agents`, fetchImpl);
+    expect(result.fallbackReason).toBeNull();
+    expect(result.snapshot.source).toBe("working-set");
+    expect(result.snapshot.bases).toHaveLength(3);
+    const units = result.snapshot.bases.reduce((sum, base) => sum + base.units.length, 0);
+    expect(units).toBe(7);
   });
 });
 

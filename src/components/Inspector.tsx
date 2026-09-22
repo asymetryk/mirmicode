@@ -1,4 +1,5 @@
 import type { FormEvent } from "react";
+import { CAHQ_WORKING_SET_ORIGIN } from "../adapters/source";
 import { factionName, postureLabel, postureOf } from "../factions";
 import { formatAbsolute, formatLastTouched, harnessSlug } from "../format";
 import { roleLabel, unitRole } from "../rtsArt";
@@ -129,13 +130,15 @@ export function Inspector({
             inputMode="url"
             spellCheck={false}
             autoComplete="off"
-            placeholder="https://…/bases.json"
+            placeholder={CAHQ_WORKING_SET_ORIGIN}
             value={urlDraft}
             onChange={(event) => onUrlDraft(event.target.value)}
           />
           <p className="help">
-            GET a JSON document matching the README contract. An unauthenticated request only.
-            If it fails, the map stays on the sample fixture.
+            Unauthenticated GET of Working Set JSON. On the tailnet, start from{" "}
+            {CAHQ_WORKING_SET_ORIGIN} or set <code>VITE_WORKING_SET_URL</code>. If the
+            request fails or the document has no bases, the map stays on the sample fixture
+            and the banner names the reason.
           </p>
           <div className="actions">
             <button type="submit" disabled={loading || urlDraft.trim() === ""}>

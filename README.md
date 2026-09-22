@@ -79,27 +79,50 @@ v1 crests, used only on that fallback:
 
 ## Sample data
 
-`src/data/sample-bases.json` is synthetic metadata so the map runs with nothing else reachable. `example/*` repos are not live telemetry. The status line says `Fixture · sample data`.
+`src/data/sample-bases.json` is the map fallback: synthetic metadata so the map runs with nothing else reachable. `example/*` repos are not live telemetry. The status line says `Fixture · sample data`.
 
 Each base carries a mixed squad, not one hero. `asymetryk/mirmicode` is a Cursor majority (Grok-4.6 walker, Gemini medic, plus scout, drone, builder, and tankette) with Codex Luna and Skiff and OhMyPi Kimi and Medic. The other bases are a Codex charter, an OhMyPi ops board, and a Codex prompt lab. Together the fixture fields every v2 silhouette.
 
-## Data adapter
+`src/data/cahq-working-set.sample.json` is a separate flat `agents` document in the Working Set field shape (several units sharing a repo). It is also synthetic. It is not a capture from the tailnet host. Tests run it through the same normalizer the live fetch uses.
 
-CAHQ Working Set is the intended source of truth: metadata only, for Cursor, Codex, OhMyPi, and OpenCode surfaces. This spike does not vendor that service. OpenCode still renders as its own faction color if a payload names it. The fixture demonstrates the three factions above.
+## Live Working Set vs fixture
 
-From the environment that produced this spike, the private Working Set host did not resolve, and the private reference implementation was not readable. The map therefore ships a fixture plus an adapter Howard can point at a JSON URL later.
+CAHQ Working Set is the live source of truth: metadata only, for Cursor, Codex, OhMyPi, and OpenCode surfaces. This client does not vendor that service. OpenCode still renders as its own faction color if a payload names it.
 
-### What works now
+Checked from the Cursor cloud VM on 2026-09-22: `https://working-set.tail21f530.ts.net` did not resolve (`Could not resolve host`). That name is Tailscale MagicDNS, and this VM is not on the tailnet. The private reference repo `asymetryk/agentinfra` (`source/working_set*`, `source/working-set-ui`, `deploy/k3s/working-set-ui/`) was not readable with this environment’s GitHub credential. No live JSON was fetched. The map does not report a live connection from here.
 
-- **Fixture path.** Default. No network. `loadFixture()` normalizes `src/data/sample-bases.json`.
-- **Working Set path.** Paste a URL in **Data source**, or set `VITE_WORKING_SET_URL` (see `.env.example`). The browser sends an unauthenticated `GET` with `Accept: application/json` and no credentials. A successful JSON body becomes the map. Any failure (DNS, HTTP error, non-JSON, empty bases, URL with embedded credentials) keeps the map on the fixture and shows the reason.
-- **Dev proxy, optional.** If the service is reachable from your machine but does not send CORS headers:
+### What the client does
 
-  ```bash
-  WORKING_SET_PROXY_TARGET=https://your-working-set-origin npm run dev
-  ```
+- **Fixture path.** Default when `VITE_WORKING_SET_URL` is empty and this browser has not saved a URL. No network. `loadFixture()` normalizes `src/data/sample-bases.json`.
+- **Live path.** Paste a URL in **Data source**, or set `VITE_WORKING_SET_URL` (see `.env.example`). The browser sends an unauthenticated `GET` with `Accept: application/json`, `credentials: "omit"`, and `cache: "no-store"`. A JSON body with at least one base becomes the map. The status line reads `Working Set · N bases · M units`.
+- **Fallback.** DNS failure, HTTP error, non-JSON, an empty `bases`/`agents`/`units` list, or a URL with embedded credentials keeps the map on the sample fixture. A banner starts with `Fixture fallback.` and names the host.
 
-  Vite forwards `/working-set/...` to that origin with the prefix removed. Load `http://127.0.0.1:5173/working-set/<json-path>`. The proxy target is server-side only. Do not put tokens in the repo or in `VITE_` variables.
+Startup URL precedence: a saved “use fixture” choice, then a URL saved in this browser, then `VITE_WORKING_SET_URL`, then the fixture.
+
+### Point a tailnet machine at the live host
+
+1. Join the tailnet so MagicDNS resolves `*.tail21f530.ts.net`.
+2. See what the host returns:
+
+   ```bash
+   curl -fsS -D - -H 'Accept: application/json' https://working-set.tail21f530.ts.net
+   ```
+
+   If the body is a JSON document (a `bases`, `agents`, or `units` array, or flat rows), use that URL. If the body is the Working Set HTML UI, open the UI’s network log and copy the JSON request URL. Do not put a cookie, token, or userinfo in the URL.
+3. From this repo on that machine:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Set `VITE_WORKING_SET_URL` to the JSON URL, then `npm run dev`. Or paste the URL into **Data source** and press **Load**.
+4. If the service is reachable but sends no CORS headers, keep the browser on the dev server and proxy from the same machine:
+
+   ```bash
+   WORKING_SET_PROXY_TARGET=https://working-set.tail21f530.ts.net npm run dev
+   ```
+
+   Vite forwards `/working-set/...` to that origin with the prefix removed. Load `http://127.0.0.1:5173/working-set/<json-path>`. The proxy target is server-side only. Do not put tokens in the repo or in `VITE_` variables.
 
 There is no built-in path, auth header, or transcript fetch. If Working Set needs a credential, terminate that on a proxy you control. This client will not store one.
 
@@ -108,7 +131,7 @@ There is no built-in path, auth header, or transcript fetch. If Working Set need
 `normalizeWorkingSetPayload` in `src/adapters/normalize.ts` accepts:
 
 - a top-level array, or
-- an object with a `bases`, `items`, or `records` array
+- an object with a `bases`, `items`, `records`, `agents`, or `units` array (the first of those keys that is an array wins)
 
 Two record shapes collapse into the same map:
 
@@ -119,14 +142,14 @@ Flat rows do not invent a second unit from a parent harness when `units` or `age
 
 | Map field | Accepted keys | Notes |
 | --- | --- | --- |
-| Repo / base | `repo`, `repository`, `project`, or `base` | `base` may be a string or an object with `repo`, `repository`, `full_name`, or `name`. Records without a repo are dropped. Same repo merges. |
+| Repo / base | `repo`, `repository`, `project`, `full_name`, or `base` | `base` may be a string or an object with `repo`, `repository`, `full_name`, or `name`. Records without a repo are dropped. Same repo merges. |
 | Base id | `id` on a grouped base | Optional. Derived from the repo when omitted. Duplicate base ids get a numeric suffix. On a flat row, `id` belongs to the unit. |
 | Base label | `label` on a grouped base | Human name for the repo. Flat-row `label` stays on the unit. |
 | Units | `units` or `agents` | Array of unit objects. Omit it and the record itself is one unit. |
-| Faction / harness | `harness` or `surface` | Lowercased. Missing becomes `unknown`. |
+| Faction / harness | `harness` or `surface` | Lowercased. `oh-my-pi` and `open-code` fold onto `ohmypi` and `opencode` so the painted sprites match. Missing becomes `unknown`. |
 | Unit type / model | `model` | Blank or missing becomes `unknown`. |
 | Thread | `thread_name` or `threadName` | Empty renders as an em dash. |
-| Status | `status` | Free text such as `active`. Empty renders as an em dash. |
+| Status | `status` | Free text. `working`, `active`, and `busy` glow as working. `blocked`, `queued`, `stuck`, and `error` take the blocked slash. Anything else, including a missing status, is idle. The HUD still shows the raw status text. |
 | Unit label | `label` on a unit or flat row | Optional human label. |
 | Last touched | `updated_at`, `updatedAt`, `last_touched`, or `lastTouched` | ISO-8601 string. The base shows the latest unit time. |
 | Placement | `x`, `y` on the base | Optional numbers in `0..1`. Map presentation only. Ignored when out of range. |
@@ -158,8 +181,6 @@ Unknown fields are ignored, including any message or transcript body. Strings ar
 ```
 
 When the live payload uses different names, extend the alias lists in `normalize.ts`. The UI only renders `CampaignBase` and `Unit` (`src/types.ts`).
-
-Startup URL precedence: a saved “use fixture” choice, then a URL saved in this browser, then `VITE_WORKING_SET_URL`, then the fixture.
 
 ## Lore
 
