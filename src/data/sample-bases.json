@@ -191,7 +191,8 @@
           "updated_at": "2026-09-17T05:00:00Z",
           "last_prompt": "Operator hid this unit from the public board."
         }
-      ]
+      ],
+      "stage": "active"
     },
     {
       "id": "charter",
@@ -290,7 +291,8 @@
           "updated_at": "2026-09-21T14:12:00Z",
           "last_prompt": "Continue work on brass-check with an honest context snippet."
         }
-      ]
+      ],
+      "stage": "mvp"
     },
     {
       "id": "ops-board",
@@ -389,7 +391,8 @@
           "updated_at": "2026-09-20T20:05:00Z",
           "last_prompt": "Continue work on diagram with an honest context snippet."
         }
-      ]
+      ],
+      "stage": "parked"
     },
     {
       "id": "prompt-lab",
@@ -470,7 +473,8 @@
           "updated_at": "2026-09-19T10:15:00Z",
           "last_prompt": "Continue work on loop with an honest context snippet."
         }
-      ]
+      ],
+      "stage": "archive"
     },
     {
       "id": "unassigned",
@@ -655,7 +659,8 @@
           "updated_at": "2026-09-18T08:10:00Z",
           "last_prompt": "Codex unknown lifecycle with a usable prompt."
         }
-      ]
+      ],
+      "stage": "unknown"
     }
   ]
 }

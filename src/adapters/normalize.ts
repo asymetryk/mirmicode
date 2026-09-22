@@ -8,6 +8,7 @@ import {
 import { repoKey } from "../repos";
 import { scrubSensitivePath, shouldScrubPrompts } from "../publicMode";
 import type { CampaignBase, OpenProjectSummary, Unit } from "../types";
+import { stageFromString } from "../rtsArt";
 
 const TEXT_LIMIT = 180;
 
@@ -83,6 +84,7 @@ export function normalizeWorkingSetPayload(payload: unknown): NormalizedPayload 
       openProject: fromUnits ?? repoProjects.get(repoKey(base.repo)) ?? null,
       updatedAt: latestTimestamp(base.units.map((unit) => unit.updatedAt).concat(base.updatedAt)),
       place: base.place,
+      stage: base.stage,
       units: base.units,
     };
   });
@@ -103,6 +105,7 @@ type MutableBase = {
   label: string | null;
   updatedAt: string;
   place: { x: number; y: number } | null;
+  stage: import("../types").CampStage;
   units: Unit[];
   openProjects: OpenProjectSummary[];
 };
@@ -121,6 +124,8 @@ function ensureBase(
     if (!existing.place) existing.place = readPlace(record);
     const touched = readUpdatedAt(record);
     if (touched !== "unknown") existing.updatedAt = latestTimestamp([existing.updatedAt, touched]);
+    const stage = readStage(record);
+    if (existing.stage === "unknown" && stage !== "unknown") existing.stage = stage;
     return existing;
   }
 
@@ -132,6 +137,7 @@ function ensureBase(
     label: readUnitArray(record) ? bound(readString(record.label)) : null,
     updatedAt: readUpdatedAt(record),
     place: readPlace(record),
+    stage: readStage(record),
     units: [],
     openProjects: [],
   };
@@ -154,6 +160,16 @@ function readUnitArray(record: Record<string, unknown>): unknown[] | null {
   if (Array.isArray(record.units)) return record.units;
   if (Array.isArray(record.agents)) return record.agents;
   return null;
+}
+
+function readStage(record: Record<string, unknown>): import("../types").CampStage {
+  const observed = readObject(record.observed);
+  const annotation = readObject(record.annotation);
+  return stageFromString(
+    readString(annotation?.stage) ??
+      readString(observed?.stage) ??
+      readString(record.stage),
+  );
 }
 
 function readUnit(

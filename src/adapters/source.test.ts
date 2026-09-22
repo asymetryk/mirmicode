@@ -11,6 +11,7 @@ import {
   BUILDING_KINDS,
   RESOURCE_KINDS,
   UNIT_ROLES,
+  buildingSetForStage,
   buildingSrc,
   dominantFaction,
   glyphId,
@@ -19,6 +20,8 @@ import {
   markerSrc,
   outpostSrc,
   resourceSrc,
+  stageClassName,
+  stageFromString,
   unitRole,
   unitSrc,
 } from "../rtsArt";
@@ -844,6 +847,58 @@ describe("posture", () => {
     expect(postureOf(postureSignal(null, "active"))).toBe("working");
     expect(postureOf(postureSignal("  ", "blocked"))).toBe("blocked");
     expect(postureOf(postureSignal(null, null))).toBe("idle");
+  });
+});
+
+describe("camp stages", () => {
+  it("normalizes stage fields from flat, observed, or annotation sources", () => {
+    const { bases } = normalizeWorkingSetPayload({
+      items: [
+        { observed: { repo: "example/idea", stage: "IDEA" } },
+        { observed: { repo: "example/mvp" }, annotation: { stage: "mvp" } },
+        { repo: "example/active", stage: "active" },
+        { observed: { repo: "example/unknown" } },
+      ],
+    });
+    const byId = Object.fromEntries(bases.map((base) => [base.repo, base.stage]));
+    expect(byId["example/idea"]).toBe("idea");
+    expect(byId["example/mvp"]).toBe("mvp");
+    expect(byId["example/active"]).toBe("active");
+    expect(byId["example/unknown"]).toBe("unknown");
+  });
+
+  it("maps invalid stage values to unknown", () => {
+    const { bases } = normalizeWorkingSetPayload({
+      items: [{ observed: { repo: "example/bad" }, annotation: { stage: "retired" } }],
+    });
+    expect(bases[0]?.stage).toBe("unknown");
+  });
+
+  it("exposes a building set per stage, falling back to unknown", () => {
+    expect(buildingSetForStage("idea")).toEqual(["pad"]);
+    expect(buildingSetForStage("mvp")).toEqual(["pad", "depot", "turret"]);
+    expect(buildingSetForStage("active")).toEqual(BUILDING_KINDS);
+    expect(buildingSetForStage("unknown")).toEqual(BUILDING_KINDS);
+    expect(buildingSetForStage(null)).toEqual(BUILDING_KINDS);
+  });
+
+  it("returns a safe stage class name", () => {
+    expect(stageClassName("active")).toBe("active");
+    expect(stageClassName("parked")).toBe("parked");
+  });
+
+  it("reads stageFromString consistently", () => {
+    expect(stageFromString("ACTIVE")).toBe("active");
+    expect(stageFromString("parked")).toBe("parked");
+    expect(stageFromString("retired")).toBe("unknown");
+    expect(stageFromString(null)).toBe("unknown");
+  });
+
+  it("reads stages on sample fixture bases", () => {
+    const snapshot = loadFixture();
+    const stages = new Set(snapshot.bases.map((base) => base.stage));
+    expect(stages.has("unknown")).toBe(true);
+    expect(stages.size).toBeGreaterThanOrEqual(1);
   });
 });
 

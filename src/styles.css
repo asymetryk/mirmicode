@@ -1036,3 +1036,157 @@ summary:focus-visible {
     max-height: min(55%, calc(100% - 4.5rem));
   }
 }
+
+.camp-dossier-panel {
+  position: absolute;
+  right: 0.85rem;
+  top: 0.85rem;
+  z-index: 4;
+  width: min(22rem, calc(100% - 1.7rem));
+  max-height: calc(100% - 5.5rem);
+  overflow: auto;
+  padding: 0.75rem 0.85rem 0.85rem;
+  background: rgba(25, 28, 20, 0.96);
+  border: 1px solid rgba(243, 239, 226, 0.22);
+  border-radius: 2px;
+  box-shadow: var(--shadow);
+}
+
+.camp-dossier-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.camp-dossier-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.55rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid rgba(243, 239, 226, 0.24);
+  border-radius: 2px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.badge[data-health="green"] { color: #9ae6b4; border-color: rgba(154, 230, 180, 0.35); }
+.badge[data-health="yellow"] { color: #e6b15c; border-color: rgba(230, 177, 92, 0.35); }
+.badge[data-health="red"] { color: #f6adad; border-color: rgba(246, 173, 173, 0.35); }
+.badge[data-health="unknown"] { color: var(--faint); }
+
+.camp-dossier-reason {
+  margin: 0 0 0.85rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.camp-dossier-section {
+  margin-top: 0.85rem;
+}
+
+.camp-dossier-section h3 {
+  margin: 0 0 0.45rem;
+  color: var(--accent);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.camp-dossier-list,
+.camp-dossier-backlog,
+.camp-dossier-links {
+  margin: 0;
+  padding: 0 0 0 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.camp-dossier-list li,
+.camp-dossier-backlog li,
+.camp-dossier-links li {
+  padding-left: 0.15rem;
+}
+
+.camp-dossier-backlog .backlog-subject {
+  display: block;
+  color: var(--text);
+}
+
+.camp-dossier-backlog .backlog-meta {
+  display: block;
+  color: var(--faint);
+  font-size: 0.78rem;
+}
+
+.camp-dossier-links a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.camp-dossier-links a:hover,
+.camp-dossier-links a:focus {
+  text-decoration: underline;
+}
+
+@media (max-width: 860px) {
+  .camp-dossier-panel {
+    left: 0.7rem;
+    right: 0.7rem;
+    top: auto;
+    bottom: 0.7rem;
+    width: auto;
+    max-height: min(45%, calc(100% - 4.5rem));
+  }
+}
+
+/* Camp stage tints applied over the existing v2 building/outpost sprites */
+.base-site {
+  --stage-tint: none;
+}
+
+.base-site[data-stage="idea"] {
+  --stage-tint: sepia(0.5) hue-rotate(170deg) saturate(0.35) brightness(1.15) contrast(0.92);
+}
+
+.base-site[data-stage="mvp"] {
+  --stage-tint: saturate(0.78) brightness(1.06) hue-rotate(8deg);
+}
+
+.base-site[data-stage="active"] {
+  --stage-tint: none;
+}
+
+.base-site[data-stage="parked"] {
+  --stage-tint: grayscale(0.55) brightness(0.82) sepia(0.18) saturate(0.72);
+}
+
+.base-site[data-stage="archive"] {
+  --stage-tint: grayscale(0.85) brightness(0.66) sepia(0.35) saturate(0.55);
+}
+
+.base-site[data-stage="unknown"] {
+  --stage-tint: grayscale(0.48) hue-rotate(220deg) brightness(0.92) saturate(0.6);
+}
+
+.outpost-sprite img,
+.dressing img {
+  filter: var(--stage-tint, none);
+  transition: filter 0.2s ease;
+}
+
+.outpost-sprite.is-attached img {
+  filter: var(--stage-tint, none) drop-shadow(0 0 12px var(--accent));
+}
