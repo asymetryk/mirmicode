@@ -1,6 +1,6 @@
 import { unitKind, type UnitKind } from "./factions";
 
-/** Crest shared by models. Same model always wears the same glyph, on any faction body. */
+/** Crest shared by models on the v1 hero fallback. Same model always wears the same glyph. */
 export type GlyphId = "a" | "b" | "c";
 
 const GLYPH_BY_KIND: Partial<Record<UnitKind, GlyphId>> = {
@@ -35,6 +35,155 @@ const GLYPH_SRC: Record<GlyphId, string> = {
 /** Factions that have a painted outpost. Earlier entries win a tie. */
 const OUTPOST_FACTIONS = ["cursor", "codex", "ohmypi"] as const;
 
+export type PaintedFaction = (typeof OUTPOST_FACTIONS)[number];
+
+/**
+ * Silhouettes in the staged v2 unit pack.
+ * A model maps onto one of these. The faction picks the body.
+ */
+export const UNIT_ROLES = [
+  "scout",
+  "worker",
+  "drone",
+  "tankette",
+  "walker",
+  "medic",
+  "mirmi-small",
+  "mirmi-armed",
+  "skiff",
+  "builder",
+] as const;
+
+export type UnitRole = (typeof UNIT_ROLES)[number];
+
+export const BUILDING_KINDS = ["pad", "depot", "turret", "refinery", "barracks", "lab"] as const;
+export type BuildingKind = (typeof BUILDING_KINDS)[number];
+
+export const RESOURCE_KINDS = ["crystal", "biomass", "scrap"] as const;
+export type ResourceKind = (typeof RESOURCE_KINDS)[number];
+
+const ROLE_LABEL: Record<UnitRole, string> = {
+  scout: "Scout",
+  worker: "Worker",
+  drone: "Drone",
+  tankette: "Tankette",
+  walker: "Walker",
+  medic: "Medic",
+  "mirmi-small": "Mirmi",
+  "mirmi-armed": "Armed",
+  skiff: "Skiff",
+  builder: "Builder",
+};
+
+const BUILDING_LABEL: Record<BuildingKind, string> = {
+  pad: "Pad",
+  depot: "Depot",
+  turret: "Turret",
+  refinery: "Refinery",
+  barracks: "Barracks",
+  lab: "Lab",
+};
+
+const RESOURCE_LABEL: Record<ResourceKind, string> = {
+  crystal: "Crystal",
+  biomass: "Biomass",
+  scrap: "Scrap",
+};
+
+/** Same model always picks the same silhouette, on any faction body. */
+const ROLE_BY_MODEL: Record<string, UnitRole> = {
+  astra: "scout",
+  luna: "worker",
+  terra: "drone",
+  sol: "tankette",
+  gemini: "medic",
+  minimax: "mirmi-small",
+  kimi: "mirmi-armed",
+};
+
+const ROLE_FILE: Record<UnitRole, string> = {
+  scout: "scout-bot-01",
+  worker: "worker-bot-02",
+  "mirmi-small": "mirmi-small-03",
+  "mirmi-armed": "mirmi-armed-04",
+  drone: "drone-05",
+  tankette: "tankette-06",
+  walker: "walker-07",
+  skiff: "skiff-08",
+  medic: "medic-bot-09",
+  builder: "builder-bot-10",
+};
+
+const BUILDING_FILE: Record<BuildingKind, string> = {
+  pad: "pad-01",
+  depot: "depot-02",
+  turret: "turret-03",
+  refinery: "refinery-04",
+  barracks: "barracks-05",
+  lab: "lab-06",
+};
+
+const RESOURCE_FILE: Record<ResourceKind, string> = {
+  crystal: "crystal-node-01",
+  biomass: "biomass-pod-02",
+  scrap: "scrap-pile-03",
+};
+
+/** Longer phrases first so "mirmi-armed" wins over "mirmi". */
+const ROLE_PHRASES: Array<[string, UnitRole]> = [
+  ["mirmi-armed", "mirmi-armed"],
+  ["mirmi armed", "mirmi-armed"],
+  ["mirmi-small", "mirmi-small"],
+  ["mirmi small", "mirmi-small"],
+  ["tankette", "tankette"],
+  ["builder", "builder"],
+  ["worker", "worker"],
+  ["walker", "walker"],
+  ["medic", "medic"],
+  ["skiff", "skiff"],
+  ["drone", "drone"],
+  ["scout", "scout"],
+  ["mirmi", "mirmi-small"],
+];
+
+/** Neutral files that were not in the staged subset. */
+const NEUTRAL_UNIT_GAP = new Set<UnitRole>(["mirmi-small", "mirmi-armed", "skiff"]);
+
+export function roleLabel(role: UnitRole): string {
+  return ROLE_LABEL[role];
+}
+
+export function buildingLabel(kind: BuildingKind): string {
+  return BUILDING_LABEL[kind];
+}
+
+export function resourceLabel(kind: ResourceKind): string {
+  return RESOURCE_LABEL[kind];
+}
+
+export function paintedFaction(harness: string | null | undefined): PaintedFaction | null {
+  const key = (harness ?? "").toLowerCase();
+  if (key === "cursor" || key === "codex" || key === "ohmypi") return key;
+  return null;
+}
+
+/**
+ * Model → silhouette.
+ * An exact known model wins. Otherwise a type word in the model string
+ * ("Scout", "Mirmi-armed") picks that sprite. Grok* is the walker.
+ */
+export function unitRole(model: string): UnitRole | null {
+  const compact = model.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const exact = ROLE_BY_MODEL[compact];
+  if (exact) return exact;
+  if (compact.includes("grok")) return "walker";
+  const text = model.toLowerCase();
+  for (const [phrase, role] of ROLE_PHRASES) {
+    if (text.includes(phrase)) return role;
+  }
+  return null;
+}
+
 export function glyphId(model: string): GlyphId | null {
   return GLYPH_BY_KIND[unitKind(model)] ?? null;
 }
@@ -48,8 +197,47 @@ export function glyphSrc(model: string): string | null {
   return id ? GLYPH_SRC[id] : null;
 }
 
+/** v1 outpost, used when a faction has no v2 pad. */
 export function outpostSrc(harness: string): string | null {
   return OUTPOST_SRC[harness.toLowerCase()] ?? null;
+}
+
+/**
+ * v2 unit sprite for this harness and model.
+ * Unknown harnesses use the neutral body when that file was staged.
+ * Returns null when nothing in v2 matches — caller falls back to the v1 hero.
+ */
+export function unitSrc(harness: string, model: string): string | null {
+  const role = unitRole(model);
+  if (!role) return null;
+  const faction = paintedFaction(harness);
+  if (faction) return `/rts-art-v2/units/${faction}-${ROLE_FILE[role]}.png`;
+  if (NEUTRAL_UNIT_GAP.has(role)) return null;
+  return `/rts-art-v2/units/neutral-${ROLE_FILE[role]}.png`;
+}
+
+/**
+ * v2 building. Neutral pad was not staged, so a missing faction returns null
+ * for the pad and the neutral sheet for the other kinds.
+ */
+export function buildingSrc(harness: string | null, kind: BuildingKind): string | null {
+  const faction = paintedFaction(harness);
+  if (!faction) {
+    if (kind === "pad") return null;
+    return `/rts-art-v2/buildings/neutral-${BUILDING_FILE[kind]}.png`;
+  }
+  return `/rts-art-v2/buildings/${faction}-${BUILDING_FILE[kind]}.png`;
+}
+
+export function resourceSrc(harness: string | null, kind: ResourceKind): string {
+  const faction = paintedFaction(harness) ?? "neutral";
+  return `/rts-art-v2/resources/${faction}-${RESOURCE_FILE[kind]}.png`;
+}
+
+export function markerSrc(harness: string, posture: "idle" | "working"): string {
+  const faction = paintedFaction(harness) ?? "neutral";
+  const file = posture === "working" ? "work-marker-02" : "idle-marker-01";
+  return `/rts-art-v2/fx/${faction}-${file}.png`;
 }
 
 /**

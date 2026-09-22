@@ -1,3 +1,5 @@
+import type { BuildingKind, ResourceKind } from "./rtsArt";
+import { RESOURCE_KINDS } from "./rtsArt";
 import type { CampaignBase, ViewState } from "./types";
 
 export const WORLD = { width: 2400, height: 1600 };
@@ -40,8 +42,8 @@ export function fitView(
   if (bases.length === 0 || width <= 0 || height <= 0) {
     return { x: 40, y: 40, scale: 1 };
   }
-  const padX = 260;
-  const padY = 230;
+  const padX = 420;
+  const padY = 360;
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
@@ -66,15 +68,47 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-/** Token position relative to a base anchor. Rows are centered and hold up to four units. */
+/** Token position relative to a base anchor. Rows are centered and hold up to five units. */
 export function unitSlot(index: number, count: number): { x: number; y: number } {
-  const columns = Math.min(4, Math.max(count, 1));
+  const columns = Math.min(5, Math.max(count, 1));
   const row = Math.floor(index / columns);
   const rowStart = row * columns;
   const rowCount = Math.min(columns, count - rowStart);
   const column = index - rowStart;
   return {
-    x: (column - (rowCount - 1) / 2) * 150,
-    y: row * 124,
+    x: (column - (rowCount - 1) / 2) * 118,
+    y: row * 108,
   };
+}
+
+/** Satellite buildings around a base anchor. The pad itself is the outpost at the origin. */
+export const BUILDING_OFFSET: Record<BuildingKind, { x: number; y: number }> = {
+  pad: { x: 0, y: 0 },
+  depot: { x: -196, y: 42 },
+  turret: { x: 196, y: 34 },
+  refinery: { x: -122, y: -124 },
+  barracks: { x: 128, y: -118 },
+  lab: { x: 4, y: -196 },
+};
+
+export const RESOURCE_OFFSETS: Array<{ x: number; y: number }> = [
+  { x: -252, y: 78 },
+  { x: 256, y: 86 },
+  { x: 214, y: -206 },
+];
+
+/** A few props per base. Every fourth base shows all three kinds so the field reads as a set. */
+export function resourcePlacements(baseIndex: number): Array<{ kind: ResourceKind; slot: number }> {
+  if (baseIndex % 4 === 0) {
+    return RESOURCE_KINDS.map((kind, slot) => ({ kind, slot }));
+  }
+  const first = baseIndex % RESOURCE_KINDS.length;
+  const second = (baseIndex + 1) % RESOURCE_KINDS.length;
+  const a = RESOURCE_KINDS[first];
+  const b = RESOURCE_KINDS[second];
+  if (!a || !b) return [];
+  return [
+    { kind: a, slot: 0 },
+    { kind: b, slot: 1 },
+  ];
 }

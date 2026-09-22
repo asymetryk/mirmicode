@@ -2,9 +2,26 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { postureOf, factionName } from "../factions";
 import { harnessSlug } from "../format";
-import { dominantFaction } from "../rtsArt";
-import { WORLD, fitView, clamp, unitSlot, type PositionedBase } from "../layout";
+import {
+  BUILDING_KINDS,
+  buildingSrc,
+  dominantFaction,
+  resourceSrc,
+  roleLabel,
+  unitRole,
+} from "../rtsArt";
+import {
+  WORLD,
+  fitView,
+  clamp,
+  unitSlot,
+  BUILDING_OFFSET,
+  RESOURCE_OFFSETS,
+  resourcePlacements,
+  type PositionedBase,
+} from "../layout";
 import type { ViewState } from "../types";
+import { Cutout } from "./Cutout";
 import { Minimap } from "./Minimap";
 import { Outpost } from "./Outpost";
 import { UnitFigure } from "./UnitFigure";
@@ -198,10 +215,40 @@ export function MapStage({
         }}
       >
         <p className="world-mark">Bases</p>
-        {bases.map((base) => {
+        {bases.map((base, baseIndex) => {
           const baseSelected = base.id === selectedBaseId;
+          const faction = dominantFaction(base.units);
           return (
             <div key={base.id} className="base-site" style={{ left: base.x, top: base.y }}>
+              {BUILDING_KINDS.filter((kind) => kind !== "pad").map((kind) => {
+                const src = buildingSrc(faction, kind);
+                const slot = BUILDING_OFFSET[kind];
+                if (!src) return null;
+                return (
+                  <span
+                    key={kind}
+                    className={`dressing building building-${kind}`}
+                    style={{ left: slot.x, top: slot.y }}
+                    aria-hidden="true"
+                  >
+                    <Cutout src={src} />
+                  </span>
+                );
+              })}
+              {resourcePlacements(baseIndex).map((prop) => {
+                const slot = RESOURCE_OFFSETS[prop.slot];
+                if (!slot) return null;
+                return (
+                  <span
+                    key={`${prop.kind}-${prop.slot}`}
+                    className={`dressing resource resource-${prop.kind}`}
+                    style={{ left: slot.x, top: slot.y }}
+                    aria-hidden="true"
+                  >
+                    <Cutout src={resourceSrc(faction, prop.kind)} />
+                  </span>
+                );
+              })}
               <button
                 type="button"
                 className="outpost"
@@ -209,16 +256,18 @@ export function MapStage({
                 aria-pressed={baseSelected && selectedUnitId === null}
                 onClick={() => onTokenClick(base.id, null)}
               >
-                <Outpost
-                  faction={dominantFaction(base.units)}
-                  selected={baseSelected}
-                  attached={baseSelected && attached}
-                />
+                <Outpost faction={faction} selected={baseSelected} attached={baseSelected && attached} />
                 <span className="outpost-name">{base.repo}</span>
               </button>
               {base.units.map((unit, index) => {
                 const slot = unitSlot(index, base.units.length);
                 const selected = unit.id === selectedUnitId;
+                const role = unitRole(unit.model);
+                const typeLabel = role ? roleLabel(role) : unit.model;
+                const typeBit =
+                  role && typeLabel.toLowerCase() !== unit.model.toLowerCase()
+                    ? `${typeLabel} (${unit.model})`
+                    : unit.model;
                 return (
                   <button
                     key={unit.id}
@@ -228,10 +277,11 @@ export function MapStage({
                     data-unit-id={unit.id}
                     data-faction={harnessSlug(unit.harness)}
                     data-posture={postureOf(unit.status)}
+                    data-role={role ?? "other"}
                     aria-pressed={selected}
-                    aria-label={`${factionName(unit.harness)} ${unit.model}, ${unit.status ?? "idle"}, on ${base.repo}`}
+                    aria-label={`${factionName(unit.harness)} ${typeBit}, ${unit.status ?? "idle"}, on ${base.repo}`}
                     title={`${factionName(unit.harness)} · ${unit.model}`}
-                    style={{ left: slot.x, top: 128 + slot.y }}
+                    style={{ left: slot.x, top: 108 + slot.y }}
                     onClick={() => onTokenClick(base.id, unit.id)}
                   >
                     <span className="unit-figure">
@@ -240,9 +290,10 @@ export function MapStage({
                         model={unit.model}
                         status={unit.status}
                         selected={selected}
+                        showMarker
                       />
                     </span>
-                    <span className="unit-type">{unit.model}</span>
+                    <span className="unit-type">{typeLabel}</span>
                   </button>
                 );
               })}

@@ -1,4 +1,5 @@
-import { outpostSrc } from "../rtsArt";
+import { buildingSrc, outpostSrc } from "../rtsArt";
+import { Cutout } from "./Cutout";
 
 type OutpostProps = {
   faction: string | null;
@@ -7,19 +8,15 @@ type OutpostProps = {
 };
 
 export function Outpost({ faction, selected, attached }: OutpostProps) {
-  const src = faction ? outpostSrc(faction) : null;
-  const className = [
-    "outpost-sprite",
-    selected ? "is-selected" : "",
-    attached ? "is-attached" : "",
-  ]
+  const src = buildingSrc(faction, "pad") ?? (faction ? outpostSrc(faction) : null);
+  const className = ["outpost-sprite", selected ? "is-selected" : "", attached ? "is-attached" : ""]
     .filter(Boolean)
     .join(" ");
 
   return (
     <span className={className} data-faction={faction ?? "other"}>
       {selected ? <span className="ring" /> : null}
-      {src ? <img src={src} alt="" draggable={false} /> : <span className="outpost-fallback" />}
+      {src ? <Cutout src={src} /> : <span className="outpost-fallback" />}
     </span>
   );
 }

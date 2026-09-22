@@ -1,8 +1,23 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import sampleBases from "../data/sample-bases.json";
 import { postureOf } from "../factions";
-import { dominantFaction, glyphId, heroSrc, outpostSrc } from "../rtsArt";
-import { fitView, positionBases, unitSlot } from "../layout";
+import { BUILDING_OFFSET, fitView, positionBases, resourcePlacements, unitSlot } from "../layout";
+import {
+  BUILDING_KINDS,
+  RESOURCE_KINDS,
+  UNIT_ROLES,
+  buildingSrc,
+  dominantFaction,
+  glyphId,
+  heroSrc,
+  markerSrc,
+  outpostSrc,
+  resourceSrc,
+  unitRole,
+  unitSrc,
+} from "../rtsArt";
 import { normalizeWorkingSetPayload } from "./normalize";
 import { loadFixture, parseWorkingSetUrl, resolveSnapshot } from "./source";
 
@@ -332,6 +347,75 @@ describe("rts sprites", () => {
     expect(outpostSrc("Cursor")).toBe("/rts-art/building-outpost-cursor.png");
   });
 
+  it("maps models and explicit types onto staged v2 sprites", () => {
+    expect(unitRole("Astra")).toBe("scout");
+    expect(unitRole("Luna")).toBe("worker");
+    expect(unitRole("Terra")).toBe("drone");
+    expect(unitRole("Sol")).toBe("tankette");
+    expect(unitRole("Grok-4.6")).toBe("walker");
+    expect(unitRole("Gemini")).toBe("medic");
+    expect(unitRole("MiniMax")).toBe("mirmi-small");
+    expect(unitRole("Kimi")).toBe("mirmi-armed");
+    expect(unitRole("Scout")).toBe("scout");
+    expect(unitRole("Mirmi-armed")).toBe("mirmi-armed");
+    expect(unitRole("Mirmi-small")).toBe("mirmi-small");
+    expect(unitRole("unknown-model")).toBeNull();
+
+    expect(unitSrc("cursor", "Grok-4.6")).toBe("/rts-art-v2/units/cursor-walker-07.png");
+    expect(unitSrc("codex", "Luna")).toBe("/rts-art-v2/units/codex-worker-bot-02.png");
+    expect(unitSrc("ohmypi", "Builder")).toBe("/rts-art-v2/units/ohmypi-builder-bot-10.png");
+    expect(unitSrc("opencode", "Walker")).toBe("/rts-art-v2/units/neutral-walker-07.png");
+    expect(unitSrc("opencode", "Scout")).toBe("/rts-art-v2/units/neutral-scout-bot-01.png");
+    expect(unitSrc("opencode", "Mirmi-small")).toBeNull();
+    expect(unitSrc("opencode", "Skiff")).toBeNull();
+    expect(unitSrc("opencode", "unknown-model")).toBeNull();
+
+    expect(buildingSrc("cursor", "pad")).toBe("/rts-art-v2/buildings/cursor-pad-01.png");
+    expect(buildingSrc("codex", "lab")).toBe("/rts-art-v2/buildings/codex-lab-06.png");
+    expect(buildingSrc("ohmypi", "turret")).toBe("/rts-art-v2/buildings/ohmypi-turret-03.png");
+    expect(buildingSrc(null, "depot")).toBe("/rts-art-v2/buildings/neutral-depot-02.png");
+    expect(buildingSrc(null, "pad")).toBeNull();
+    expect(resourceSrc("ohmypi", "scrap")).toBe("/rts-art-v2/resources/ohmypi-scrap-pile-03.png");
+    expect(resourceSrc(null, "crystal")).toBe("/rts-art-v2/resources/neutral-crystal-node-01.png");
+    expect(markerSrc("cursor", "working")).toBe("/rts-art-v2/fx/cursor-work-marker-02.png");
+    expect(markerSrc("codex", "idle")).toBe("/rts-art-v2/fx/codex-idle-marker-01.png");
+    expect(markerSrc("opencode", "working")).toBe("/rts-art-v2/fx/neutral-work-marker-02.png");
+
+    for (const faction of ["cursor", "codex", "ohmypi"] as const) {
+      for (const role of UNIT_ROLES) {
+        expectPublic(unitSrc(faction, role));
+      }
+      for (const kind of BUILDING_KINDS) {
+        expectPublic(buildingSrc(faction, kind));
+      }
+      for (const kind of RESOURCE_KINDS) {
+        expectPublic(resourceSrc(faction, kind));
+      }
+      expectPublic(markerSrc(faction, "idle"));
+      expectPublic(markerSrc(faction, "working"));
+    }
+  });
+
+  it("fields every v2 silhouette on the sample map and keeps faction majorities", () => {
+    const snapshot = loadFixture();
+    const roles = new Set(
+      snapshot.bases.flatMap((base) => base.units.map((unit) => unitRole(unit.model))),
+    );
+    for (const role of UNIT_ROLES) expect(roles.has(role)).toBe(true);
+
+    const byId = Object.fromEntries(snapshot.bases.map((base) => [base.id, dominantFaction(base.units)]));
+    expect(byId.mirmicode).toBe("cursor");
+    expect(byId.charter).toBe("codex");
+    expect(byId["ops-board"]).toBe("ohmypi");
+    expect(byId["prompt-lab"]).toBe("codex");
+
+    expect(resourcePlacements(0).map((prop) => prop.kind)).toEqual(["crystal", "biomass", "scrap"]);
+    expect(resourcePlacements(1)).toHaveLength(2);
+    const offsets = Object.values(BUILDING_OFFSET);
+    const keys = new Set(offsets.map((slot) => `${slot.x},${slot.y}`));
+    expect(keys.size).toBe(offsets.length);
+  });
+
   it("picks the plurality faction for the outpost and breaks ties toward cursor", () => {
     expect(
       dominantFaction([
@@ -382,5 +466,16 @@ describe("layout", () => {
     const keys = new Set(slots.map((slot) => `${slot.x},${slot.y}`));
     expect(keys.size).toBe(4);
     expect(Math.max(...slots.map((slot) => slot.x)) - Math.min(...slots.map((slot) => slot.x))).toBeGreaterThan(80);
+
+    const army = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((index) => unitSlot(index, 10));
+    const armyKeys = new Set(army.map((slot) => `${slot.x},${slot.y}`));
+    expect(armyKeys.size).toBe(10);
+    expect(new Set(army.map((slot) => slot.y)).size).toBeGreaterThan(1);
   });
 });
+
+function expectPublic(src: string | null): void {
+  expect(src, "missing sprite path").toBeTruthy();
+  const rel = (src ?? "").replace(/^\//, "");
+  expect(existsSync(resolve("public", rel)), rel).toBe(true);
+}
