@@ -89,8 +89,14 @@ spec:
               memory: 256Mi
           securityContext:
             allowPrivilegeEscalation: false
+            # caddy:2-alpine sets cap_net_bind_service=+ep on the binary.
+            # drop ALL without adding it back fails exec with
+            # "caddy: Operation not permitted" even on :8080.
+            # Homelab pattern: keep drop ALL and add NET_BIND_SERVICE.
+            # agentinfra deploy/k3s/working-set-ui was not readable from here.
             capabilities:
               drop: ["ALL"]
+              add: ["NET_BIND_SERVICE"]
             runAsNonRoot: true
             runAsUser: 1000
             runAsGroup: 1000

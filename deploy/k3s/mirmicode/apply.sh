@@ -48,10 +48,12 @@ if ! kubectl -n mirmicode get secret mirmicode-tailscale-auth >/dev/null 2>&1; t
 fi
 
 rendered="$(mktemp)"
-trap 'rm -f "${rendered}"' EXIT
+trap 'rm -f "${rendered}" "${rendered}.bak"' EXIT
 kubectl kustomize "${here}" > "${rendered}"
 if [[ "${image}" != "mirmicode.local/web:latest" ]]; then
-  sed -i "s#mirmicode.local/web:latest#${image}#g" "${rendered}"
+  # GNU sed accepts -i with no suffix; BSD sed (macOS) requires one.
+  # -i.bak then delete the backup works on both.
+  sed -i.bak "s#mirmicode.local/web:latest#${image}#g" "${rendered}" && rm -f "${rendered}.bak"
 fi
 kubectl apply -f "${rendered}"
 kubectl -n mirmicode rollout status deployment/mirmicode --timeout=180s
