@@ -14,9 +14,10 @@ import { CampDossierPanel } from "./components/CampDossierPanel";
 import { MapStage } from "./components/MapStage";
 import { SelectionPopover } from "./components/SelectionPopover";
 import { SideRail } from "./components/SideRail";
+import { resolveDossier } from "./dossier";
 import { positionBases } from "./layout";
 import { DEFAULT_NOISE_FILTER, applyNoiseFilter, type NoiseFilter } from "./mapNoise";
-import type { CampDossier, MapSnapshot } from "./types";
+import type { CampDossierCatalog, MapSnapshot } from "./types";
 
 const HIDE_NOISE_KEY = "mirmicode.hideNoise";
 const HIDE_DETACHED_KEY = "mirmicode.hideDetached";
@@ -36,13 +37,7 @@ export function App() {
   const [railOpen, setRailOpen] = useState(readRailOpen);
   const requestVersion = useRef(0);
 
-  const dossierByCampId = useMemo(() => {
-    const map = new Map<string, CampDossier>();
-    for (const dossier of campDossiers.camps) {
-      map.set(dossier.campId, dossier);
-    }
-    return map;
-  }, []);
+  const dossierCatalog = campDossiers as CampDossierCatalog;
 
   useEffect(() => {
     let cancelled = false;
@@ -222,7 +217,7 @@ export function App() {
             />
             <CampDossierPanel
               base={selected}
-              dossier={selected ? dossierByCampId.get(selected.id) ?? null : null}
+              dossier={selected ? resolveDossier(selected, dossierCatalog) : null}
               onClose={onClearSelection}
             />
           </MapStage>

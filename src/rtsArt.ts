@@ -187,6 +187,35 @@ export function buildingSetForStage(stage: CampStage | null | undefined): Buildi
   return STAGE_BUILDING_SET[key];
 }
 
+/**
+ * Stage dressing for camps with no faction claim (bare / no painted army).
+ * Returns a deterministic subset of the stage set keyed by a stable hash of
+ * `repo + stage` so neighbouring camps on the field do not look identical.
+ * The pad is always kept when the stage includes it, so an Outpost still draws.
+ */
+export function bareBuildingSet(stage: CampStage | null | undefined, repo: string): BuildingKind[] {
+  const stageSet = buildingSetForStage(stage);
+  if (stageSet.length <= 1) return stageSet;
+  const seed = `${repo.trim().toLowerCase()}|${stageFromString(stage)}`;
+  const drop = seedHash(seed) % Math.max(1, stageSet.length - 1);
+  const skip: Record<number, true> = {};
+  for (let i = 0; i < drop; i += 1) {
+    skip[seedHash(`${seed}::drop::${i}`) % stageSet.length] = true;
+  }
+  const next = stageSet.filter((_, index) => !skip[index]);
+  if (!next.includes("pad")) next.unshift("pad");
+  return next;
+}
+
+/** djb2-style hash; cheap, deterministic across browsers. */
+function seedHash(value: string): number {
+  let hash = 5381;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = ((hash << 5) + hash + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
 export function resourceLabel(kind: ResourceKind): string {
   return RESOURCE_LABEL[kind];
 }

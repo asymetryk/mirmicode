@@ -32,6 +32,11 @@ export type NoiseSubject = {
   lastPrompt?: string | null;
   /** Payload flag. True when a prompt exists even if public scrub cleared the text. */
   hasContextSnippet?: boolean;
+  /**
+   * Adapter-set flag. Native feed units have no prompt bodies but should
+   * still be drawn; the snippet hard-filter lets them through.
+   */
+  snippetExempt?: boolean;
 };
 
 export type FilteredBases = {
@@ -124,7 +129,14 @@ function emphasisRank(emphasis: Emphasis): number {
 }
 
 /** Last-prompt / note chain only. Thread labels alone are not a usable snippet. */
-export function hasUsableContextSnippet(unit: { hasContextSnippet?: boolean; lastPrompt?: string | null }): boolean {
+export function hasUsableContextSnippet(
+  unit: {
+    hasContextSnippet?: boolean;
+    snippetExempt?: boolean;
+    lastPrompt?: string | null;
+  },
+): boolean {
+  if (unit.snippetExempt === true) return true;
   if (unit.hasContextSnippet === true) return true;
   if (typeof unit.lastPrompt === "string" && unit.lastPrompt.trim().length > 0) return true;
   return false;

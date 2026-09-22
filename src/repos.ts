@@ -32,6 +32,7 @@ export function mergeRepoCatalog(bases: CampaignBase[], catalog: readonly string
       updatedAt: "unknown",
       place: null,
       stage: "unknown",
+      oneLiner: null,
       units: [],
     });
   }

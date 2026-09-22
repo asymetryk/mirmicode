@@ -11,6 +11,7 @@ export function CampDossierPanel({ base, dossier, onClose }: CampDossierPanelPro
   if (!base) return null;
 
   const publicMode = isPublicMode();
+  const heading = dossier?.campId ?? base.label ?? base.repo;
 
   return (
     <div className="camp-dossier-panel" role="complementary" aria-label="Camp dossier">
@@ -20,14 +21,55 @@ export function CampDossierPanel({ base, dossier, onClose }: CampDossierPanelPro
           Close
         </button>
       </div>
-      <h2>{dossier ? dossier.campId : base.repo}</h2>
+      <h2>{heading}</h2>
       {dossier ? (
         <DossierBody dossier={dossier} publicMode={publicMode} />
       ) : (
-        <p className="lede">No dossier entry for this camp yet.</p>
+        <DossierFallback base={base} publicMode={publicMode} />
       )}
     </div>
   );
+}
+
+function DossierFallback({ base, publicMode }: { base: CampaignBase; publicMode: boolean }) {
+  const openProjectHref = base.openProject?.href ?? null;
+  const repoHref = repoLinkFromBase(base);
+  return (
+    <>
+      {base.oneLiner ? <p className="lede">{base.oneLiner}</p> : null}
+      <p className="lede">No dossier entry for this camp yet.</p>
+      <section className="camp-dossier-section">
+        <h3>Links</h3>
+        <ul className="camp-dossier-links">
+          {repoHref ? (
+            <li>
+              <a href={repoHref} target="_blank" rel="noreferrer">
+                Repository
+              </a>
+            </li>
+          ) : null}
+          {openProjectHref && !publicMode ? (
+            <li>
+              <a href={openProjectHref} target="_blank" rel="noreferrer">
+                OpenProject
+              </a>
+            </li>
+          ) : null}
+          {!repoHref && !openProjectHref ? (
+            <li className="is-empty">No public links recorded.</li>
+          ) : null}
+        </ul>
+      </section>
+    </>
+  );
+}
+
+function repoLinkFromBase(base: CampaignBase): string | null {
+  const repo = base.repo.trim();
+  if (!repo || repo.toLowerCase() === "unassigned") return null;
+  if (repo.includes("github.com")) return repo;
+  if (/^[\w.-]+\/[\w.-]+$/.test(repo)) return `https://github.com/${repo}`;
+  return null;
 }
 
 function DossierBody({ dossier, publicMode }: { dossier: CampDossier; publicMode: boolean }) {

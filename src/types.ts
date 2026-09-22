@@ -20,6 +20,12 @@ export type Unit = {
    * Survives public scrubbing so the map hard filter can keep units that have context without showing text.
    */
   hasContextSnippet: boolean;
+  /**
+   * Native-feed only: the source never carries prompt bodies, so the
+   * "usable snippet" hard filter does not apply. Set by the adapter; the
+   * noise filter lets these units stay without lying about `hasContextSnippet`.
+   */
+  snippetExempt?: boolean;
   /** annotation.status, then flat status. Operator triage such as open or done. Not lifecycle. */
   status: string | null;
   /** observed.lifecycle. Live values: idle, detached, archived, unknown. Null when absent. */
@@ -58,6 +64,11 @@ export type CampaignBase = {
   place: { x: number; y: number } | null;
   /** Camp lifecycle stage. Defaults to "unknown" when missing or invalid. */
   stage: CampStage;
+  /**
+   * Native-feed camp `one_liner`. Used by the dossier panel as a fallback
+   * when no dossier entry exists for this base. Null for other feeds.
+   */
+  oneLiner: string | null;
   units: Unit[];
 };
 
