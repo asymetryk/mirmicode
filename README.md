@@ -21,7 +21,7 @@ Labhand applies. This repo does not run `kubectl` from a cloud VM.
 | Surface | Mode | Prompts |
 | --- | --- | --- |
 | `mirmicode.tail21f530.ts.net` | Private (default) | Shows `observed.lastUserPrompt` / aliases as **Last prompt** |
-| `mirmicode.asymetryk.com` | Public / read-only | Scrubs prompts; HUD/tooltips/Inspector show **Thread** (label) or omit the row |
+| `mirmicode.asymetryk.com` | Public / read-only | Scrubs prompts; popover/tooltips show **Thread** (label) or omit the snippet hero |
 
 Public mode still draws bases, units, filters, Unassigned, status, lifecycle, presence, and freshness. It drops `lastUserPrompt`, `last_user_prompt`, flat prompt aliases, and `annotation.note` used as a prompt. Obvious absolute home paths and `.jsonl` paths in labels/thread names are redacted when scrubbing.
 
@@ -112,11 +112,13 @@ npm run preview
 
 `preview` serves the static build at http://127.0.0.1:4173. A production `npm run build` without the Docker `ARG` does not bake the same-origin path; the image build does.
 
-Drag to pan. Scroll to zoom. **Select** a unit to read its harness, model, thread, status, and lifecycle in the HUD. **Attach** locks the view on that unit’s base. The **minimap** jumps the view. Escape detaches. These are view controls. The map does not send orders to agents.
+Drag to pan. Scroll to zoom. **Select** a unit to open a popover with its context snippet (hero), harness, model, thread, status, and lifecycle. **Attach** locks the view on that unit’s base. The **minimap** jumps the view. Escape closes the popover (or detaches first). These are view controls. The map does not send orders to agents.
 
-The **Noise** switch starts on. It hides `presence` `not_seen` and `annotation.hidden` true. `archived` and `detached` stay on the map dimmer until **Hide archived** or **Hide detached** is turned on. `unknown` stays visible and dimmer. A Cursor unit with `lifecycle` `unknown` and no repo is dimmed further inside Unassigned. **Unassigned** is one outpost with a count. Select it to open that list in the HUD. Counts come from the loaded snapshot. They are not a fixed demo size.
+The **Noise** switch starts on. It hides `presence` `not_seen` and `annotation.hidden` true. `archived` and `detached` stay on the map dimmer until **Hide archived** or **Hide detached** is turned on. `unknown` stays visible and dimmer. A Cursor unit with `lifecycle` `unknown` and no repo is dimmed further inside Unassigned. **Unassigned** is one outpost with a count. Select it to open that list in the popover. Counts come from the loaded snapshot. They are not a fixed demo size.
 
-The legend under the title groups the atlas: faction bodies, the ten unit types, and the field (buildings and resource props). It does not list every file in the pack.
+Units without a usable **Last prompt** snippet (same resolution as the field below) are hard-hidden from the map — no empty shells. Public mode still scrubs prompt *text* but keeps units whose payload had a snippet.
+
+The legend lives in the right rail (factions, unit types, field art, noise switches, data source). The map stays nearly fullscreen.
 
 ## Sprites
 
@@ -261,11 +263,11 @@ Flat rows do not invent a second unit from a parent harness when `units` or `age
 | Operator hidden | `annotation.hidden`, then flat `hidden` | Boolean `true` hides the unit. Any other value, including the string `"true"`, does not. |
 | Stale snapshot | `snapshot.stale` | Boolean `true` shows a refresh-failed banner. It does not hide units. Missing or non-boolean stays quiet. |
 | Unit label | `annotation.label`, flat `label`, then `thread_name` / `threadName` | First nonblank string wins. |
-| Last prompt | `observed.lastUserPrompt`, then `observed.last_user_prompt`, then flat `last_prompt`, `lastPrompt`, `last_user_message`, `lastUserMessage`, `user_prompt`, `userPrompt`, `prompt`, `input`, then `annotation.note` | First nonblank string wins; non-string and blank values are skipped. The published observed prompt is at most 240 characters and is kept in full for the tooltip. Never derived from `annotation.label`. **Public BIP** (`VITE_PUBLIC_MODE` / `PUBLIC_MODE`) drops this field entirely unless `VITE_PUBLIC_FULL_LIVE` / `PUBLIC_FULL_LIVE` is set. |
+| Last prompt | `observed.lastUserPrompt`, then `observed.last_user_prompt`, then flat `last_prompt`, `lastPrompt`, `last_user_message`, `lastUserMessage`, `user_prompt`, `userPrompt`, `prompt`, `input`, then `annotation.note` | First nonblank string wins; non-string and blank values are skipped. The published observed prompt is at most 240 characters and is kept in full for the tooltip. Never derived from `annotation.label`. Units without a usable value are hard-hidden from the map. **Public BIP** (`VITE_PUBLIC_MODE` / `PUBLIC_MODE`) drops displayed prompt text unless `VITE_PUBLIC_FULL_LIVE` / `PUBLIC_FULL_LIVE` is set, but still keeps `hasContextSnippet` so the hard filter can show those units without leaking text. |
 | Last touched | `annotation.updated_at`, `observed.updated_at`, then flat `updated_at`, `updatedAt`, `last_touched`, or `lastTouched` | The base shows the latest valid unit time. |
 | Placement | `x`, `y` on the base | Optional numbers in `0..1`. Map presentation only. Ignored when out of range. |
 
-Unknown fields and transcript bodies are ignored. Display metadata is capped at 180 characters, except prompt text, which is retained for full native `title` tooltips. The HUD and roster show `Last prompt:` with prompt text shortened to 140 characters; without a prompt they show `Thread:` using the unit label/thread name. Map-unit titles use the same honest prefix with full prompt text. When the feed includes `observed.lastUserPrompt` or `observed.last_user_prompt`, that text is the Last prompt line. Older prompt aliases and `annotation.note` remain the fallback. `annotation.label` alone stays `Thread:`. On a public BIP build, prompts are scrubbed and the UI stays on `Thread:` (or omits the row when there is no label). Both sample fixtures include fictional prompt text and label-only units. A grouped fixture record looks like this:
+Unknown fields and transcript bodies are ignored. Display metadata is capped at 180 characters, except prompt text, which is retained for full native `title` tooltips. The selection popover shows the prompt as hero content when private; public BIP scrubs that hero and falls back to `Thread:` (label/name) in secondary lines. `annotation.label` alone is not enough to place a unit on the map. Both sample fixtures include fictional prompt text and a few label-only shells that the hard filter removes. A grouped fixture record looks like this:
 
 ```json
 {
@@ -321,7 +323,7 @@ Hidden units remain in the snapshot. Turning the noise switch off draws `not_see
 
 ### Unassigned
 
-Nested items with both `observed.repo` and `observed.repo_name` missing or blank share one base named Unassigned. The map draws that base as a single outpost and a count of the units that passed the filter. It does not place a token per unit. Select the outpost to open the list in the HUD, then select a unit. The HUD shows lifecycle, presence, freshness, and status on separate lines, plus the honest Last prompt or Thread line. Assigned repos keep one token per visible unit. Repo-less Cursor units whose lifecycle is `unknown` sit at the end of that list, dimmer than the rest.
+Nested items with both `observed.repo` and `observed.repo_name` missing or blank share one base named Unassigned. The map draws that base as a single outpost and a count of the units that passed the filter (noise **and** usable context snippet). It does not place a token per unit. Select the outpost to open the list in the popover, then select a unit. The popover shows lifecycle, presence, freshness, and status on separate lines, plus the snippet hero when private. Assigned repos keep one token per visible unit. Repo-less Cursor units whose lifecycle is `unknown` sit at the end of that list, dimmer than the rest.
 
 The sample fixture’s noise rows and Unassigned outpost are synthetic. They demonstrate the filter offline. Live counts follow whatever the Working Set returns.
 

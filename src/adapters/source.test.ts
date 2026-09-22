@@ -180,6 +180,7 @@ describe("normalizeWorkingSetPayload", () => {
         threadName: "flat-thread",
         label: "Annotated label",
         lastPrompt: null,
+        hasContextSnippet: false,
         updatedAt: "2026-09-21T10:00:00Z",
         status: "blocked",
         lifecycle: "idle",

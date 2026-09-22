@@ -7,9 +7,9 @@ import {
   readStartupWorkingSetUrl,
   resolveSnapshot,
 } from "./adapters/source";
-import { Inspector } from "./components/Inspector";
 import { Legend } from "./components/Legend";
 import { MapStage } from "./components/MapStage";
+import { SelectionPopover } from "./components/SelectionPopover";
 import { positionBases } from "./layout";
 import { DEFAULT_NOISE_FILTER, applyNoiseFilter, type NoiseFilter } from "./mapNoise";
 import type { MapSnapshot } from "./types";
@@ -51,11 +51,17 @@ export function App() {
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setAttached(false);
+      if (event.key !== "Escape") return;
+      if (attached) {
+        setAttached(false);
+        return;
+      }
+      setSelectedBaseId(null);
+      setSelectedUnitId(null);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [attached]);
 
   const filtered = useMemo(
     () => applyNoiseFilter(snapshot?.bases ?? [], filter),
@@ -115,6 +121,12 @@ export function App() {
     setAttached((value) => !value);
   }
 
+  function onClearSelection() {
+    setSelectedBaseId(null);
+    setSelectedUnitId(null);
+    setAttached(false);
+  }
+
   const status = statusLine(snapshot, loading, positioned, filtered.hiddenCount);
   const staleNote = snapshot?.stale ? STALE_SNAPSHOT_BANNER : null;
 
@@ -154,16 +166,6 @@ export function App() {
           </p>
         ) : null}
       </header>
-      <Legend
-        bases={positioned}
-        hideNoise={filter.hideNoise}
-        hideDetached={filter.hideDetached}
-        hideArchived={filter.hideArchived}
-        hiddenCount={filtered.hiddenCount}
-        onHideNoise={onHideNoise}
-        onHideDetached={onHideDetached}
-        onHideArchived={onHideArchived}
-      />
       <MapStage
         key={`${snapshot?.source ?? "pending"}:${snapshot?.fetchedAt ?? "0"}`}
         bases={positioned}
@@ -178,12 +180,30 @@ export function App() {
           setSelectedBaseId(baseId);
           setSelectedUnitId(unitId);
         }}
-      />
-      <Inspector
-        base={selected}
-        unit={selectedUnit}
-        attached={attached && selected !== null}
-        now={now}
+        onClearSelection={onClearSelection}
+      >
+        <SelectionPopover
+          base={selected}
+          unit={selectedUnit}
+          attached={attached && selected !== null}
+          now={now}
+          onToggleAttach={onToggleAttach}
+          onClose={onClearSelection}
+          onSelectUnit={(baseId, unitId) => {
+            setSelectedBaseId(baseId);
+            setSelectedUnitId(unitId);
+          }}
+        />
+      </MapStage>
+      <Legend
+        bases={positioned}
+        hideNoise={filter.hideNoise}
+        hideDetached={filter.hideDetached}
+        hideArchived={filter.hideArchived}
+        hiddenCount={filtered.hiddenCount}
+        onHideNoise={onHideNoise}
+        onHideDetached={onHideDetached}
+        onHideArchived={onHideArchived}
         fetchedAt={snapshot?.fetchedAt ?? null}
         sourceLabel={status}
         urlDraft={urlDraft}
@@ -191,11 +211,6 @@ export function App() {
         onUrlDraft={setUrlDraft}
         onLoadUrl={onLoadUrl}
         onUseFixture={onUseFixture}
-        onToggleAttach={onToggleAttach}
-        onSelectUnit={(baseId, unitId) => {
-          setSelectedBaseId(baseId);
-          setSelectedUnitId(unitId);
-        }}
       />
     </div>
   );

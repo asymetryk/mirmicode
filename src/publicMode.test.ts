@@ -72,10 +72,12 @@ describe("public BIP prompt scrub", () => {
     if (!camel || !pathy) throw new Error("Missing normalized units");
 
     expect(camel.lastPrompt).toBeNull();
+    expect(camel.hasContextSnippet).toBe(true);
     expect(unitContext(camel)).toBe("Thread: Thread title");
     expect(unitContext(camel)).not.toContain("Secret");
     expect(unitContext(camel)).not.toContain("Last prompt");
     expect(pathy.lastPrompt).toBeNull();
+    expect(pathy.hasContextSnippet).toBe(false);
     expect(pathy.label).toBe("[path redacted]");
     expect(pathy.threadName).toBe("[path redacted]");
   });
@@ -106,6 +108,7 @@ describe("public BIP prompt scrub", () => {
         threadName: "thread-a",
         label: "Label A",
         lastPrompt: "should not leak",
+        hasContextSnippet: true,
         status: null,
         lifecycle: null,
         presence: null,

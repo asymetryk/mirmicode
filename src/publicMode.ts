@@ -1,7 +1,7 @@
 /**
  * Public / read-only BIP mode.
  *
- * When on, agent prompts stay off the map UI (HUD, tooltips, Inspector).
+ * When on, agent prompts stay off the map UI (popover, tooltips, roster).
  * Private/tailnet builds leave this off so lastUserPrompt still shows.
  *
  * Precedence: runtime `window.__MIRMICODE__` (pod env) overrides bake-time

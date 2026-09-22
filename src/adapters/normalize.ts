@@ -148,20 +148,21 @@ function readUnit(
   const label = scrubSensitivePath(
     bound(readString(annotation?.label) ?? readString(record.label) ?? threadName),
   );
-  // Public BIP: drop every prompt alias so HUD/tooltips never see private text.
-  const lastPrompt = shouldScrubPrompts()
-    ? null
-    : (readString(observed?.lastUserPrompt) ??
-      readString(observed?.last_user_prompt) ??
-      readString(record.last_prompt) ??
-      readString(record.lastPrompt) ??
-      readString(record.last_user_message) ??
-      readString(record.lastUserMessage) ??
-      readString(record.user_prompt) ??
-      readString(record.userPrompt) ??
-      readString(record.prompt) ??
-      readString(record.input) ??
-      readString(annotation?.note));
+  // Same order as Last prompt / hard-filter snippet. Public BIP drops the text but keeps existence.
+  const resolvedPrompt =
+    readString(observed?.lastUserPrompt) ??
+    readString(observed?.last_user_prompt) ??
+    readString(record.last_prompt) ??
+    readString(record.lastPrompt) ??
+    readString(record.last_user_message) ??
+    readString(record.lastUserMessage) ??
+    readString(record.user_prompt) ??
+    readString(record.userPrompt) ??
+    readString(record.prompt) ??
+    readString(record.input) ??
+    readString(annotation?.note);
+  const hasContextSnippet = resolvedPrompt !== null;
+  const lastPrompt = shouldScrubPrompts() ? null : resolvedPrompt;
   return {
     id: uniqueId(rawId, seenUnitIds),
     harness,
@@ -169,6 +170,7 @@ function readUnit(
     threadName,
     label,
     lastPrompt,
+    hasContextSnippet,
     status: bound(readString(annotation?.status) ?? readString(record.status)),
     lifecycle: bound(
       readString(observed?.lifecycle) ??

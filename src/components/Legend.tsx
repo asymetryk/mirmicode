@@ -1,5 +1,7 @@
+import type { FormEvent } from "react";
+import { CAHQ_WORKING_SET_ORIGIN, SAME_ORIGIN_WORKING_SET_PATH } from "../adapters/source";
 import { FACTION_ORDER, factionName, legendFactions } from "../factions";
-import { harnessSlug } from "../format";
+import { formatAbsolute, harnessSlug } from "../format";
 import {
   BUILDING_KINDS,
   RESOURCE_KINDS,
@@ -24,6 +26,13 @@ type LegendProps = {
   onHideNoise: (value: boolean) => void;
   onHideDetached: (value: boolean) => void;
   onHideArchived: (value: boolean) => void;
+  fetchedAt: string | null;
+  sourceLabel: string;
+  urlDraft: string;
+  loading: boolean;
+  onUrlDraft: (value: string) => void;
+  onLoadUrl: (event: FormEvent<HTMLFormElement>) => void;
+  onUseFixture: () => void;
 };
 
 export function Legend({
@@ -35,48 +44,61 @@ export function Legend({
   onHideNoise,
   onHideDetached,
   onHideArchived,
+  fetchedAt,
+  sourceLabel,
+  urlDraft,
+  loading,
+  onUrlDraft,
+  onLoadUrl,
+  onUseFixture,
 }: LegendProps) {
   const harnesses = bases.flatMap((base) => base.units.map((unit) => unit.harness));
   const factions = legendFactions(harnesses);
   const extras = extraTypes(bases);
 
   return (
-    <aside className="legend" aria-label="Legend">
-      <div className="legend-row">
+    <aside className="legend legend-rail" aria-label="Legend">
+      <div className="legend-block">
         <span className="legend-kicker">Factions</span>
-        {factions.map((harness) => (
-          <span key={harness} className="legend-faction" data-faction={harnessSlug(harness)}>
-            <UnitFigure harness={harness} model="Scout" status="idle" />
-            <span>{factionName(harness)}</span>
-          </span>
-        ))}
-      </div>
-      <div className="legend-row">
-        <span className="legend-kicker">Types</span>
-        {UNIT_ROLES.map((role, index) => {
-          const harness = FACTION_ORDER[index % FACTION_ORDER.length] ?? "cursor";
-          return (
-            <span key={role} className="legend-type" data-faction={harness}>
-              <UnitFigure harness={harness} model={role} status="idle" />
-              <span>{roleLabel(role)}</span>
+        <div className="legend-stack">
+          {factions.map((harness) => (
+            <span key={harness} className="legend-faction" data-faction={harnessSlug(harness)}>
+              <UnitFigure harness={harness} model="Scout" status="idle" />
+              <span>{factionName(harness)}</span>
             </span>
-          );
-        })}
+          ))}
+        </div>
       </div>
-      <div className="legend-row">
+      <div className="legend-block">
+        <span className="legend-kicker">Types</span>
+        <div className="legend-stack">
+          {UNIT_ROLES.map((role, index) => {
+            const harness = FACTION_ORDER[index % FACTION_ORDER.length] ?? "cursor";
+            return (
+              <span key={role} className="legend-type" data-faction={harness}>
+                <UnitFigure harness={harness} model={role} status="idle" />
+                <span>{roleLabel(role)}</span>
+              </span>
+            );
+          })}
+        </div>
+      </div>
+      <div className="legend-block">
         <span className="legend-kicker">Field</span>
-        {BUILDING_KINDS.map((kind, index) => {
-          const harness = FACTION_ORDER[index % FACTION_ORDER.length] ?? "cursor";
-          const src = buildingSrc(harness, kind);
-          if (!src) return null;
-          return <Thumb key={kind} src={src} label={buildingLabel(kind)} />;
-        })}
-        {RESOURCE_KINDS.map((kind, index) => {
-          const harness = FACTION_ORDER[index % FACTION_ORDER.length] ?? "cursor";
-          return <Thumb key={kind} src={resourceSrc(harness, kind)} label={resourceLabel(kind)} />;
-        })}
+        <div className="legend-stack">
+          {BUILDING_KINDS.map((kind, index) => {
+            const harness = FACTION_ORDER[index % FACTION_ORDER.length] ?? "cursor";
+            const src = buildingSrc(harness, kind);
+            if (!src) return null;
+            return <Thumb key={kind} src={src} label={buildingLabel(kind)} />;
+          })}
+          {RESOURCE_KINDS.map((kind, index) => {
+            const harness = FACTION_ORDER[index % FACTION_ORDER.length] ?? "cursor";
+            return <Thumb key={kind} src={resourceSrc(harness, kind)} label={resourceLabel(kind)} />;
+          })}
+        </div>
       </div>
-      <div className="legend-row noise-filters">
+      <div className="legend-block noise-filters">
         <span className="legend-kicker">Noise</span>
         <label>
           <input
@@ -105,20 +127,54 @@ export function Legend({
         <span className="noise-count">{hiddenCount === 0 ? "Nothing hidden" : `${hiddenCount} hidden`}</span>
       </div>
       {extras.length > 0 ? (
-        <div className="legend-row">
+        <div className="legend-block">
           <span className="legend-kicker">Other</span>
-          {extras.map((entry) => (
-            <span
-              key={`${entry.harness}:${entry.model}`}
-              className="legend-type"
-              data-faction={harnessSlug(entry.harness)}
-            >
-              <UnitFigure harness={entry.harness} model={entry.model} status="idle" />
-              <span>{entry.model}</span>
-            </span>
-          ))}
+          <div className="legend-stack">
+            {extras.map((entry) => (
+              <span
+                key={`${entry.harness}:${entry.model}`}
+                className="legend-type"
+                data-faction={harnessSlug(entry.harness)}
+              >
+                <UnitFigure harness={entry.harness} model={entry.model} status="idle" />
+                <span>{entry.model}</span>
+              </span>
+            ))}
+          </div>
         </div>
       ) : null}
+      <details className="source-panel">
+        <summary>Data source</summary>
+        <p className="source-now">{sourceLabel}</p>
+        <form onSubmit={onLoadUrl}>
+          <label htmlFor="working-set-url">Working Set URL</label>
+          <input
+            id="working-set-url"
+            type="text"
+            inputMode="url"
+            spellCheck={false}
+            autoComplete="off"
+            placeholder={SAME_ORIGIN_WORKING_SET_PATH}
+            value={urlDraft}
+            onChange={(event) => onUrlDraft(event.target.value)}
+          />
+          <p className="help">
+            Unauthenticated GET of Working Set JSON. The deployed map uses{" "}
+            <code>{SAME_ORIGIN_WORKING_SET_PATH}</code> on this origin. Caddy proxies that path to{" "}
+            {CAHQ_WORKING_SET_ORIGIN}. If the request fails or the document has no bases, the map
+            stays on the sample fixture and the banner names the reason.
+          </p>
+          <div className="actions">
+            <button type="submit" disabled={loading || urlDraft.trim() === ""}>
+              {loading ? "Loading…" : "Load"}
+            </button>
+            <button type="button" onClick={onUseFixture} disabled={loading}>
+              Use fixture
+            </button>
+          </div>
+        </form>
+        {fetchedAt ? <p className="fetched">Snapshot {formatAbsolute(fetchedAt)}</p> : null}
+      </details>
     </aside>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent } from "react";
+import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import { postureOf, postureSignal, factionName } from "../factions";
 import { drawsUnitTokens, unitEmphasis } from "../mapNoise";
 import { harnessSlug, unitContext } from "../format";
@@ -34,6 +34,8 @@ type MapStageProps = {
   attached: boolean;
   onSelectBase: (id: string) => void;
   onSelectUnit: (baseId: string, unitId: string) => void;
+  onClearSelection: () => void;
+  children?: ReactNode;
 };
 
 export function MapStage({
@@ -43,6 +45,8 @@ export function MapStage({
   attached,
   onSelectBase,
   onSelectUnit,
+  onClearSelection,
+  children,
 }: MapStageProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const fitted = useRef(false);
@@ -93,7 +97,7 @@ export function MapStage({
     if (!el) return;
     const onWheel = (event: WheelEvent) => {
       event.preventDefault();
-      if ((event.target as HTMLElement | null)?.closest(".minimap, .legend")) return;
+      if ((event.target as HTMLElement | null)?.closest(".minimap, .legend, .selection-popover")) return;
       const current = viewRef.current;
       const rect = el.getBoundingClientRect();
       const nextScale = clamp(current.scale * (event.deltaY > 0 ? 0.92 : 1.08), 0.35, 2);
@@ -136,7 +140,7 @@ export function MapStage({
   function onPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
     if (attached || event.button !== 0) return;
     const target = event.target as HTMLElement;
-    if (target.closest(".minimap")) return;
+    if (target.closest(".minimap, .selection-popover")) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     const unit = target.closest<HTMLElement>("[data-unit-id]");
     const base = target.closest<HTMLElement>("[data-base-id]");
@@ -181,6 +185,7 @@ export function MapStage({
     }
     if (drag.unitId && drag.baseId) onSelectUnit(drag.baseId, drag.unitId);
     else if (drag.baseId) onSelectBase(drag.baseId);
+    else onClearSelection();
   }
 
   function onTokenClick(baseId: string, unitId: string | null) {
@@ -194,7 +199,7 @@ export function MapStage({
 
   const hint = focus
     ? `Attached to ${focus.repo}. Detach to pan.`
-    : "Drag to pan. Scroll to zoom. Select a unit. Attach locks the view on its base.";
+    : "Drag to pan. Scroll to zoom. Select a unit for details. Escape closes.";
 
   return (
     <div
@@ -321,6 +326,7 @@ export function MapStage({
       </div>
       {bases.length === 0 ? <p className="map-empty">No bases in this snapshot.</p> : null}
       <p className="map-hint">{hint}</p>
+      {children}
       <Minimap
         bases={bases}
         selectedId={selectedBaseId}
