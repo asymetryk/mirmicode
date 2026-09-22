@@ -1,4 +1,5 @@
 import { UNASSIGNED_REPO } from "../mapNoise";
+import { scrubSensitivePath, shouldScrubPrompts } from "../publicMode";
 import type { CampaignBase, Unit } from "../types";
 
 const TEXT_LIMIT = 180;
@@ -138,18 +139,19 @@ function readUnit(
   const annotation = readObject(record.annotation);
   const harness = bound(readHarness(record)) ?? "unknown";
   const model = bound(readModel(record)) ?? "unknown";
-  const threadName = bound(readString(record.thread_name) ?? readString(record.threadName));
+  const threadName = scrubSensitivePath(
+    bound(readString(record.thread_name) ?? readString(record.threadName)),
+  );
   const rawId =
     bound(readString(record.item_id) ?? readString(record.id)) ??
     fallbackUnitId(repo, harness, model, threadName);
-  return {
-    id: uniqueId(rawId, seenUnitIds),
-    harness,
-    model,
-    threadName,
-    label: bound(readString(annotation?.label) ?? readString(record.label) ?? threadName),
-    lastPrompt:
-      readString(observed?.lastUserPrompt) ??
+  const label = scrubSensitivePath(
+    bound(readString(annotation?.label) ?? readString(record.label) ?? threadName),
+  );
+  // Public BIP: drop every prompt alias so HUD/tooltips never see private text.
+  const lastPrompt = shouldScrubPrompts()
+    ? null
+    : (readString(observed?.lastUserPrompt) ??
       readString(observed?.last_user_prompt) ??
       readString(record.last_prompt) ??
       readString(record.lastPrompt) ??
@@ -159,7 +161,14 @@ function readUnit(
       readString(record.userPrompt) ??
       readString(record.prompt) ??
       readString(record.input) ??
-      readString(annotation?.note),
+      readString(annotation?.note));
+  return {
+    id: uniqueId(rawId, seenUnitIds),
+    harness,
+    model,
+    threadName,
+    label,
+    lastPrompt,
     status: bound(readString(annotation?.status) ?? readString(record.status)),
     lifecycle: bound(
       readString(observed?.lifecycle) ??

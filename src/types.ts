@@ -7,7 +7,10 @@ export type Unit = {
   model: string;
   threadName: string | null;
   label: string | null;
-  /** observed.lastUserPrompt, then observed.last_user_prompt, then prompt aliases or annotation.note. Never a task label. */
+  /**
+   * observed.lastUserPrompt, then observed.last_user_prompt, then prompt aliases or annotation.note.
+   * Never a task label. Null in public BIP mode (prompts scrubbed) unless full live is on.
+   */
   lastPrompt: string | null;
   /** annotation.status, then flat status. Operator triage such as open or done. Not lifecycle. */
   status: string | null;

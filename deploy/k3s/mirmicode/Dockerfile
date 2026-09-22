@@ -13,6 +13,12 @@ RUN npm ci
 COPY . .
 ARG VITE_WORKING_SET_URL=/working-set/api/v1/working-set
 ENV VITE_WORKING_SET_URL=$VITE_WORKING_SET_URL
+# Public BIP (mirmicode.asymetryk.com): bake VITE_PUBLIC_MODE=1 so prompts scrub.
+# Tailnet image leaves this unset. Runtime PUBLIC_MODE on the pod can also flip it.
+ARG VITE_PUBLIC_MODE=
+ENV VITE_PUBLIC_MODE=$VITE_PUBLIC_MODE
+ARG VITE_PUBLIC_FULL_LIVE=
+ENV VITE_PUBLIC_FULL_LIVE=$VITE_PUBLIC_FULL_LIVE
 RUN npm test && npm run build
 
 FROM caddy:2-alpine
@@ -23,7 +29,9 @@ COPY --from=assets /src/dist /srv
 RUN chmod 755 /usr/local/bin/mirmicode-entrypoint /usr/local/bin/socksforward \
   && chown -R 1000:1000 /srv /etc/mirmicode
 ENV XDG_CONFIG_HOME=/tmp/caddy-config \
-    XDG_DATA_HOME=/tmp/caddy-data
+    XDG_DATA_HOME=/tmp/caddy-data \
+    PUBLIC_MODE= \
+    PUBLIC_FULL_LIVE=
 USER 1000:1000
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/mirmicode-entrypoint"]

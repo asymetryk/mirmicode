@@ -23,14 +23,25 @@ import_tar() {
   sudo k3s ctr images import "${tar}"
 }
 
+# Optional bake-time public BIP: MIRMICODE_PUBLIC_MODE=1 ./build-image.sh
+# Prefer runtime PUBLIC_MODE on a public CF Tunnel pod when the same image
+# also serves the private tailnet hostname.
+build_args=()
+if [ -n "${MIRMICODE_PUBLIC_MODE:-}" ]; then
+  build_args+=(--build-arg "VITE_PUBLIC_MODE=${MIRMICODE_PUBLIC_MODE}")
+fi
+if [ -n "${MIRMICODE_PUBLIC_FULL_LIVE:-}" ]; then
+  build_args+=(--build-arg "VITE_PUBLIC_FULL_LIVE=${MIRMICODE_PUBLIC_FULL_LIVE}")
+fi
+
 if command -v docker >/dev/null 2>&1; then
-  docker build -f "${dockerfile}" -t "${image_latest}" -t "${image_sha}" "${root}"
+  docker build -f "${dockerfile}" "${build_args[@]}" -t "${image_latest}" -t "${image_sha}" "${root}"
   tar="$(mktemp --suffix=.tar /tmp/mirmicode-image.XXXXXX)"
   docker save -o "${tar}" "${image_latest}" "${image_sha}"
   import_tar "${tar}"
   rm -f "${tar}"
 elif command -v nerdctl >/dev/null 2>&1; then
-  nerdctl --namespace k8s.io build -f "${dockerfile}" -t "${image_latest}" -t "${image_sha}" "${root}"
+  nerdctl --namespace k8s.io build -f "${dockerfile}" "${build_args[@]}" -t "${image_latest}" -t "${image_sha}" "${root}"
 else
   echo "build-image.sh needs docker or nerdctl on asym-k1." >&2
   exit 1

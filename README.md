@@ -12,9 +12,35 @@ Build in public. Not monetized. No accounts, no payments, no analytics.
 
 ## Deploy
 
-The real surface is **https://mirmicode.tail21f530.ts.net** on cluster **asym-k3s**, namespace `mirmicode`, pinned to node **asym-k1**. `http://127.0.0.1:5173` is interim local preview.
+The private surface is **https://mirmicode.tail21f530.ts.net** on cluster **asym-k3s**, namespace `mirmicode`, pinned to node **asym-k1**. A public BIP at **https://mirmicode.asymetryk.com** (CF Tunnel) can reuse the same image with public mode on so agent prompts stay off the map. `http://127.0.0.1:5173` is interim local preview.
 
 Labhand applies. This repo does not run `kubectl` from a cloud VM.
+
+### Private vs public BIP
+
+| Surface | Mode | Prompts |
+| --- | --- | --- |
+| `mirmicode.tail21f530.ts.net` | Private (default) | Shows `observed.lastUserPrompt` / aliases as **Last prompt** |
+| `mirmicode.asymetryk.com` | Public / read-only | Scrubs prompts; HUD/tooltips/Inspector show **Thread** (label) or omit the row |
+
+Public mode still draws bases, units, filters, Unassigned, status, lifecycle, presence, and freshness. It drops `lastUserPrompt`, `last_user_prompt`, flat prompt aliases, and `annotation.note` used as a prompt. Obvious absolute home paths and `.jsonl` paths in labels/thread names are redacted when scrubbing.
+
+**Flags (pick one layer):**
+
+| Knob | Where | Default |
+| --- | --- | --- |
+| `VITE_PUBLIC_MODE=1` | Bake-time (`.env`, Docker `ARG`) | off |
+| `VITE_PUBLIC_FULL_LIVE=1` | Bake-time escape hatch: keep prompts on a public build | off |
+| `PUBLIC_MODE=1` | Runtime env on the web/Caddy container; rewrites `/runtime-config.js` | unset (bake-time wins) |
+| `PUBLIC_FULL_LIVE=1` | Runtime full-live override | unset |
+
+Labhand / Abby: set **`PUBLIC_MODE=1`** on the public CF Tunnel deploy only. Leave the existing tailnet deploy unset so prompts stay visible there. Do not turn on `PUBLIC_FULL_LIVE` for the public hostname unless you intentionally want prompts on the open map.
+
+```bash
+# Bake a public image (optional; runtime PUBLIC_MODE is enough for a shared image):
+MIRMICODE_PUBLIC_MODE=1 ./deploy/k3s/mirmicode/build-image.sh
+```
+
 
 ```bash
 # On asym-k1, after the tailscale secret exists (below):
@@ -235,11 +261,11 @@ Flat rows do not invent a second unit from a parent harness when `units` or `age
 | Operator hidden | `annotation.hidden`, then flat `hidden` | Boolean `true` hides the unit. Any other value, including the string `"true"`, does not. |
 | Stale snapshot | `snapshot.stale` | Boolean `true` shows a refresh-failed banner. It does not hide units. Missing or non-boolean stays quiet. |
 | Unit label | `annotation.label`, flat `label`, then `thread_name` / `threadName` | First nonblank string wins. |
-| Last prompt | `observed.lastUserPrompt`, then `observed.last_user_prompt`, then flat `last_prompt`, `lastPrompt`, `last_user_message`, `lastUserMessage`, `user_prompt`, `userPrompt`, `prompt`, `input`, then `annotation.note` | First nonblank string wins; non-string and blank values are skipped. The published observed prompt is at most 240 characters and is kept in full for the tooltip. Never derived from `annotation.label`. |
+| Last prompt | `observed.lastUserPrompt`, then `observed.last_user_prompt`, then flat `last_prompt`, `lastPrompt`, `last_user_message`, `lastUserMessage`, `user_prompt`, `userPrompt`, `prompt`, `input`, then `annotation.note` | First nonblank string wins; non-string and blank values are skipped. The published observed prompt is at most 240 characters and is kept in full for the tooltip. Never derived from `annotation.label`. **Public BIP** (`VITE_PUBLIC_MODE` / `PUBLIC_MODE`) drops this field entirely unless `VITE_PUBLIC_FULL_LIVE` / `PUBLIC_FULL_LIVE` is set. |
 | Last touched | `annotation.updated_at`, `observed.updated_at`, then flat `updated_at`, `updatedAt`, `last_touched`, or `lastTouched` | The base shows the latest valid unit time. |
 | Placement | `x`, `y` on the base | Optional numbers in `0..1`. Map presentation only. Ignored when out of range. |
 
-Unknown fields and transcript bodies are ignored. Display metadata is capped at 180 characters, except prompt text, which is retained for full native `title` tooltips. The HUD and roster show `Last prompt:` with prompt text shortened to 140 characters; without a prompt they show `Thread:` using the unit label/thread name. Map-unit titles use the same honest prefix with full prompt text. When the feed includes `observed.lastUserPrompt` or `observed.last_user_prompt`, that text is the Last prompt line. Older prompt aliases and `annotation.note` remain the fallback. `annotation.label` alone stays `Thread:`. Both sample fixtures include fictional prompt text and label-only units. A grouped fixture record looks like this:
+Unknown fields and transcript bodies are ignored. Display metadata is capped at 180 characters, except prompt text, which is retained for full native `title` tooltips. The HUD and roster show `Last prompt:` with prompt text shortened to 140 characters; without a prompt they show `Thread:` using the unit label/thread name. Map-unit titles use the same honest prefix with full prompt text. When the feed includes `observed.lastUserPrompt` or `observed.last_user_prompt`, that text is the Last prompt line. Older prompt aliases and `annotation.note` remain the fallback. `annotation.label` alone stays `Thread:`. On a public BIP build, prompts are scrubbed and the UI stays on `Thread:` (or omits the row when there is no label). Both sample fixtures include fictional prompt text and label-only units. A grouped fixture record looks like this:
 
 ```json
 {
