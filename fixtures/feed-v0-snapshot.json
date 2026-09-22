@@ -1,0 +1,79 @@
+{
+  "fetched_at": "2026-09-22T15:41:44.896865+00:00",
+  "source": "mirmicode-native-feed-v0",
+  "camps": [
+    {
+      "repo_key": "agentinfra",
+      "repo_label": "agentinfra",
+      "github_url": "https://github.com/asymetryk/agentinfra",
+      "stage": "active",
+      "open_project": {
+        "id": 123,
+        "key": "coding-agent-hq",
+        "name": "Coding Agent HQ",
+        "url": "https://openproject.example/projects/coding-agent-hq",
+        "status": "ok"
+      },
+      "one_liner": "Coding Agent HQ — operator surface for omp agents.",
+      "aliases": ["agentinfra", "cahq"]
+    },
+    {
+      "repo_key": "homelab",
+      "repo_label": "homelab",
+      "github_url": "https://github.com/asymetryk/homelab",
+      "stage": "active",
+      "open_project": {
+        "id": 456,
+        "key": "homelab-poc",
+        "name": "Homelab PoC",
+        "url": "https://openproject.example/projects/homelab-poc",
+        "status": "ok"
+      },
+      "one_liner": "Tailnet PoC — Caddy, K3s, and observability stack.",
+      "aliases": ["homelab"]
+    },
+    {
+      "repo_key": "policy-sentinel",
+      "repo_label": "Policy Sentinel",
+      "github_url": "https://github.com/asymetryk/policy-sentinel",
+      "stage": "mvp",
+      "open_project": {
+        "id": 789,
+        "key": "repo-policy-sentinel",
+        "name": "Repo Policy Sentinel",
+        "url": "https://openproject.example/projects/repo-policy-sentinel",
+        "status": "ok"
+      },
+      "one_liner": "Policy Sentinel — repo policy enforcement for omp.",
+      "aliases": ["policy-sentinel", "policySentinel"]
+    }
+  ],
+  "units": [
+    {
+      "id": "agentinfra-omp-lead",
+      "repo_key": "agentinfra",
+      "harness": "omp",
+      "model": "MiniMax-M3",
+      "thread_name": "feed-contract-v0",
+      "status": "open",
+      "destination": {
+        "kind": "repo",
+        "value": "asymetryk/agentinfra"
+      },
+      "updated_at": "2026-09-22T15:30:00Z"
+    },
+    {
+      "id": "homelab-omp-poc",
+      "repo_key": "homelab",
+      "harness": "omp",
+      "model": "MiniMax-M3",
+      "thread_name": "tailnet-poc",
+      "status": "open",
+      "destination": {
+        "kind": "path",
+        "value": "asymetryk/homelab/deploy/k3s"
+      },
+      "updated_at": "2026-09-22T15:32:00Z"
+    }
+  ]
+}

@@ -4,9 +4,11 @@ import {
   STALE_SNAPSHOT_BANNER,
   WORKING_SET_SOURCE_KEY,
   WORKING_SET_URL_KEY,
+  loadFixture,
   readStartupWorkingSetUrl,
   resolveSnapshot,
 } from "./adapters/source";
+import { loadNativeFeedFixture } from "./adapters/nativeFeed";
 import campDossiers from "./data/camp-dossiers.json";
 import { CampDossierPanel } from "./components/CampDossierPanel";
 import { MapStage } from "./components/MapStage";
@@ -45,12 +47,17 @@ export function App() {
   useEffect(() => {
     let cancelled = false;
     const version = ++requestVersion.current;
-    void apply(readStartupUrl(), (next, reason) => {
+    const commit = (next: MapSnapshot, reason: string | null) => {
       if (cancelled || version !== requestVersion.current) return;
       setSnapshot(next);
       setFallbackReason(reason);
       setLoading(false);
-    });
+    };
+    if (useNativeFeed()) {
+      void loadNative(commit);
+    } else {
+      void apply(readStartupUrl(), commit);
+    }
     return () => {
       cancelled = true;
     };
@@ -278,6 +285,7 @@ function statusLine(
   const count = `${visible.length} ${visible.length === 1 ? "base" : "bases"} · ${units} units${hidden}`;
   if (loading) return `Loading… · ${count}`;
   if (snapshot.source === "working-set") return `Live Working Set · ${count}`;
+  if (snapshot.source === "native-feed") return `Native feed · ${count}`;
   return `Fixture · sample data · ${count}`;
 }
 
@@ -320,7 +328,35 @@ async function apply(
   commit(result.snapshot, result.fallbackReason);
 }
 
+async function loadNative(
+  commit: (snapshot: MapSnapshot, fallbackReason: string | null) => void,
+): Promise<void> {
+  try {
+    const snapshot = await loadNativeFeedFixture();
+    commit(snapshot, null);
+  } catch (error) {
+    commit(loadFixtureForFallback(), readableReason(error));
+  }
+}
+
+function loadFixtureForFallback(): MapSnapshot {
+  // Fallback when the native feed fails to load: keep the existing fixture
+  // behavior so the UI never blanks. The fixture is independent of the
+  // mirmicode-native contract and is not a cahq dependency.
+  return loadFixture();
+}
+
+function readableReason(error: unknown): string {
+  if (error instanceof Error && error.message) return error.message;
+  return "Native feed fixture could not be reached.";
+}
+
+function useNativeFeed(): boolean {
+  return (import.meta.env.VITE_FEED_SOURCE ?? "").trim().toLowerCase() === "native";
+}
+
 function readStartupUrl(): string {
+  if (useNativeFeed()) return "";
   const envUrl = import.meta.env.VITE_WORKING_SET_URL;
   try {
     return readStartupWorkingSetUrl(envUrl, localStorage);

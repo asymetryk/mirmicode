@@ -1,4 +1,4 @@
-export type MapSource = "fixture" | "working-set";
+export type MapSource = "fixture" | "working-set" | "native-feed";
 
 /** Camp lifecycle stage from the camp dossier. */
 export type CampStage = "idea" | "mvp" | "active" | "parked" | "archive" | "unknown";
