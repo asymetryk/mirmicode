@@ -60,11 +60,15 @@ spec:
             - name: WORKING_SET_TOKEN_FILE
               value: /run/secrets/working-set/token
             # Public BIP (mirmicode.asymetryk.com / CF Tunnel only): set to "1"
-            # so the map scrubs lastUserPrompt and prompt aliases. Leave unset
+            # so runtime-config.js turns on UI scrub AND the pod nulls prompt
+            # fields on /working-set before the browser sees them. Leave unset
             # (or "0") on this tailnet deploy so private prompts still show.
+            # Apply the updated Caddy ConfigMap with the image: /runtime-config.js
+            # is served as JS with Cache-Control: no-store.
             # - name: PUBLIC_MODE
             #   value: "1"
-            # Optional escape hatch when PUBLIC_MODE=1: keep prompts visible.
+            # Optional escape hatch when PUBLIC_MODE=1: keep prompts in the UI
+            # and skip the Working Set JSON scrub.
             # - name: PUBLIC_FULL_LIVE
             #   value: "1"
           ports:

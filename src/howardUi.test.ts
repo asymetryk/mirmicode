@@ -101,6 +101,49 @@ describe("context snippet hard filter", () => {
     expect(unitContext(secret)).toBe("Thread: Thread title");
     expect(unitContext(secret)).not.toContain("Secret");
   });
+
+  it("keeps units when the public API nulled prompt text and set hasContextSnippet", () => {
+    setPublicModeForTests({ publicMode: true });
+    const { bases } = normalizeWorkingSetPayload({
+      items: [
+        {
+          item_id: "kept",
+          hasContextSnippet: true,
+          observed: {
+            repo: "example/kept",
+            lifecycle: "idle",
+            lastUserPrompt: null,
+            last_user_prompt: null,
+          },
+          annotation: { label: "Thread title", note: null, status: "open" },
+          last_prompt: null,
+          prompt: null,
+        },
+        {
+          item_id: "string-flag",
+          hasContextSnippet: "true",
+          observed: { repo: "example/kept" },
+          annotation: { label: "String flag is not a snippet" },
+        },
+        {
+          item_id: "dropped",
+          observed: { repo: "example/kept" },
+          annotation: { label: "Only a thread" },
+        },
+      ],
+    });
+    const kept = bases[0]!.units.find((entry) => entry.id === "kept")!;
+    const stringFlag = bases[0]!.units.find((entry) => entry.id === "string-flag")!;
+    expect(kept.lastPrompt).toBeNull();
+    expect(kept.hasContextSnippet).toBe(true);
+    expect(kept.label).toBe("Thread title");
+    expect(kept.status).toBe("open");
+    expect(stringFlag.hasContextSnippet).toBe(false);
+    expect(popoverSnippet(kept)).toBeNull();
+    expect(unitContext(kept)).toBe("Thread: Thread title");
+    const filtered = applyNoiseFilter(bases, DEFAULT_NOISE_FILTER);
+    expect(filtered.bases.flatMap((base) => base.units.map((entry) => entry.id))).toEqual(["kept"]);
+  });
 });
 
 describe("popoverSnippet", () => {
