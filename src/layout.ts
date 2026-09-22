@@ -2,12 +2,12 @@ import type { BuildingKind, ResourceKind } from "./rtsArt";
 import { RESOURCE_KINDS } from "./rtsArt";
 import type { CampaignBase, ViewState } from "./types";
 
-export const WORLD = { width: 2400, height: 1600 };
+export const WORLD = { width: 5600, height: 3680 };
 
 export type PositionedBase = CampaignBase & { x: number; y: number };
 
-const FIELD_MARGIN_X = 180;
-const FIELD_MARGIN_Y = 140;
+const FIELD_MARGIN_X = 350;
+const FIELD_MARGIN_Y = 280;
 
 export function positionBases(bases: CampaignBase[]): PositionedBase[] {
   const unplaced = bases.filter((base) => base.place === null);
@@ -56,7 +56,7 @@ export function fitView(
   }
   const worldW = Math.max(1, maxX - minX);
   const worldH = Math.max(1, maxY - minY);
-  const scale = clamp(Math.min(width / worldW, height / worldH), 0.35, 1.35);
+  const scale = clamp(Math.min(width / worldW, height / worldH), 0.2, 1.6);
   return {
     scale,
     x: (width - worldW * scale) / 2 - minX * scale,
