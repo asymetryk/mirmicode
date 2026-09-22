@@ -23,6 +23,7 @@ import {
 import { normalizeWorkingSetPayload } from "./normalize";
 import {
   CAHQ_WORKING_SET_ORIGIN,
+  SAME_ORIGIN_WORKING_SET_PATH,
   loadFixture,
   parseWorkingSetUrl,
   readStartupWorkingSetUrl,
@@ -507,6 +508,23 @@ describe("resolveSnapshot", () => {
   it("rejects credentials and non-http URLs", () => {
     expect(() => parseWorkingSetUrl("https://user:pw@example.com/bases")).toThrow(/credentials/);
     expect(() => parseWorkingSetUrl("file:///tmp/bases.json")).toThrow(/http or https/);
+    expect(() => parseWorkingSetUrl("//cahq.tail21f530.ts.net/api/v1/working-set")).toThrow(/valid URL/);
+    expect(() => parseWorkingSetUrl(SAME_ORIGIN_WORKING_SET_PATH)).toThrow(/origin/);
+  });
+
+  it("requests the baked same-origin path on the page origin", async () => {
+    const requested: string[] = [];
+    const fetchImpl: typeof fetch = async (url) => {
+      requested.push(String(url));
+      return new Response(JSON.stringify({ items: [{ repo_name: "example/synthetic" }] }));
+    };
+    const page = "https://mirmicode.tail21f530.ts.net/map";
+    const result = await resolveSnapshot(SAME_ORIGIN_WORKING_SET_PATH, fetchImpl, new Date("2026-09-22T00:00:00Z"), page);
+
+    expect(requested).toEqual([`https://mirmicode.tail21f530.ts.net${SAME_ORIGIN_WORKING_SET_PATH}`]);
+    expect(result.snapshot.source).toBe("working-set");
+    expect(result.fallbackReason).toBeNull();
+    expect(CAHQ_WORKING_SET_ORIGIN).toBe("https://cahq.tail21f530.ts.net");
   });
 
   it.each([
