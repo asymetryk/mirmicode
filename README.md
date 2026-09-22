@@ -332,7 +332,9 @@ Nested items with both `observed.repo` and `observed.repo_name` missing or blank
 
 ## Repo camps
 
-`src/data/all-repos.json` is the public repository list for GitHub user **asymetryk**, baked on 2026-09-22 from `gh repo list asymetryk` and `gh api users/asymetryk/repos` (10 public repos, including forks). The browser does not call GitHub and does not need a token. `loadFixture` and `loadWorkingSet` merge that list after normalize: a Working Set repo keeps its units; a catalog repo with no units is an empty camp (an outpost and a name, no army). Names dedupe on lowercased `owner/name`. Private repositories were not visible to the credential that generated the file (`GET /user` returned 403). Refresh the list by replacing `repos` in that file; do not put a GitHub token in the client.
+`src/data/all-repos.json` is the camp catalog. The source of truth is Howard’s `~/Developer` tree, baked from a directory scan (see `src/data/developer-camps.scan.json` and `scripts/refresh-developer-camps.sh`). It is not the old public GitHub list for user **asymetryk** (10 repos). A private GitHub credential bake failed: `GET /user` returned 403, and `gh repo list` with no owner only saw `asymetryk/mirmicode`. The browser does not call GitHub and does not need a token.
+
+`loadFixture` and `loadWorkingSet` merge that list after normalize. A Working Set repo keeps its units. A catalog name with no units is an empty camp (an outpost and a name, no army). Names dedupe on the lowercased id. When the scan recorded an `origin` remote, the id is `owner/name`. Otherwise the id is the folder name, so a local-only checkout still appears. Regenerate on the Mac with `./scripts/refresh-developer-camps.sh`. Do not put a GitHub token in the client.
 
 The sample fixture’s noise rows and Unassigned outpost are synthetic. They demonstrate the filter offline. Live counts follow whatever the Working Set returns.
 
