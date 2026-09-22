@@ -1,6 +1,13 @@
+import { canonicalHarness } from "../factions";
 import { UNASSIGNED_REPO } from "../mapNoise";
+import {
+  aggregateOpenProject,
+  readOpenProjectAssociations,
+  readRepoOpenProjectMap,
+} from "../openProject";
+import { repoKey } from "../repos";
 import { scrubSensitivePath, shouldScrubPrompts } from "../publicMode";
-import type { CampaignBase, Unit } from "../types";
+import type { CampaignBase, OpenProjectSummary, Unit } from "../types";
 
 const TEXT_LIMIT = 180;
 
@@ -15,7 +22,7 @@ export type NormalizedPayload = {
  * Maps a Working Set JSON payload into bases and the units on them.
  * A base is a repo. Each unit is one agent: harness = faction, model = unit type.
  * Flat and nested Working Set rows that share a repo collapse into one base.
- * Unknown fields are dropped. Transcript bodies are never read.
+ * Unknown fields are dropped. Transcript bodies and git branch names are never read.
  */
 export function normalizeWorkingSetPayload(payload: unknown): NormalizedPayload {
   const records = readRecords(payload);
@@ -25,6 +32,7 @@ export function normalizeWorkingSetPayload(payload: unknown): NormalizedPayload 
   }
 
   const issues: string[] = [];
+  const repoProjects = readRepoOpenProjectMap(payload);
   const byRepo = new Map<string, MutableBase>();
   const order: string[] = [];
   const seenBaseIds = new Map<string, number>();
@@ -45,17 +53,21 @@ export function normalizeWorkingSetPayload(payload: unknown): NormalizedPayload 
     const base = ensureBase(byRepo, order, seenBaseIds, repo, record);
     const nested = readUnitArray(record);
     if (nested) {
+      noteOpenProject(base, record);
       nested.forEach((unitEntry, unitIndex) => {
         if (!unitEntry || typeof unitEntry !== "object" || Array.isArray(unitEntry)) {
           issues.push(`Dropped unit ${unitIndex + 1} in record ${index + 1}: expected an object.`);
           return;
         }
-        base.units.push(readUnit(unitEntry as Record<string, unknown>, repo, seenUnitIds));
+        const unitRecord = unitEntry as Record<string, unknown>;
+        base.units.push(readUnit(unitRecord, repo, seenUnitIds));
+        noteOpenProject(base, unitRecord);
       });
       return;
     }
 
     base.units.push(readUnit(record, repo, seenUnitIds));
+    noteOpenProject(base, record);
   });
 
   const bases = order.map((key) => {
@@ -63,10 +75,12 @@ export function normalizeWorkingSetPayload(payload: unknown): NormalizedPayload 
     if (!base) {
       throw new Error("Missing normalized base.");
     }
+    const fromUnits = aggregateOpenProject(base.openProjects);
     return {
       id: base.id,
       repo: base.repo,
       label: base.label,
+      openProject: fromUnits ?? repoProjects.get(repoKey(base.repo)) ?? null,
       updatedAt: latestTimestamp(base.units.map((unit) => unit.updatedAt).concat(base.updatedAt)),
       place: base.place,
       units: base.units,
@@ -90,6 +104,7 @@ type MutableBase = {
   updatedAt: string;
   place: { x: number; y: number } | null;
   units: Unit[];
+  openProjects: OpenProjectSummary[];
 };
 
 function ensureBase(
@@ -118,10 +133,21 @@ function ensureBase(
     updatedAt: readUpdatedAt(record),
     place: readPlace(record),
     units: [],
+    openProjects: [],
   };
   byRepo.set(key, base);
   order.push(key);
   return base;
+}
+
+function noteOpenProject(base: MutableBase, record: Record<string, unknown>): void {
+  const associations = readObject(record.associations);
+  const fromAssociation = readOpenProjectAssociations(associations?.openproject);
+  if (fromAssociation.length > 0) {
+    base.openProjects.push(...fromAssociation);
+    return;
+  }
+  base.openProjects.push(...readOpenProjectAssociations(record.openproject));
 }
 
 function readUnitArray(record: Record<string, unknown>): unknown[] | null {
@@ -242,16 +268,6 @@ function readHarness(record: Record<string, unknown>): string {
     readString(record.harness) ??
     readString(record.surface);
   return value ? canonicalHarness(value) : "unknown";
-}
-
-/** Fold spelling variants onto the painted faction ids. Unknown harnesses stay lowercase. */
-function canonicalHarness(value: string): string {
-  const compact = value.toLowerCase().replace(/[^a-z0-9]+/g, "");
-  if (compact === "cursor") return "cursor";
-  if (compact === "codex") return "codex";
-  if (compact === "ohmypi") return "ohmypi";
-  if (compact === "opencode") return "opencode";
-  return value.toLowerCase();
 }
 
 function readModel(record: Record<string, unknown>): string {

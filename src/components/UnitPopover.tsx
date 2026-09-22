@@ -1,67 +1,54 @@
 import { factionName, postureLabel, postureOf, postureSignal } from "../factions";
-import { formatAbsolute, formatLastTouched, harnessSlug, popoverSnippet, unitContext } from "../format";
+import { formatAbsolute, formatLastTouched, harnessSlug, unitContext } from "../format";
 import { isUnassignedRepo, unitEmphasis } from "../mapNoise";
 import { roleLabel, unitRole } from "../rtsArt";
 import type { CampaignBase, Unit } from "../types";
 import { OpenProjectBlock } from "./OpenProjectBlock";
 import { UnitFigure } from "./UnitFigure";
 
-type SelectionPopoverProps = {
-  base: CampaignBase | null;
+type UnitPopoverProps = {
+  base: CampaignBase;
   unit: Unit | null;
   attached: boolean;
   now: number;
+  fetchedAt: string | null;
   onToggleAttach: () => void;
   onClose: () => void;
   onSelectUnit: (baseId: string, unitId: string) => void;
 };
 
-export function SelectionPopover({
+export function UnitPopover({
   base,
   unit,
   attached,
   now,
+  fetchedAt,
   onToggleAttach,
   onClose,
   onSelectUnit,
-}: SelectionPopoverProps) {
-  if (!base) return null;
-
+}: UnitPopoverProps) {
   const touched = unit?.updatedAt ?? base.updatedAt;
   const absolute = touched ? formatAbsolute(touched) : null;
   const role = unit ? unitRole(unit.model) : null;
   const unassigned = isUnassignedRepo(base.repo);
   const empty = base.units.length === 0;
   const posture = unit ? postureSignal(unit.status, unit.lifecycle) : null;
-  const snippet = unit ? popoverSnippet(unit) : null;
+  const title = unit ? unit.model : unassigned ? `${base.units.length} units` : base.repo;
 
   return (
-    <div className="selection-popover" role="dialog" aria-label="Selection">
-      <div className="selection-popover-head">
+    <aside className="unit-popover" role="dialog" aria-label={unit ? "Unit" : "Base"}>
+      <div className="popover-head">
         <p className="kicker">
-          {unit
-            ? `${factionName(unit.harness)} unit`
-            : unassigned
-              ? "Unassigned"
-              : empty
-                ? "Camp"
-                : "Base"}
+          {unit ? `${factionName(unit.harness)} unit` : unassigned ? "Unassigned" : empty ? "Camp" : "Base"}
         </p>
-        <button type="button" className="popover-close" onClick={onClose} aria-label="Close">
+        <button type="button" className="popover-close" onClick={onClose}>
           Close
         </button>
       </div>
-      <h2>
-        {unit ? unit.model : unassigned ? `${base.units.length} units` : base.repo}
-      </h2>
+      <h2>{title}</h2>
       <OpenProjectBlock project={base.openProject} />
       {unit ? (
         <>
-          {snippet ? (
-            <p className="snippet-hero" title={snippet}>
-              {snippet}
-            </p>
-          ) : null}
           <div
             className="hud-figure"
             data-faction={harnessSlug(unit.harness)}
@@ -76,6 +63,11 @@ export function SelectionPopover({
             />
             <p>{postureLabel(postureOf(posture))}</p>
           </div>
+          {unitContext(unit) ? (
+            <p className="unit-context" title={unitContext(unit) ?? undefined}>
+              {unitContext(unit, true)}
+            </p>
+          ) : null}
           <dl className="facts">
             <Fact label="Harness" value={factionName(unit.harness)} />
             <Fact label="Model" value={unit.model} />
@@ -95,8 +87,8 @@ export function SelectionPopover({
             <p className="lede">Camp with no army. This repo has no Working Set units on the map.</p>
           ) : unassigned ? (
             <p className="lede">
-              These units have no repo. They stay in this list. The map shows one outpost and the
-              count, not a token for each unit.
+              These units have no repo. They stay in this list. The map shows one outpost and the count,
+              not a token for each unit.
             </p>
           ) : null}
           <dl className="facts">
@@ -133,25 +125,11 @@ export function SelectionPopover({
                     {entry.status ? ` · ${entry.status}` : ""}
                     {entry.lifecycle ? ` · ${entry.lifecycle}` : ""}
                   </span>
-                  {(() => {
-                    const snippet = popoverSnippet(entry, true);
-                    const context = unitContext(entry, true);
-                    if (snippet) {
-                      return (
-                        <span className="roster-meta" title={popoverSnippet(entry) ?? undefined}>
-                          {snippet}
-                        </span>
-                      );
-                    }
-                    if (context) {
-                      return (
-                        <span className="roster-meta" title={unitContext(entry) ?? undefined}>
-                          {context}
-                        </span>
-                      );
-                    }
-                    return null;
-                  })()}
+                  {unitContext(entry) ? (
+                    <span className="roster-meta" title={unitContext(entry) ?? undefined}>
+                      {unitContext(entry, true)}
+                    </span>
+                  ) : null}
                 </span>
               </button>
             </li>
@@ -163,7 +141,8 @@ export function SelectionPopover({
           {attached ? "Detach view" : "Attach view"}
         </button>
       </div>
-    </div>
+      {fetchedAt ? <p className="fetched">Snapshot {formatAbsolute(fetchedAt)}</p> : null}
+    </aside>
   );
 }
 

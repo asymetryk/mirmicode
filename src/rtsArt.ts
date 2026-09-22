@@ -1,4 +1,4 @@
-import { unitKind, type UnitKind } from "./factions";
+import { canonicalHarness, unitKind, type UnitKind } from "./factions";
 
 /** Crest shared by models on the v1 hero fallback. Same model always wears the same glyph. */
 export type GlyphId = "a" | "b" | "c";
@@ -162,7 +162,7 @@ export function resourceLabel(kind: ResourceKind): string {
 }
 
 export function paintedFaction(harness: string | null | undefined): PaintedFaction | null {
-  const key = (harness ?? "").toLowerCase();
+  const key = canonicalHarness(harness ?? "");
   if (key === "cursor" || key === "codex" || key === "ohmypi") return key;
   return null;
 }
@@ -189,7 +189,8 @@ export function glyphId(model: string): GlyphId | null {
 }
 
 export function heroSrc(harness: string): string | null {
-  return HERO_SRC[harness.toLowerCase()] ?? null;
+  const faction = paintedFaction(harness);
+  return faction ? (HERO_SRC[faction] ?? null) : null;
 }
 
 export function glyphSrc(model: string): string | null {
@@ -199,7 +200,8 @@ export function glyphSrc(model: string): string | null {
 
 /** v1 outpost, used when a faction has no v2 pad. */
 export function outpostSrc(harness: string): string | null {
-  return OUTPOST_SRC[harness.toLowerCase()] ?? null;
+  const faction = paintedFaction(harness);
+  return faction ? (OUTPOST_SRC[faction] ?? null) : null;
 }
 
 /**
@@ -248,7 +250,8 @@ export function markerSrc(harness: string, posture: "idle" | "working"): string 
 export function dominantFaction(units: Array<{ harness: string }>): string | null {
   const counts = new Map<string, number>();
   for (const unit of units) {
-    const key = unit.harness.toLowerCase();
+    const key = paintedFaction(unit.harness);
+    if (!key) continue;
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   let best: string | null = null;

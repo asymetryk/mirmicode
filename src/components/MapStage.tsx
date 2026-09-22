@@ -225,14 +225,16 @@ export function MapStage({
           const baseSelected = base.id === selectedBaseId;
           const faction = dominantFaction(base.units);
           const unassigned = !drawsUnitTokens(base.repo);
+          const bare = base.units.length === 0;
           return (
             <div
               key={base.id}
               className="base-site"
               data-unassigned={unassigned ? "true" : "false"}
+              data-camp={bare ? "empty" : "army"}
               style={{ left: base.x, top: base.y }}
             >
-              {unassigned
+              {unassigned || bare
                 ? null
                 : BUILDING_KINDS.filter((kind) => kind !== "pad").map((kind) => {
                 const src = buildingSrc(faction, kind);
@@ -249,7 +251,7 @@ export function MapStage({
                   </span>
                 );
               })}
-              {unassigned
+              {unassigned || bare
                 ? null
                 : resourcePlacements(baseIndex).map((prop) => {
                 const slot = RESOURCE_OFFSETS[prop.slot];
@@ -271,7 +273,13 @@ export function MapStage({
                 data-base-id={base.id}
                 data-count={unassigned ? base.units.length : undefined}
                 aria-pressed={baseSelected && selectedUnitId === null}
-                aria-label={unassigned ? `Unassigned, ${base.units.length} units` : undefined}
+                aria-label={
+                  unassigned
+                    ? `Unassigned, ${base.units.length} units`
+                    : bare
+                      ? `${base.repo}, camp with no army`
+                      : base.repo
+                }
                 onClick={() => onTokenClick(base.id, null)}
               >
                 <Outpost faction={faction} selected={baseSelected} attached={baseSelected && attached} />

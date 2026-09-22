@@ -55,7 +55,7 @@ summary:focus-visible {
 .app {
   height: 100dvh;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 15.5rem;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   background: var(--bg);
 }
@@ -816,6 +816,170 @@ summary:focus-visible {
 
 .help { margin: 0.45rem 0 0; }
 
+.stage-shell {
+  min-height: 0;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.stage-shell.is-rail-open {
+  grid-template-columns: minmax(0, 1fr) 22.5rem;
+}
+
+.map-frame {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+.map-stage {
+  position: absolute;
+  inset: 0;
+  grid-column: auto;
+  grid-row: auto;
+}
+
+.side-rail {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid rgba(243, 239, 226, 0.12);
+  background: #171a12;
+}
+
+.side-rail .legend {
+  grid-column: auto;
+  grid-row: auto;
+  flex: 1;
+  border-left: 0;
+  background: transparent;
+}
+
+.rail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.7rem 0.2rem;
+}
+
+.rail-head h2,
+.rail-section h3 {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.rail-toggle,
+.rail-expand {
+  border: 1px solid rgba(243, 239, 226, 0.28);
+  background: transparent;
+  padding: 0.35rem 0.65rem;
+  border-radius: 2px;
+}
+
+.rail-expand {
+  position: absolute;
+  z-index: 6;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: rgba(16, 18, 12, 0.92);
+}
+
+.rail-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.2rem 0.7rem 0.75rem;
+}
+
+.rail-section + .rail-section,
+.rail-section + .legend {
+  margin-top: 0.85rem;
+}
+
+.camp-list {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.camp-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.32rem 0.4rem;
+  text-align: left;
+  background: #12150e;
+  border: 1px solid rgba(243, 239, 226, 0.16);
+  border-radius: 2px;
+}
+
+.camp-row.is-selected { border-color: var(--accent); }
+
+.camp-name {
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, "Cascadia Code", "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+}
+
+.camp-meta {
+  flex: none;
+  color: var(--faint);
+  font-size: 0.7rem;
+}
+
+.faction-group { margin-top: 0.4rem; }
+
+.faction-group summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 0.84rem;
+}
+
+.faction-count {
+  color: var(--faint);
+  font-family: ui-monospace, "Cascadia Code", "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+}
+
+.op-block { margin: 0.65rem 0 0.75rem; }
+
+.op-link,
+.op-name,
+.op-status,
+.op-summary,
+.op-empty {
+  margin: 0.18rem 0 0;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.op-link { color: var(--accent); }
+.op-name,
+.op-status { color: var(--text); }
+.op-summary,
+.op-empty { color: var(--muted); }
+
+.camp-list .op-link,
+.camp-list .op-name,
+.camp-list .op-empty {
+  margin: 0.12rem 0 0.35rem;
+  font-size: 0.72rem;
+}
+
 @media (max-width: 860px) {
   body { overflow: auto; }
 
@@ -823,20 +987,24 @@ summary:focus-visible {
     height: auto;
     min-height: 100dvh;
     grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(22rem, 62dvh) auto;
+    grid-template-rows: auto auto;
   }
 
-  .topbar,
-  .legend,
-  .map-stage { grid-column: 1; }
+  .stage-shell,
+  .stage-shell.is-rail-open {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(22rem, 62dvh) auto;
+  }
 
-  .map-stage { grid-row: 2; }
-  .legend {
-    grid-row: 3;
+  .map-frame { min-height: 22rem; }
+
+  .side-rail,
+  .side-rail .legend {
+    max-height: 70dvh;
     border-left: 0;
     border-top: 1px solid rgba(243, 239, 226, 0.12);
-    max-height: none;
   }
+
   .topbar-meta { text-align: left; }
   .minimap { width: 148px; }
   .minimap-field { height: 84px; }

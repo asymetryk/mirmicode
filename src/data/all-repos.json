@@ -1,0 +1,17 @@
+{
+  "owner": "asymetryk",
+  "fetchedOn": "2026-09-22",
+  "source": "GitHub user asymetryk (type User, public_repos 10). Listed with `gh repo list asymetryk --limit 1000` and checked against `gh api --paginate users/asymetryk/repos?per_page=100&type=owner`. Includes the four public forks (buzz, cmux, kept, openproject) because they are repos this account has. Private repos were not visible: GET /user returned 403 for this credential, and `gh repo list` with no owner only saw asymetryk/mirmicode. Refresh by replacing `repos` from those commands. The browser never calls GitHub; the map merges this file at load.",
+  "repos": [
+    "asymetryk/agent-operating-charter",
+    "asymetryk/ai-stack-observatory",
+    "asymetryk/buzz",
+    "asymetryk/cmux",
+    "asymetryk/fcc-lookup-mvp",
+    "asymetryk/kept",
+    "asymetryk/langley-halls",
+    "asymetryk/mirmicode",
+    "asymetryk/openproject",
+    "asymetryk/second-brain-assets"
+  ]
+}

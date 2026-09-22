@@ -7,9 +7,9 @@ import {
   readStartupWorkingSetUrl,
   resolveSnapshot,
 } from "./adapters/source";
-import { Legend } from "./components/Legend";
 import { MapStage } from "./components/MapStage";
 import { SelectionPopover } from "./components/SelectionPopover";
+import { SideRail } from "./components/SideRail";
 import { positionBases } from "./layout";
 import { DEFAULT_NOISE_FILTER, applyNoiseFilter, type NoiseFilter } from "./mapNoise";
 import type { MapSnapshot } from "./types";
@@ -17,6 +17,7 @@ import type { MapSnapshot } from "./types";
 const HIDE_NOISE_KEY = "mirmicode.hideNoise";
 const HIDE_DETACHED_KEY = "mirmicode.hideDetached";
 const HIDE_ARCHIVED_KEY = "mirmicode.hideArchived";
+const RAIL_OPEN_KEY = "mirmicode.railOpen";
 
 export function App() {
   const [urlDraft, setUrlDraft] = useState(readStartupUrl);
@@ -28,6 +29,7 @@ export function App() {
   const [attached, setAttached] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [filter, setFilter] = useState<NoiseFilter>(readNoiseFilter);
+  const [railOpen, setRailOpen] = useState(readRailOpen);
   const requestVersion = useRef(0);
 
   useEffect(() => {
@@ -147,6 +149,11 @@ export function App() {
 
   const banner = [fallbackReason, staleNote, snapshot?.notice].filter(Boolean).join(" ") || null;
 
+  function onRailOpen(value: boolean) {
+    setRailOpen(value);
+    writeFlag(RAIL_OPEN_KEY, value);
+  }
+
   return (
     <div className="app">
       <header className="topbar">
@@ -166,52 +173,79 @@ export function App() {
           </p>
         ) : null}
       </header>
-      <MapStage
-        key={`${snapshot?.source ?? "pending"}:${snapshot?.fetchedAt ?? "0"}`}
-        bases={positioned}
-        selectedBaseId={selectedBaseId}
-        selectedUnitId={selectedUnitId}
-        attached={attached && selected !== null}
-        onSelectBase={(id) => {
-          setSelectedBaseId(id);
-          setSelectedUnitId(null);
-        }}
-        onSelectUnit={(baseId, unitId) => {
-          setSelectedBaseId(baseId);
-          setSelectedUnitId(unitId);
-        }}
-        onClearSelection={onClearSelection}
-      >
-        <SelectionPopover
-          base={selected}
-          unit={selectedUnit}
-          attached={attached && selected !== null}
-          now={now}
-          onToggleAttach={onToggleAttach}
-          onClose={onClearSelection}
-          onSelectUnit={(baseId, unitId) => {
-            setSelectedBaseId(baseId);
-            setSelectedUnitId(unitId);
-          }}
-        />
-      </MapStage>
-      <Legend
-        bases={positioned}
-        hideNoise={filter.hideNoise}
-        hideDetached={filter.hideDetached}
-        hideArchived={filter.hideArchived}
-        hiddenCount={filtered.hiddenCount}
-        onHideNoise={onHideNoise}
-        onHideDetached={onHideDetached}
-        onHideArchived={onHideArchived}
-        fetchedAt={snapshot?.fetchedAt ?? null}
-        sourceLabel={status}
-        urlDraft={urlDraft}
-        loading={loading}
-        onUrlDraft={setUrlDraft}
-        onLoadUrl={onLoadUrl}
-        onUseFixture={onUseFixture}
-      />
+      <div className={railOpen ? "stage-shell is-rail-open" : "stage-shell"}>
+        <div className="map-frame">
+          <MapStage
+            key={`${snapshot?.source ?? "pending"}:${snapshot?.fetchedAt ?? "0"}`}
+            bases={positioned}
+            selectedBaseId={selectedBaseId}
+            selectedUnitId={selectedUnitId}
+            attached={attached && selected !== null}
+            onSelectBase={(id) => {
+              setSelectedBaseId(id);
+              setSelectedUnitId(null);
+            }}
+            onSelectUnit={(baseId, unitId) => {
+              setSelectedBaseId(baseId);
+              setSelectedUnitId(unitId);
+            }}
+            onClearSelection={onClearSelection}
+          >
+            <SelectionPopover
+              base={selected}
+              unit={selectedUnit}
+              attached={attached && selected !== null}
+              now={now}
+              onToggleAttach={onToggleAttach}
+              onClose={onClearSelection}
+              onSelectUnit={(baseId, unitId) => {
+                setSelectedBaseId(baseId);
+                setSelectedUnitId(unitId);
+              }}
+            />
+          </MapStage>
+          {railOpen ? null : (
+            <button
+              type="button"
+              className="rail-expand"
+              aria-expanded={false}
+              onClick={() => onRailOpen(true)}
+            >
+              Forces
+            </button>
+          )}
+        </div>
+        {railOpen ? (
+          <SideRail
+            bases={positioned}
+            selectedBaseId={selectedBaseId}
+            selectedUnitId={selectedUnitId}
+            hideNoise={filter.hideNoise}
+            hideDetached={filter.hideDetached}
+            hideArchived={filter.hideArchived}
+            hiddenCount={filtered.hiddenCount}
+            fetchedAt={snapshot?.fetchedAt ?? null}
+            sourceLabel={status}
+            urlDraft={urlDraft}
+            loading={loading}
+            onHideNoise={onHideNoise}
+            onHideDetached={onHideDetached}
+            onHideArchived={onHideArchived}
+            onCollapse={() => onRailOpen(false)}
+            onSelectBase={(id) => {
+              setSelectedBaseId(id);
+              setSelectedUnitId(null);
+            }}
+            onSelectUnit={(baseId, unitId) => {
+              setSelectedBaseId(baseId);
+              setSelectedUnitId(unitId);
+            }}
+            onUrlDraft={setUrlDraft}
+            onLoadUrl={onLoadUrl}
+            onUseFixture={onUseFixture}
+          />
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -230,6 +264,10 @@ function statusLine(
   if (loading) return `Loading… · ${count}`;
   if (snapshot.source === "working-set") return `Live Working Set · ${count}`;
   return `Fixture · sample data · ${count}`;
+}
+
+function readRailOpen(): boolean {
+  return readFlag(RAIL_OPEN_KEY, true);
 }
 
 function readNoiseFilter(): NoiseFilter {

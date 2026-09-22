@@ -1,10 +1,11 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import allRepos from "../data/all-repos.json";
 import cahqSample from "../data/cahq-working-set.sample.json";
 import sampleBases from "../data/sample-bases.json";
-import { postureOf, postureSignal } from "../factions";
-import { unitContext } from "../format";
+import { factionName, postureOf, postureSignal } from "../factions";
+import { harnessSlug, unitContext } from "../format";
 import { BUILDING_OFFSET, fitView, positionBases, resourcePlacements, unitSlot } from "../layout";
 import {
   BUILDING_KINDS,
@@ -13,6 +14,7 @@ import {
   buildingSrc,
   dominantFaction,
   glyphId,
+  paintedFaction,
   heroSrc,
   markerSrc,
   outpostSrc,
@@ -97,6 +99,40 @@ describe("normalizeWorkingSetPayload", () => {
     const unit = bases[0]!.units[0]!;
     expect(unitContext(unit)).toBe(`Last prompt: ${prompt.trim()}`);
     expect(unitContext(unit, true)).toBe(`Last prompt: ${prompt.slice(0, 139)}…`);
+  });
+
+  it("folds omp onto ohmypi and never uses the bare omp label", () => {
+    const { bases } = normalizeWorkingSetPayload([
+      { repo: "example/demo", surface: "omp", model: "Kimi", lastUserPrompt: "ship the rail" },
+      { repo: "example/demo", surface: "OMP", model: "Scout" },
+      { repo: "example/demo", harness: "oh-my-pi", model: "Medic" },
+    ]);
+    expect(bases[0]?.units.map((unit) => unit.harness)).toEqual(["ohmypi", "ohmypi", "ohmypi"]);
+    expect(bases[0]?.units.map((unit) => factionName(unit.harness))).toEqual(["OhMyPi", "OhMyPi", "OhMyPi"]);
+    expect(factionName("omp")).toBe("OhMyPi");
+    expect(factionName("OMP")).toBe("OhMyPi");
+    expect(harnessSlug("omp")).toBe("ohmypi");
+    expect(paintedFaction("omp")).toBe("ohmypi");
+    expect(unitSrc("omp", "Kimi")).toBe("/rts-art-v2/units/ohmypi-mirmi-armed-04.png");
+    expect(heroSrc("omp")).toBe("/rts-art/hero-ohmypi-mechanical.png");
+  });
+
+  it("drops git branch fields instead of copying them onto a unit", () => {
+    const { bases } = normalizeWorkingSetPayload([
+      {
+        repo: "example/demo",
+        branch: "feature/secret",
+        head_branch: "main",
+        observed: { surface: "cursor", branch: "wip", git_branch: "trunk" },
+        annotation: { label: "Thread title" },
+      },
+    ]);
+    const blob = JSON.stringify(bases[0]);
+    expect(blob).not.toContain("feature/secret");
+    expect(blob).not.toContain("head_branch");
+    expect(blob).not.toContain("git_branch");
+    expect(blob).not.toContain("wip");
+    expect(blob).not.toContain("trunk");
   });
 
   it("reads the canonical contract", () => {
@@ -674,7 +710,11 @@ describe("resolveSnapshot", () => {
 
     expect(requested).toEqual([expected]);
     expect(result.snapshot.source).toBe("working-set");
-    expect(result.snapshot.bases.map((base) => base.repo)).toEqual(["example/synthetic"]);
+    expect(result.snapshot.bases.map((base) => base.repo)).toEqual([
+      "example/synthetic",
+      ...allRepos.repos,
+    ]);
+    expect(result.snapshot.bases.find((base) => base.repo === "asymetryk/buzz")?.units).toEqual([]);
     expect(result.fallbackReason).toBeNull();
   });
 
@@ -741,7 +781,12 @@ describe("cahq working set sample", () => {
     const result = await resolveSnapshot(`${CAHQ_WORKING_SET_ORIGIN}/agents`, fetchImpl);
     expect(result.fallbackReason).toBeNull();
     expect(result.snapshot.source).toBe("working-set");
-    expect(result.snapshot.bases).toHaveLength(3);
+    expect(result.snapshot.bases.slice(0, 3).map((base) => base.repo)).toEqual([
+      "asymetryk/mirmicode",
+      "example/charter",
+      "example/ops-board",
+    ]);
+    expect(result.snapshot.bases.find((base) => base.repo === "asymetryk/buzz")?.units).toEqual([]);
     const units = result.snapshot.bases.reduce((sum, base) => sum + base.units.length, 0);
     expect(units).toBe(7);
   });
@@ -754,9 +799,14 @@ describe("sample fixture", () => {
 
     const snapshot = loadFixture();
     expect(snapshot.notice).toBeNull();
-    expect(snapshot.bases.length).toBe(raw.bases.length);
+    expect(snapshot.bases.length).toBeGreaterThan(raw.bases.length);
+    const rawRepos = new Set(raw.bases.map((base) => base.repo.toLowerCase()));
 
     for (const base of snapshot.bases) {
+      if (!rawRepos.has(base.repo.toLowerCase())) {
+        expect(base.units).toEqual([]);
+        continue;
+      }
       expect(base.units.length).toBeGreaterThanOrEqual(2);
       const factions = new Set(base.units.map((unit) => unit.harness));
       expect(factions.size).toBeGreaterThanOrEqual(2);
@@ -905,8 +955,10 @@ describe("rts sprites", () => {
       ]),
     ).toBe("cursor");
     expect(dominantFaction([{ harness: "opencode" }])).toBeNull();
+    expect(dominantFaction([{ harness: "omp" }, { harness: "omp" }, { harness: "cursor" }])).toBe("ohmypi");
 
     for (const base of loadFixture().bases) {
+      if (base.units.length === 0) continue;
       expect(dominantFaction(base.units)).not.toBeNull();
     }
   });

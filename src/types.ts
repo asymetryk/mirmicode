@@ -31,11 +31,21 @@ export type Unit = {
   updatedAt: string;
 };
 
+/** OpenProject project copied from Working Set associations. Null means none linked. */
+export type OpenProjectSummary = {
+  href: string | null;
+  name: string | null;
+  status: string | null;
+  summary: string | null;
+};
+
 /** One project/repo on the campaign map. */
 export type CampaignBase = {
   id: string;
   repo: string;
   label: string | null;
+  /** Aggregated from unit associations, else a repo map already on the payload. */
+  openProject: OpenProjectSummary | null;
   /** Latest unit touch, or "unknown". */
   updatedAt: string;
   /**

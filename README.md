@@ -114,13 +114,13 @@ npm run preview
 
 `preview` serves the static build at http://127.0.0.1:4173. A production `npm run build` without the Docker `ARG` does not bake the same-origin path; the image build does.
 
-Drag to pan. Scroll to zoom. **Select** a unit to open a popover with its context snippet (hero), harness, model, thread, status, and lifecycle. **Attach** locks the view on that unit’s base. The **minimap** jumps the view. Escape closes the popover (or detaches first). These are view controls. The map does not send orders to agents.
+Drag to pan. Scroll to zoom. **Select** a unit or camp to open a popover with its context snippet (hero), harness, model, thread, status, lifecycle, and OpenProject. **Attach** locks the view on that base. The **minimap** jumps the view. Escape closes the popover (or detaches first). These are view controls. The map does not send orders to agents. Git branch names are not shown.
 
-The **Noise** switch starts on. It hides `presence` `not_seen` and `annotation.hidden` true. `archived` and `detached` stay on the map dimmer until **Hide archived** or **Hide detached** is turned on. `unknown` stays visible and dimmer. A Cursor unit with `lifecycle` `unknown` and no repo is dimmed further inside Unassigned. **Unassigned** is one outpost with a count. Select it to open that list in the popover. Counts come from the loaded snapshot. They are not a fixed demo size.
+**Forces** is the side rail: camps, factions and their units, and the legend (bodies, types, field, noise switches, data source). **Hide** collapses it so the map fills the space under the title. The choice is remembered as `mirmicode.railOpen`. Unit and base details stay in the popover.
 
-Units without a usable **Last prompt** snippet (same resolution as the field below) are hard-hidden from the map — no empty shells. Public mode still scrubs prompt *text* but keeps units whose payload had a snippet.
+The **Noise** switch starts on. It hides `presence` `not_seen` and `annotation.hidden` true. `archived` stays dimmer until **Hide archived** is turned on. `detached` stays dimmer for other harnesses. An OhMyPi unit (`omp` / `ohmypi`) with `lifecycle` `detached` stays full strength when `presence` is `present` or it has a last-user prompt. **Hide detached** still removes detached units. `unknown` stays visible and dimmer. A Cursor unit with `lifecycle` `unknown` and no repo is dimmed further inside Unassigned. **Unassigned** is one outpost with a count. Select it to open that list in the popover. Counts come from the loaded snapshot. They are not a fixed demo size.
 
-The legend lives in the right rail (factions, unit types, field art, noise switches, data source). The map stays nearly fullscreen.
+Units without a usable **Last prompt** snippet (same resolution as the field below) are hard-hidden from the map — no empty shells. Public mode still scrubs prompt *text* but keeps units whose payload had a snippet. A catalog camp with no units stays on the map.
 
 ## Sprites
 
@@ -255,7 +255,7 @@ Flat rows do not invent a second unit from a parent harness when `units` or `age
 | Base id | `id` on a grouped base | Optional. Derived from the repo when omitted. Duplicate base ids get a numeric suffix. On a flat row, `id` belongs to the unit. |
 | Base label | `label` on a grouped base | Human name for the repo. Flat-row `label` stays on the unit. |
 | Units | `units` or `agents` | Array of unit objects. Omit it and the record itself is one unit. |
-| Faction / harness | `observed.surface`, `observed.harness`, then flat `harness` or `surface` | Lowercased. `oh-my-pi` and `open-code` fold onto `ohmypi` and `opencode`. Missing becomes `unknown`. |
+| Faction / harness | `observed.surface`, `observed.harness`, then flat `harness` or `surface` | Lowercased. `omp`, `oh-my-pi`, and `OhMyPi` fold onto the painted id `ohmypi` and display as **OhMyPi**. `open-code` folds onto `opencode`. Missing becomes `unknown`. The UI does not show the bare `omp` token. |
 | Unit type / model | `observed.model`, then flat `model` | Blank or missing becomes `unknown`. |
 | Thread | `thread_name` or `threadName` | Empty renders as an em dash. |
 | Status | `annotation.status`, then flat `status` | Operator triage. Live values are `open` and `done`. Shown as Status, never as lifecycle. `open` and `done` do not drive the glow. `working`, `active`, and `busy` still glow; `blocked`, `queued`, `stuck`, and `error` take the blocked slash. |
@@ -268,8 +268,9 @@ Flat rows do not invent a second unit from a parent harness when `units` or `age
 | Last prompt | `observed.lastUserPrompt`, then `observed.last_user_prompt`, then flat `last_prompt`, `lastPrompt`, `last_user_message`, `lastUserMessage`, `user_prompt`, `userPrompt`, `prompt`, `input`, then `annotation.note` | First nonblank string wins; non-string and blank values are skipped. The published observed prompt is at most 240 characters and is kept in full for the tooltip. Never derived from `annotation.label`. Units without a usable value are hard-hidden from the map. **Public BIP** (`PUBLIC_MODE=1` on the pod, or bake-time `VITE_PUBLIC_MODE`) drops displayed prompt text unless full live is set. The public pod also nulls those JSON fields and sets `hasContextSnippet: true` when a snippet existed, which the client honors so the hard filter can show the unit without the text. |
 | Last touched | `annotation.updated_at`, `observed.updated_at`, then flat `updated_at`, `updatedAt`, `last_touched`, or `lastTouched` | The base shows the latest valid unit time. |
 | Placement | `x`, `y` on the base | Optional numbers in `0..1`. Map presentation only. Ignored when out of range. |
+| OpenProject | `associations.openproject` on the item or grouped base. Fallback: a repo map already on the payload at `openproject`, `repo_openproject`, or `openproject_by_repo` (top level or under `snapshot`) | Object fields read when present: `href` / `url` / `html_url` / `project_url`, `name` / `title` / `identifier`, `status` / `phase`, `description` / `summary` / `next_update` / `updated_at`. A nested `project` object is read the same way. The base shows the project most of its units share; a tie keeps the first. Only `http` and `https` become links. No association, including a null `associations.openproject`, renders the plain text **no OP project linked**. The client does not call OpenProject. |
 
-Unknown fields and transcript bodies are ignored. Display metadata is capped at 180 characters, except prompt text, which is retained for full native `title` tooltips. The selection popover shows the prompt as hero content when private; public BIP scrubs that hero and falls back to `Thread:` (label/name) in secondary lines. `annotation.label` alone is not enough to place a unit on the map. Both sample fixtures include fictional prompt text and a few label-only shells that the hard filter removes. A grouped fixture record looks like this:
+Unknown fields, transcript bodies, and git branch names are ignored. Display metadata is capped at 180 characters, except prompt text, which is retained for full native `title` tooltips. The selection popover shows the prompt as hero content when private; public BIP scrubs that hero and falls back to `Thread:` (label/name) in secondary lines. `annotation.label` alone is not enough to place a unit on the map. Both sample fixtures include fictional prompt text and a few label-only shells that the hard filter removes. A grouped fixture record looks like this:
 
 ```json
 {
@@ -312,7 +313,7 @@ When the live payload uses different names, extend the alias lists in `normalize
 | Not seen | On | Hide when `presence` is `not_seen` |
 | Operator hidden | On | Hide when `annotation.hidden` is boolean `true` |
 | Archived | Dim, hide optional | Stay on the map, drawn dimmer. **Hide archived** removes them |
-| Detached | Dim, hide optional | Stay on the map, drawn dimmer. **Hide detached** removes them |
+| Detached | Dim, hide optional | Stay on the map, drawn dimmer, except OhMyPi (`omp` / `ohmypi`) when `presence` is `present` or a last-user prompt is present. **Hide detached** still removes them |
 | Unknown lifecycle | Dim | Stay visible, drawn dimmer. Unclear or cold, not dead |
 | Repo-less Cursor unknown | Demote | Dimmed further and listed last in the Unassigned drilldown. Not removed |
 | Stale snapshot | Banner | `snapshot.stale` true shows “Working Set refresh failed. This snapshot is stale.” Units stay |
@@ -325,7 +326,11 @@ Hidden units remain in the snapshot. Turning the noise switch off draws `not_see
 
 ### Unassigned
 
-Nested items with both `observed.repo` and `observed.repo_name` missing or blank share one base named Unassigned. The map draws that base as a single outpost and a count of the units that passed the filter (noise **and** usable context snippet). It does not place a token per unit. Select the outpost to open the list in the popover, then select a unit. The popover shows lifecycle, presence, freshness, and status on separate lines, plus the snippet hero when private. Assigned repos keep one token per visible unit. Repo-less Cursor units whose lifecycle is `unknown` sit at the end of that list, dimmer than the rest.
+Nested items with both `observed.repo` and `observed.repo_name` missing or blank share one base named Unassigned. The map draws that base as a single outpost and a count of the units that passed the filter (noise **and** usable context snippet). It does not place a token per unit. Select the outpost to open the list in the popover, then select a unit. The popover shows lifecycle, presence, freshness, and status on separate lines, plus the snippet hero when private, and the base’s OpenProject line. Assigned repos keep one token per visible unit. Repo-less Cursor units whose lifecycle is `unknown` sit at the end of that list, dimmer than the rest.
+
+## Repo camps
+
+`src/data/all-repos.json` is the public repository list for GitHub user **asymetryk**, baked on 2026-09-22 from `gh repo list asymetryk` and `gh api users/asymetryk/repos` (10 public repos, including forks). The browser does not call GitHub and does not need a token. `loadFixture` and `loadWorkingSet` merge that list after normalize: a Working Set repo keeps its units; a catalog repo with no units is an empty camp (an outpost and a name, no army). Names dedupe on lowercased `owner/name`. Private repositories were not visible to the credential that generated the file (`GET /user` returned 403). Refresh the list by replacing `repos` in that file; do not put a GitHub token in the client.
 
 The sample fixture’s noise rows and Unassigned outpost are synthetic. They demonstrate the filter offline. Live counts follow whatever the Working Set returns.
 

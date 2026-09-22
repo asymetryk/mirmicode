@@ -8,7 +8,10 @@ type OutpostProps = {
 };
 
 export function Outpost({ faction, selected, attached }: OutpostProps) {
-  const src = buildingSrc(faction, "pad") ?? (faction ? outpostSrc(faction) : null);
+  const src =
+    buildingSrc(faction, "pad") ??
+    (faction ? outpostSrc(faction) : null) ??
+    buildingSrc(null, "depot");
   const className = ["outpost-sprite", selected ? "is-selected" : "", attached ? "is-attached" : ""]
     .filter(Boolean)
     .join(" ");

@@ -1,3 +1,4 @@
+import { canonicalHarness } from "./factions";
 import type { CampaignBase } from "./types";
 
 /** Repo name used when a nested Working Set item has no observed repo. */
@@ -27,6 +28,10 @@ export type NoiseSubject = {
   lifecycle: string | null;
   harness?: string | null;
   hidden?: boolean;
+  /** Live last-user prompt. Thread labels do not count. */
+  lastPrompt?: string | null;
+  /** Payload flag. True when a prompt exists even if public scrub cleared the text. */
+  hasContextSnippet?: boolean;
 };
 
 export type FilteredBases = {
@@ -76,14 +81,38 @@ export function noiseReason(unit: NoiseSubject, filter: NoiseFilter): NoiseReaso
 }
 
 /**
+ * A usable last-user prompt. Blank strings are not a snippet.
+ * This does not hide a unit. Empty shells simply have no Last prompt line.
+ */
+export function hasContextSnippet(unit: { lastPrompt?: string | null }): boolean {
+  return typeof unit.lastPrompt === "string" && unit.lastPrompt.trim().length > 0;
+}
+
+function isOhMyPi(harness: string | null | undefined): boolean {
+  return canonicalHarness(harness ?? "") === "ohmypi";
+}
+
+/**
+ * OhMyPi stays full strength when detached if it is present or still has a prompt.
+ * Archived and unknown stay dim. Other harnesses still dim when detached.
+ */
+function ohMyPiDetachedStaysBright(unit: NoiseSubject): boolean {
+  if (!isOhMyPi(unit.harness)) return false;
+  if (exactToken(unit.presence) === "present") return true;
+  return hasUsableContextSnippet(unit);
+}
+
+/**
  * Archived, detached, and unknown are cold, not dead.
  * A Cursor unit with lifecycle unknown and no repo is dimmed further.
+ * OhMyPi is not dimmed for detached alone when it is present or has a prompt.
  */
 export function unitEmphasis(unit: NoiseSubject, repo = ""): Emphasis {
   const lifecycle = exactToken(unit.lifecycle);
   if (lifecycle === UNKNOWN && exactToken(unit.harness) === CURSOR && isUnassignedRepo(repo)) {
     return "collector";
   }
+  if (lifecycle === DETACHED && ohMyPiDetachedStaysBright(unit)) return "normal";
   if (lifecycle === ARCHIVED || lifecycle === DETACHED || lifecycle === UNKNOWN) return "dim";
   return "normal";
 }
@@ -126,7 +155,11 @@ export function applyNoiseFilter(bases: CampaignBase[], filter: NoiseFilter): Fi
           (a, b) => emphasisRank(unitEmphasis(a, base.repo)) - emphasisRank(unitEmphasis(b, base.repo)),
         )
       : visible;
-    if (units.length === 0) continue;
+    if (units.length === 0) {
+      // A camp with no army stays. A base whose units were all filtered does not.
+      if (base.units.length === 0) next.push(base);
+      continue;
+    }
     const changed = units.length !== base.units.length || isUnassignedRepo(base.repo);
     next.push(changed ? { ...base, units } : base);
   }

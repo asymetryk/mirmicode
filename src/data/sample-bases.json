@@ -6,6 +6,14 @@
       "label": "Map MVP",
       "x": 0.26,
       "y": 0.22,
+      "associations": {
+        "openproject": {
+          "name": "Mirmicode",
+          "status": "on track",
+          "description": "Bird’s-eye map of the agent campaign.",
+          "href": "https://example.com/openproject/projects/mirmicode"
+        }
+      },
       "units": [
         {
           "id": "mirmicode-grok",
@@ -131,6 +139,7 @@
           "harness": "ohmypi",
           "model": "Kimi",
           "thread_name": "left-base",
+          "last_prompt": "Keep this OhMyPi unit at full strength. Detached is not a reason to dim a live prompt.",
           "status": "idle",
           "presence": "seen",
           "lifecycle": "Detached",

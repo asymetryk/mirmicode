@@ -1,5 +1,20 @@
 export const FACTION_ORDER = ["cursor", "codex", "ohmypi"] as const;
 
+/**
+ * Painted faction id.
+ * `omp`, `oh-my-pi`, and `OhMyPi` fold onto `ohmypi` so sprites stay on that body.
+ * The display name is always OhMyPi; callers must not show the raw `omp` token.
+ */
+export function canonicalHarness(value: string): string {
+  const compact = value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  if (compact === "cursor") return "cursor";
+  if (compact === "codex") return "codex";
+  if (compact === "ohmypi" || compact === "omp") return "ohmypi";
+  if (compact === "opencode") return "opencode";
+  if (compact === "unknown") return "unknown";
+  return value.trim().toLowerCase();
+}
+
 export const UNIT_TYPES = [
   "Astra",
   "Luna",
@@ -23,7 +38,7 @@ export type UnitKind =
   | "other";
 
 export function factionName(harness: string): string {
-  switch (harness.toLowerCase()) {
+  switch (canonicalHarness(harness)) {
     case "cursor":
       return "Cursor";
     case "codex":
@@ -35,7 +50,7 @@ export function factionName(harness: string): string {
     case "unknown":
       return "Unknown";
     default:
-      return harness;
+      return harness.trim() || harness;
   }
 }
 
@@ -85,8 +100,8 @@ export function legendFactions(harnesses: string[]): string[] {
   const extras: string[] = [];
   const known = new Set<string>(FACTION_ORDER);
   for (const harness of harnesses) {
-    const key = harness.toLowerCase();
-    if (known.has(key)) continue;
+    const key = canonicalHarness(harness);
+    if (!key || known.has(key)) continue;
     known.add(key);
     extras.push(key);
   }
