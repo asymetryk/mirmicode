@@ -155,13 +155,10 @@ describe("parseNativeFeedSnapshot", () => {
 
   it("uses the baked fixture and never reaches the cahq origin", async () => {
     const requested: string[] = [];
-    const fetchImpl: typeof fetch = async (input) => {
+    const fetchImpl: typeof fetch = (async (input) => {
       requested.push(String(input));
-      return new Response(JSON.stringify(fixture), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    };
+      return new Response("{}", { status: 200 });
+    }) as typeof fetch;
 
     const snapshot = await loadNativeFeedFixture(fetchImpl, new Date("2026-09-22T16:00:00Z"));
 
@@ -184,13 +181,14 @@ describe("parseNativeFeedSnapshot", () => {
         expect(unit.lastPrompt).toBeNull();
       }
     }
+    // The native fixture is statically imported and bundled by the build,
+    // so no fetchImpl should be invoked at all — definitely not against the
+    // cahq working-set origin.
+    expect(requested).toEqual([]);
     for (const url of requested) {
       expect(url).not.toContain(CAHQ_WORKING_SET_ORIGIN);
       expect(url).not.toContain("cahq.tail21f530.ts.net");
     }
-    // The native path should never import or call the working-set helpers;
-    // the adapter has no fetchImpl dependency on working-set at all.
-    expect(requested.length).toBeGreaterThanOrEqual(1);
   });
 
   it("never carries prompt bodies — lastPrompt stays null on every unit", () => {
