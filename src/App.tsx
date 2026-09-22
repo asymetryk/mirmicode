@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import {
+  STALE_SNAPSHOT_BANNER,
   WORKING_SET_SOURCE_KEY,
   WORKING_SET_URL_KEY,
   readStartupWorkingSetUrl,
@@ -113,13 +114,14 @@ export function App() {
   }
 
   const status = statusLine(snapshot, loading, positioned, filtered.hiddenCount);
+  const staleNote = snapshot?.stale ? STALE_SNAPSHOT_BANNER : null;
 
   function onHideNoise(value: boolean) {
     setFilter((current) => ({ ...current, hideNoise: value }));
     writeFlag(HIDE_NOISE_KEY, value);
   }
 
-  const banner = fallbackReason ?? snapshot?.notice ?? null;
+  const banner = [fallbackReason, staleNote, snapshot?.notice].filter(Boolean).join(" ") || null;
 
   return (
     <div className="app">
@@ -135,7 +137,7 @@ export function App() {
           <p className="public-note">Build in public. Not monetized.</p>
         </div>
         {banner ? (
-          <p className="banner" role={fallbackReason ? "alert" : "status"}>
+          <p className="banner" role={fallbackReason || staleNote ? "alert" : "status"}>
             {banner}
           </p>
         ) : null}

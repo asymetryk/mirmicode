@@ -13,9 +13,10 @@
           "model": "Grok-4.6",
           "thread_name": "bases-map",
           "lastPrompt": "Add an honest last-prompt line to the unit HUD while preserving map pan, zoom, selection, and glow.",
-          "status": "working",
-          "presence": "seen",
-          "lifecycle": "active",
+          "status": "open",
+          "presence": "present",
+          "lifecycle": "idle",
+          "freshness": "2h",
           "updated_at": "2026-09-21T19:05:00Z"
         },
         {
@@ -147,10 +148,22 @@
           "harness": "cursor",
           "model": "Scout",
           "thread_name": "known-repo",
-          "status": "idle",
-          "presence": "seen",
+          "status": "open",
+          "presence": "present",
           "lifecycle": "unknown",
+          "freshness": "unknown",
           "updated_at": "2026-09-17T04:00:00Z"
+        },
+        {
+          "id": "mirmicode-operator-hidden",
+          "harness": "codex",
+          "model": "Luna",
+          "thread_name": "operator-hid",
+          "status": "done",
+          "presence": "present",
+          "lifecycle": "idle",
+          "hidden": true,
+          "updated_at": "2026-09-17T05:00:00Z"
         }
       ]
     },

@@ -76,7 +76,7 @@ export function Legend({
             checked={hideNoise}
             onChange={(event) => onHideNoise(event.target.checked)}
           />
-          Hide not seen, archived, detached, and repo-less Cursor unknowns
+          Hide not seen, archived, and operator-hidden
         </label>
         <span className="noise-count">{hiddenCount === 0 ? "Nothing hidden" : `${hiddenCount} hidden`}</span>
       </div>

@@ -2,7 +2,7 @@ import type { FormEvent } from "react";
 import { CAHQ_WORKING_SET_ORIGIN, SAME_ORIGIN_WORKING_SET_PATH } from "../adapters/source";
 import { factionName, postureLabel, postureOf, postureSignal } from "../factions";
 import { formatAbsolute, formatLastTouched, harnessSlug, unitContext } from "../format";
-import { isUnassignedRepo } from "../mapNoise";
+import { isUnassignedRepo, unitEmphasis } from "../mapNoise";
 import { roleLabel, unitRole } from "../rtsArt";
 import type { CampaignBase, Unit } from "../types";
 import { UnitFigure } from "./UnitFigure";
@@ -82,6 +82,7 @@ export function Inspector({
               <Fact label="Status" value={unit.status ?? "—"} />
               <Fact label="Lifecycle" value={unit.lifecycle ?? "—"} />
               <Fact label="Presence" value={unit.presence ?? "—"} />
+              <Fact label="Freshness" value={unit.freshness ?? "—"} />
               <Fact label="Base" value={unassigned ? "Unassigned" : base.repo} />
               <Fact label="Last touched" value={formatLastTouched(unit.updatedAt, now)} detail={absolute} />
             </dl>
@@ -115,6 +116,7 @@ export function Inspector({
                   type="button"
                   className={entry.id === unit?.id ? "roster-unit is-selected" : "roster-unit"}
                   data-faction={harnessSlug(entry.harness)}
+                  data-emphasis={unitEmphasis(entry, base.repo)}
                   data-posture={postureOf(postureSignal(entry.status, entry.lifecycle))}
                   aria-pressed={entry.id === unit?.id}
                   title={unitContext(entry) ?? undefined}

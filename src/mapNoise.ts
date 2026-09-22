@@ -4,10 +4,7 @@ import type { CampaignBase } from "./types";
 export const UNASSIGNED_REPO = "Unassigned";
 
 export type NoiseFilter = {
-  /**
-   * Hide presence `not_seen`, lifecycle `archived` or `detached`,
-   * and Cursor units with lifecycle `unknown` and no repo.
-   */
+  /** Hide presence `not_seen`, lifecycle `archived`, and annotation.hidden true. */
   hideNoise: boolean;
 };
 
@@ -15,12 +12,15 @@ export const DEFAULT_NOISE_FILTER: NoiseFilter = {
   hideNoise: true,
 };
 
-export type NoiseReason = "not_seen" | "archived" | "detached" | "cursor_collector";
+export type NoiseReason = "not_seen" | "archived" | "hidden";
+
+export type Emphasis = "normal" | "dim" | "collector";
 
 export type NoiseSubject = {
   presence: string | null;
   lifecycle: string | null;
   harness?: string | null;
+  hidden?: boolean;
 };
 
 export type FilteredBases = {
@@ -46,7 +46,7 @@ export function drawsUnitTokens(repo: string): boolean {
 /**
  * Trimmed, lowercased field text.
  * Missing, blank, and non-string values are null so a hide rule can be skipped.
- * Live hide values are the exact strings `not_seen`, `archived`, `detached`, and `unknown`.
+ * Live strings include `not_seen`, `archived`, `detached`, and `unknown`.
  * `not-seen`, `unseen`, `archive`, and `detach` stay distinct.
  */
 export function exactToken(value: unknown): string | null {
@@ -55,22 +55,35 @@ export function exactToken(value: unknown): string | null {
   return token.length > 0 ? token : null;
 }
 
-/** Why this unit is hidden, or null when it stays on the map. */
-export function noiseReason(unit: NoiseSubject, filter: NoiseFilter, repo = ""): NoiseReason | null {
+/**
+ * Hard-hide reasons. Detached and unknown stay visible.
+ * snapshot.stale is not a hide signal.
+ */
+export function noiseReason(unit: NoiseSubject, filter: NoiseFilter): NoiseReason | null {
   if (!filter.hideNoise) return null;
-  const presence = exactToken(unit.presence);
-  if (presence === NOT_SEEN) return "not_seen";
-  const lifecycle = exactToken(unit.lifecycle);
-  if (lifecycle === ARCHIVED) return "archived";
-  if (lifecycle === DETACHED) return "detached";
-  if (
-    lifecycle === UNKNOWN &&
-    exactToken(unit.harness) === CURSOR &&
-    isUnassignedRepo(repo)
-  ) {
-    return "cursor_collector";
-  }
+  if (unit.hidden === true) return "hidden";
+  if (exactToken(unit.presence) === NOT_SEEN) return "not_seen";
+  if (exactToken(unit.lifecycle) === ARCHIVED) return "archived";
   return null;
+}
+
+/**
+ * Detached and unknown are cold, not dead.
+ * A Cursor unit with lifecycle unknown and no repo is dimmed further.
+ */
+export function unitEmphasis(unit: NoiseSubject, repo = ""): Emphasis {
+  const lifecycle = exactToken(unit.lifecycle);
+  if (lifecycle === UNKNOWN && exactToken(unit.harness) === CURSOR && isUnassignedRepo(repo)) {
+    return "collector";
+  }
+  if (lifecycle === DETACHED || lifecycle === UNKNOWN) return "dim";
+  return "normal";
+}
+
+function emphasisRank(emphasis: Emphasis): number {
+  if (emphasis === "collector") return 2;
+  if (emphasis === "dim") return 1;
+  return 0;
 }
 
 /**
@@ -81,15 +94,21 @@ export function applyNoiseFilter(bases: CampaignBase[], filter: NoiseFilter): Fi
   let hiddenCount = 0;
   const next: CampaignBase[] = [];
   for (const base of bases) {
-    const units = base.units.filter((unit) => {
-      if (noiseReason(unit, filter, base.repo)) {
+    const visible = base.units.filter((unit) => {
+      if (noiseReason(unit, filter)) {
         hiddenCount += 1;
         return false;
       }
       return true;
     });
+    const units = isUnassignedRepo(base.repo)
+      ? [...visible].sort(
+          (a, b) => emphasisRank(unitEmphasis(a, base.repo)) - emphasisRank(unitEmphasis(b, base.repo)),
+        )
+      : visible;
     if (units.length === 0) continue;
-    next.push(units.length === base.units.length ? base : { ...base, units });
+    const changed = units.length !== base.units.length || isUnassignedRepo(base.repo);
+    next.push(changed ? { ...base, units } : base);
   }
   return { bases: next, hiddenCount };
 }

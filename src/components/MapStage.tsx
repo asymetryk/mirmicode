@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { postureOf, postureSignal, factionName } from "../factions";
-import { drawsUnitTokens } from "../mapNoise";
+import { drawsUnitTokens, unitEmphasis } from "../mapNoise";
 import { harnessSlug, unitContext } from "../format";
 import {
   BUILDING_KINDS,
@@ -292,6 +292,7 @@ export function MapStage({
                     className={selected ? "unit is-selected" : "unit"}
                     data-base-id={base.id}
                     data-unit-id={unit.id}
+                    data-emphasis={unitEmphasis(unit, base.repo)}
                     data-faction={harnessSlug(unit.harness)}
                     data-posture={postureOf(posture)}
                     data-role={role ?? "other"}

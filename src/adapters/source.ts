@@ -19,6 +19,9 @@ export const CAHQ_WORKING_SET_ORIGIN = "https://cahq.tail21f530.ts.net";
 /** Browser path. Caddy strips `/working-set` and forwards the rest to CAHQ. */
 export const SAME_ORIGIN_WORKING_SET_PATH = "/working-set/api/v1/working-set";
 
+/** Shown when snapshot.stale is true. Units are not hidden for this. */
+export const STALE_SNAPSHOT_BANNER = "Working Set refresh failed. This snapshot is stale.";
+
 export const WORKING_SET_URL_KEY = "mirmicode.workingSetUrl";
 export const WORKING_SET_SOURCE_KEY = "mirmicode.dataSource";
 
@@ -57,6 +60,7 @@ export function loadFixture(now = new Date()): MapSnapshot {
     fetchedAt: now.toISOString(),
     bases: normalized.bases,
     notice,
+    stale: normalized.stale,
   };
 }
 
@@ -96,6 +100,7 @@ export async function loadWorkingSet(
     fetchedAt: now.toISOString(),
     bases: normalized.bases,
     notice: normalized.issues.length > 0 ? normalized.issues.join(" ") : null,
+    stale: normalized.stale,
   };
 }
 

@@ -24,6 +24,7 @@ import { normalizeWorkingSetPayload } from "./normalize";
 import {
   CAHQ_WORKING_SET_ORIGIN,
   SAME_ORIGIN_WORKING_SET_PATH,
+  STALE_SNAPSHOT_BANNER,
   loadFixture,
   parseWorkingSetUrl,
   readStartupWorkingSetUrl,
@@ -138,6 +139,8 @@ describe("normalizeWorkingSetPayload", () => {
         status: "blocked",
         lifecycle: "idle",
         presence: "offline",
+        freshness: null,
+        hidden: false,
       },
     ]);
   });
@@ -561,6 +564,45 @@ describe("resolveSnapshot", () => {
     expect(JSON.stringify(result)).not.toContain("synthetic-private-response");
   });
 
+  it("reads snapshot.stale as a banner flag and keeps freshness and hidden apart from lifecycle", () => {
+    const normalized = normalizeWorkingSetPayload({
+      snapshot: { stale: true },
+      items: [
+        {
+          item_id: "open-item",
+          observed: {
+            repo_name: "example/live",
+            lifecycle: "idle",
+            presence: "present",
+            freshness: "unknown",
+          },
+          annotation: { status: "open", hidden: false },
+        },
+        {
+          item_id: "hid",
+          observed: { repo_name: "example/live", lifecycle: "idle", presence: "present" },
+          annotation: { status: "done", hidden: true },
+        },
+        {
+          item_id: "string-hidden",
+          observed: { repo_name: "example/live", lifecycle: "detached" },
+          annotation: { hidden: "true", status: "open" },
+        },
+      ],
+    });
+
+    expect(normalized.stale).toBe(true);
+    expect(STALE_SNAPSHOT_BANNER).toMatch(/refresh failed/i);
+    expect(normalized.bases[0]?.units.map((unit) => [unit.id, unit.status, unit.lifecycle, unit.hidden, unit.freshness])).toEqual([
+      ["open-item", "open", "idle", false, "unknown"],
+      ["hid", "done", "idle", true, null],
+      ["string-hidden", "open", "detached", false, null],
+    ]);
+    expect(normalizeWorkingSetPayload({ snapshot: { stale: "yes" }, items: [{ repo: "example/ok" }] }).stale).toBe(false);
+    expect(normalizeWorkingSetPayload({ items: [{ repo: "example/ok" }] }).stale).toBe(false);
+    expect(loadFixture().stale).toBe(false);
+  });
+
   it("points the default origin at the live CAHQ host", () => {
     expect(CAHQ_WORKING_SET_ORIGIN).toBe("https://cahq.tail21f530.ts.net");
     expect(parseWorkingSetUrl(CAHQ_WORKING_SET_ORIGIN).toString()).toBe(
@@ -696,6 +738,8 @@ describe("posture", () => {
     expect(postureOf("queued")).toBe("blocked");
     expect(postureOf(null)).toBe("idle");
     expect(postureOf(postureSignal("working", "archived"))).toBe("working");
+    expect(postureOf(postureSignal("open", "idle"))).toBe("idle");
+    expect(postureOf(postureSignal("done", "idle"))).toBe("idle");
     expect(postureOf(postureSignal(null, "active"))).toBe("working");
     expect(postureOf(postureSignal("  ", "blocked"))).toBe("blocked");
     expect(postureOf(postureSignal(null, null))).toBe("idle");

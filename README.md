@@ -88,7 +88,7 @@ npm run preview
 
 Drag to pan. Scroll to zoom. **Select** a unit to read its harness, model, thread, status, and lifecycle in the HUD. **Attach** locks the view on that unit’s base. The **minimap** jumps the view. Escape detaches. These are view controls. The map does not send orders to agents.
 
-The **Noise** switch starts on. It hides units whose presence is `not_seen`, whose lifecycle is `archived` or `detached`, and Cursor units with lifecycle `unknown` and no repo. **Unassigned** is one outpost with a count. Select it to open that list in the HUD. Counts come from the loaded snapshot. They are not a fixed demo size.
+The **Noise** switch starts on. It hides `presence` `not_seen`, `lifecycle` `archived`, and `annotation.hidden` true. `detached` and `unknown` stay visible at lower emphasis. A Cursor unit with `lifecycle` `unknown` and no repo is dimmed further inside Unassigned. **Unassigned** is one outpost with a count. Select it to open that list in the HUD. Counts come from the loaded snapshot. They are not a fixed demo size.
 
 The legend under the title groups the atlas: faction bodies, the ten unit types, and the field (buildings and resource props). It does not list every file in the pack.
 
@@ -228,9 +228,12 @@ Flat rows do not invent a second unit from a parent harness when `units` or `age
 | Faction / harness | `observed.surface`, `observed.harness`, then flat `harness` or `surface` | Lowercased. `oh-my-pi` and `open-code` fold onto `ohmypi` and `opencode`. Missing becomes `unknown`. |
 | Unit type / model | `observed.model`, then flat `model` | Blank or missing becomes `unknown`. |
 | Thread | `thread_name` or `threadName` | Empty renders as an em dash. |
-| Status | `annotation.status`, then flat `status` | Annotation wins when it is nonblank. Lifecycle and presence are not copied into status. `working`, `active`, and `busy` glow; `blocked`, `queued`, `stuck`, and `error` take the blocked slash. Other values are idle. When status is missing, glow uses lifecycle the same way. |
-| Lifecycle | `observed.lifecycle`, then flat `lifecycle`, then `annotation.lifecycle` | Shown on its own HUD line. Missing stays an em dash and does not hide the unit. |
-| Presence | `observed.presence`, then flat `presence`, then `annotation.presence` | Shown on its own HUD line. Missing stays an em dash and does not hide the unit. |
+| Status | `annotation.status`, then flat `status` | Operator triage. Live values are `open` and `done`. Shown as Status, never as lifecycle. `open` and `done` do not drive the glow. `working`, `active`, and `busy` still glow; `blocked`, `queued`, `stuck`, and `error` take the blocked slash. |
+| Lifecycle | `observed.lifecycle`, then flat `lifecycle`, then `annotation.lifecycle` | Live values are `idle`, `detached`, `archived`, and `unknown`. Shown on its own HUD line. |
+| Presence | `observed.presence`, then flat `presence`, then `annotation.presence` | Live values are `present` and `not_seen`. Shown on its own HUD line. |
+| Freshness | `observed.freshness`, then flat `freshness` | Relative string. The literal `unknown` is kept and shown. Missing stays an em dash. It does not hide the unit. |
+| Operator hidden | `annotation.hidden`, then flat `hidden` | Boolean `true` hides the unit. Any other value, including the string `"true"`, does not. |
+| Stale snapshot | `snapshot.stale` | Boolean `true` shows a refresh-failed banner. It does not hide units. Missing or non-boolean stays quiet. |
 | Unit label | `annotation.label`, flat `label`, then `thread_name` / `threadName` | First nonblank string wins. |
 | Last prompt | Flat `last_prompt`, `lastPrompt`, `last_user_message`, `lastUserMessage`, `user_prompt`, `userPrompt`, `prompt`, `input`, then `annotation.note` | First nonblank string wins; non-string values are ignored. Never derived from `annotation.label`. |
 | Last touched | `annotation.updated_at`, `observed.updated_at`, then flat `updated_at`, `updatedAt`, `last_touched`, or `lastTouched` | The base shows the latest valid unit time. |
@@ -274,19 +277,23 @@ When the live payload uses different names, extend the alias lists in `normalize
 
 The **Noise** switch defaults to on. This browser remembers the choice (`mirmicode.hideNoise`). The status line counts visible bases and units, then adds a hidden count when the filter removed any.
 
-| Rule | Default | Hides a unit when |
+| Rule | Default | Effect |
 | --- | --- | --- |
-| Not seen | On | `presence` is `not_seen` after trim and case fold |
-| Archived or detached | On | `lifecycle` is `archived` or `detached` after trim and case fold |
-| Repo-less Cursor unknown | On | harness is Cursor, `lifecycle` is `unknown`, and the unit has no repo |
+| Not seen | On | Hide when `presence` is `not_seen` |
+| Archived | On | Hard-hide when `lifecycle` is `archived` |
+| Operator hidden | On | Hide when `annotation.hidden` is boolean `true` |
+| Detached | Always | Stay on the map, drawn dimmer. `lifecycle` `detached` is not a hard hide |
+| Unknown lifecycle | Always | Stay visible, drawn dimmer. Unclear or cold, not dead |
+| Repo-less Cursor unknown | Always | Same unit, dimmed further and listed last in the Unassigned drilldown. Not removed |
+| Stale snapshot | Banner | `snapshot.stale` true shows “Working Set refresh failed. This snapshot is stale.” Units stay |
 
-These are the live Working Set strings. A missing, blank, or non-string field skips that rule and the unit stays. `not-seen`, `unseen`, `offline`, `archive`, `detach`, and `idle` do not match. A Cursor unit with `lifecycle` `unknown` on a real repo stays on that base. A Codex unit with `lifecycle` `unknown` and no repo stays in the Unassigned list. `status` `unknown` is not itself a hide rule.
+Comparison is trim and case fold on those exact strings. A missing, blank, or non-string field skips that rule. `not-seen`, `archive`, `idle`, and freshness `unknown` do not hide a unit. `annotation.status` `open` or `done` is triage in the HUD and is not labeled as lifecycle.
 
-Hidden units remain in the snapshot. Turning a switch off draws them on their repo again. A base whose units are all hidden leaves the map until one of them passes.
+Hidden units remain in the snapshot. Turning the switch off draws `not_seen`, `archived`, and operator-hidden units again. Detached and unknown stay dim either way. A base whose units are all hidden leaves the map until one of them passes.
 
 ### Unassigned
 
-Nested items with no `observed.repo_name` or `observed.repo` share one base named Unassigned. The map draws that base as a single outpost and a count of the units that passed the filter. It does not place a token per unit. Select the outpost to open the list in the HUD, then select a unit. The HUD still shows lifecycle, status, thread, and the honest Last prompt or Thread line. Assigned repos keep one token per visible unit.
+Nested items with no `observed.repo_name` or `observed.repo` share one base named Unassigned. The map draws that base as a single outpost and a count of the units that passed the filter. It does not place a token per unit. Select the outpost to open the list in the HUD, then select a unit. The HUD shows lifecycle, presence, freshness, and status on separate lines, plus the honest Last prompt or Thread line. Assigned repos keep one token per visible unit. Repo-less Cursor units whose lifecycle is `unknown` sit at the end of that list, dimmer than the rest.
 
 The sample fixture’s noise rows and Unassigned outpost are synthetic. They demonstrate the filter offline. Live counts follow whatever the Working Set returns.
 

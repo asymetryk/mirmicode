@@ -6,6 +6,8 @@ const TEXT_LIMIT = 180;
 export type NormalizedPayload = {
   bases: CampaignBase[];
   issues: string[];
+  /** True only when snapshot.stale is boolean true. Never a hide signal. */
+  stale: boolean;
 };
 
 /**
@@ -16,8 +18,9 @@ export type NormalizedPayload = {
  */
 export function normalizeWorkingSetPayload(payload: unknown): NormalizedPayload {
   const records = readRecords(payload);
+  const stale = readSnapshotStale(payload);
   if (!records.ok) {
-    return { bases: [], issues: [records.issue] };
+    return { bases: [], issues: [records.issue], stale };
   }
 
   const issues: string[] = [];
@@ -69,7 +72,14 @@ export function normalizeWorkingSetPayload(payload: unknown): NormalizedPayload 
     };
   });
 
-  return { bases, issues };
+  return { bases, issues, stale };
+}
+
+/** Banner signal. Missing, false, and non-booleans stay false. */
+export function readSnapshotStale(payload: unknown): boolean {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return false;
+  const snapshot = readObject((payload as Record<string, unknown>).snapshot);
+  return snapshot?.stale === true;
 }
 
 type MutableBase = {
@@ -159,6 +169,8 @@ function readUnit(
         readString(record.presence) ??
         readString(annotation?.presence),
     ),
+    freshness: bound(readString(observed?.freshness) ?? readString(record.freshness)),
+    hidden: annotation?.hidden === true || record.hidden === true,
     updatedAt: readUpdatedAt(record),
   };
 }
@@ -174,6 +186,13 @@ function readRecords(
   for (const key of ["bases", "items", "records", "agents", "units"] as const) {
     const value = record[key];
     if (Array.isArray(value)) return { ok: true, value };
+  }
+  const snapshot = readObject(record.snapshot);
+  if (snapshot) {
+    for (const key of ["items", "bases", "records", "agents", "units"] as const) {
+      const value = snapshot[key];
+      if (Array.isArray(value)) return { ok: true, value };
+    }
   }
   return { ok: false, issue: "Payload had no bases, items, records, agents, or units array." };
 }

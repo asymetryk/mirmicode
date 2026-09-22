@@ -41,14 +41,18 @@ export function factionName(harness: string): string {
 
 export type Posture = "idle" | "working" | "blocked";
 
+const TRIAGE_STATUS = new Set(["open", "done"]);
+
 /**
- * Glow and the blocked slash follow annotation/flat status when that field is set.
- * Lifecycle is used only when status is missing, so a live item still has a posture.
+ * Glow follows a posture word on status, such as working or blocked.
+ * annotation.status open and done are operator triage, so they do not replace lifecycle.
  */
 export function postureSignal(status: string | null, lifecycle: string | null): string | null {
-  if (status && status.trim()) return status;
-  if (lifecycle && lifecycle.trim()) return lifecycle;
-  return null;
+  const statusText = status?.trim() ?? "";
+  if (statusText && !TRIAGE_STATUS.has(statusText.toLowerCase())) return statusText;
+  const life = lifecycle?.trim() ?? "";
+  if (life) return life;
+  return statusText || null;
 }
 
 export function postureOf(status: string | null): Posture {
