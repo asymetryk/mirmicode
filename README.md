@@ -268,6 +268,10 @@ When the live payload uses different names, extend the alias lists in `normalize
 
 ## Map noise
 
+![Filtered map with the Unassigned count and lifecycle in the HUD](docs/map-noise.png)
+
+![Unassigned drilldown list](docs/unassigned-list.png)
+
 Both switches on the **Noise** row default to on. This browser remembers the choice (`mirmicode.hideNoise`, `mirmicode.hideUnknownStatus`). The status line counts visible bases and units, then adds a hidden count when the filter removed any.
 
 | Switch | Default | Hides a unit when |
