@@ -104,13 +104,13 @@ describe("OpenProject associations", () => {
   it("shows the fixture project on mirmicode and none on an empty camp", () => {
     const snapshot = loadFixture();
     const mirmicode = snapshot.bases.find((base) => repoKey(base.repo) === "asymetryk/mirmicode");
-    const buzz = snapshot.bases.find((base) => repoKey(base.repo) === "asymetryk/buzz");
+    const empty = snapshot.bases.find((base) => base.units.length === 0);
     expect(mirmicode?.openProject).toMatchObject({
       name: "Mirmicode",
       status: "on track",
       href: "https://example.com/openproject/projects/mirmicode",
     });
-    expect(buzz?.units).toEqual([]);
-    expect(buzz?.openProject).toBeNull();
+    expect(empty?.units).toEqual([]);
+    expect(empty?.openProject).toBeNull();
   });
 });

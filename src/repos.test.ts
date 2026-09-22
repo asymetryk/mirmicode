@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { loadFixture } from "./adapters/source";
+import allRepos from "./data/all-repos.json";
+import { RETIRED_PUBLIC_GITHUB_CAMP_COUNT } from "./developerCamps";
 import { positionBases } from "./layout";
 import { DEFAULT_NOISE_FILTER, applyNoiseFilter } from "./mapNoise";
 import { mergeRepoCatalog, repoKey } from "./repos";
@@ -68,11 +70,13 @@ describe("mergeRepoCatalog", () => {
 
   it("merges the baked catalog into the fixture without cloning mirmicode", () => {
     const snapshot = loadFixture();
-    const buzz = snapshot.bases.find((base) => repoKey(base.repo) === "asymetryk/buzz");
-    expect(buzz?.units).toEqual([]);
+    expect(allRepos.repos.length).toBeGreaterThan(RETIRED_PUBLIC_GITHUB_CAMP_COUNT);
     const mirmicode = snapshot.bases.filter((base) => repoKey(base.repo) === "asymetryk/mirmicode");
     expect(mirmicode).toHaveLength(1);
     expect((mirmicode[0]?.units.length ?? 0) > 0).toBe(true);
+    const catalogCamp = allRepos.repos.find((name) => repoKey(name) !== "asymetryk/mirmicode");
+    const empty = snapshot.bases.find((base) => catalogCamp && repoKey(base.repo) === repoKey(catalogCamp));
+    expect(empty?.units).toEqual([]);
     expect(snapshot.bases.some((base) => base.units.length === 0)).toBe(true);
   });
 });

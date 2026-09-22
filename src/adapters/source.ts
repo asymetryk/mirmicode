@@ -106,7 +106,7 @@ export async function loadWorkingSet(
   };
 }
 
-/** Baked public repo list. No GitHub token in the browser. */
+/** Baked Developer camp list. No GitHub token in the browser. */
 function withRepoCatalog(bases: CampaignBase[]): CampaignBase[] {
   return mergeRepoCatalog(bases, allRepos.repos);
 }

@@ -1,0 +1,1042 @@
+{
+  "schema": "mirmicode.developer-camps.v1",
+  "source": "/Users/howard/Developer",
+  "scanned_at": "2026-09-22T15:41:44.896865+00:00",
+  "camp_count": 61,
+  "skipped_count": 53,
+  "skipped": [
+    "AI Lab Pitch-worktrees",
+    "AIC Kiro-worktrees",
+    "Asymetryk-Infrastructure-Cortex",
+    "_archives",
+    "_pocket",
+    "_retired",
+    "_xo-scratch",
+    "agent-stack-docs-worktrees",
+    "agentinfra-codex-nas-router",
+    "agentinfra-codex-pr-benchmark",
+    "agentinfra-command-center-rollout",
+    "agentinfra-fix-missy-email-bridge",
+    "agentinfra-fix-missy-email-health-probe",
+    "agentinfra-pocket-reconcile",
+    "agentinfra-work-proposals-coordinator-v1",
+    "agentinfra-work-proposals-foundation-v1",
+    "agentinfra-worktrees",
+    "agentinfra-wp-736-hq-repair",
+    "agentinfra-wp-736-remote-omp-sessions",
+    "agentinfra-wp-745-cahq-delivery",
+    "agentinfra-wp-748-project-governance",
+    "agentinfra-wp-772-coding-acceleration",
+    "agentinfra-ws-175",
+    "agentos-command-center-rollout",
+    "agentos-pocket-reconcile",
+    "agentos-worktrees",
+    "agentworkforce-runtime-worktrees",
+    "aickiro-worktrees",
+    "asymetryk-site",
+    "dtr-app-chat-notifications",
+    "dtr-app-redesign-codex",
+    "dtr-app-redesign-fable-auto",
+    "dtr-app-v2-production-auth",
+    "dtr-next-partial-1784416219",
+    "dtr-next-stale-1784420301",
+    "dtr-next-stale-1784420315",
+    "dtr-open-next-partial-1784416219",
+    "dtr-open-next-stale-1784420301",
+    "dtr-open-next-stale-1784420315",
+    "homelab-atlas-worktrees",
+    "homelab-worktrees",
+    "mirmicode-map-preview",
+    "mirmicode-mvp-main",
+    "omp-remote-upstream",
+    "shi-presentation-builder-airtable-present",
+    "shi-presentation-builder-closer-seats",
+    "shi-presentation-builder-closer-thumb",
+    "shi-presentation-builder-customer-refs",
+    "shi-presentation-builder-hide-feedback-fs",
+    "shi-presentation-builder-infra-refresh",
+    "shi-presentation-builder-shared-slide-previews",
+    "shi-presentation-builder-situation-stakes",
+    "shi-presentation-builder-transition-keep-alive"
+  ],
+  "repos": [
+    {
+      "id": "agent-operating-charter",
+      "name": "agent-operating-charter",
+      "full_name": "agent-operating-charter",
+      "folder": "agent-operating-charter",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "agentinfra",
+      "name": "agentinfra",
+      "full_name": "agentinfra",
+      "folder": "agentinfra",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "agentos",
+      "name": "agentos",
+      "full_name": "agentos",
+      "folder": "agentos",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "agentvault",
+      "name": "agentvault",
+      "full_name": "agentvault",
+      "folder": "agentvault",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "AgentVault-lauryn-chuckd-activation",
+      "name": "AgentVault-lauryn-chuckd-activation",
+      "full_name": "AgentVault-lauryn-chuckd-activation",
+      "folder": "AgentVault-lauryn-chuckd-activation",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "agentworkforce",
+      "name": "agentworkforce",
+      "full_name": "agentworkforce",
+      "folder": "agentworkforce",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "agentworkforce-capable-agents",
+      "name": "agentworkforce-capable-agents",
+      "full_name": "agentworkforce-capable-agents",
+      "folder": "agentworkforce-capable-agents",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "agentworkforce-command-center-contracts-v1",
+      "name": "agentworkforce-command-center-contracts-v1",
+      "full_name": "agentworkforce-command-center-contracts-v1",
+      "folder": "agentworkforce-command-center-contracts-v1",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "agentworkforce-outlook-owner",
+      "name": "agentworkforce-outlook-owner",
+      "full_name": "agentworkforce-outlook-owner",
+      "folder": "agentworkforce-outlook-owner",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "agentworkforce-runtime",
+      "name": "agentworkforce-runtime",
+      "full_name": "agentworkforce-runtime",
+      "folder": "agentworkforce-runtime",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "agentworkforce-runtime-multi-google",
+      "name": "agentworkforce-runtime-multi-google",
+      "full_name": "agentworkforce-runtime-multi-google",
+      "folder": "agentworkforce-runtime-multi-google",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "AI Lab Pitch",
+      "name": "AI Lab Pitch",
+      "full_name": "AI Lab Pitch",
+      "folder": "AI Lab Pitch",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "AI Stack Observatory",
+      "name": "AI Stack Observatory",
+      "full_name": "AI Stack Observatory",
+      "folder": "AI Stack Observatory",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "AIC Kiro",
+      "name": "AIC Kiro",
+      "full_name": "AIC Kiro",
+      "folder": "AIC Kiro",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "AIC Kiro Live",
+      "name": "AIC Kiro Live",
+      "full_name": "AIC Kiro Live",
+      "folder": "AIC Kiro Live",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "aickiro-live",
+      "name": "aickiro-live",
+      "full_name": "aickiro-live",
+      "folder": "aickiro-live",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "Airtable Open Project",
+      "name": "Airtable Open Project",
+      "full_name": "Airtable Open Project",
+      "folder": "Airtable Open Project",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "airtable-scraper-profile",
+      "name": "airtable-scraper-profile",
+      "full_name": "airtable-scraper-profile",
+      "folder": "airtable-scraper-profile",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "Airtable-Whiteboard",
+      "name": "Airtable-Whiteboard",
+      "full_name": "Airtable-Whiteboard",
+      "folder": "Airtable-Whiteboard",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "airtableToXLS",
+      "name": "airtableToXLS",
+      "full_name": "airtableToXLS",
+      "folder": "airtableToXLS",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "antigravity-panel",
+      "name": "antigravity-panel",
+      "full_name": "antigravity-panel",
+      "folder": "antigravity-panel",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "availability-broker",
+      "name": "availability-broker",
+      "full_name": "availability-broker",
+      "folder": "availability-broker",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "basic-memory",
+      "name": "basic-memory",
+      "full_name": "basic-memory",
+      "folder": "basic-memory",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "buzz",
+      "name": "buzz",
+      "full_name": "buzz",
+      "folder": "buzz",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "buzz-inline-thread-replies",
+      "name": "buzz-inline-thread-replies",
+      "full_name": "buzz-inline-thread-replies",
+      "folder": "buzz-inline-thread-replies",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "chrome-airtable-profile",
+      "name": "chrome-airtable-profile",
+      "full_name": "chrome-airtable-profile",
+      "folder": "chrome-airtable-profile",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "cmux-minimax-read-aloud-pr",
+      "name": "cmux-minimax-read-aloud-pr",
+      "full_name": "cmux-minimax-read-aloud-pr",
+      "folder": "cmux-minimax-read-aloud-pr",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "cmux-wp-750-read-aloud",
+      "name": "cmux-wp-750-read-aloud",
+      "full_name": "cmux-wp-750-read-aloud",
+      "folder": "cmux-wp-750-read-aloud",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "Codex",
+      "name": "Codex",
+      "full_name": "Codex",
+      "folder": "Codex",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "compare_solutions_csv",
+      "name": "compare_solutions_csv",
+      "full_name": "compare_solutions_csv",
+      "folder": "compare_solutions_csv",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "content-os-publisher",
+      "name": "content-os-publisher",
+      "full_name": "content-os-publisher",
+      "folder": "content-os-publisher",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "dtr-app",
+      "name": "dtr-app",
+      "full_name": "dtr-app",
+      "folder": "dtr-app",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "dtr-site",
+      "name": "dtr-site",
+      "full_name": "dtr-site",
+      "folder": "dtr-site",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "dtr-site-live-roll-radar-cdx070526",
+      "name": "dtr-site-live-roll-radar-cdx070526",
+      "full_name": "dtr-site-live-roll-radar-cdx070526",
+      "folder": "dtr-site-live-roll-radar-cdx070526",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "dtr-site-redesign-cdx070426",
+      "name": "dtr-site-redesign-cdx070426",
+      "full_name": "dtr-site-redesign-cdx070426",
+      "folder": "dtr-site-redesign-cdx070426",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "dtr-site-redesign-crs070426",
+      "name": "dtr-site-redesign-crs070426",
+      "full_name": "dtr-site-redesign-crs070426",
+      "folder": "dtr-site-redesign-crs070426",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "dtr-site-redesign-fable",
+      "name": "dtr-site-redesign-fable",
+      "full_name": "dtr-site-redesign-fable",
+      "folder": "dtr-site-redesign-fable",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "goalpost",
+      "name": "goalpost",
+      "full_name": "goalpost",
+      "folder": "goalpost",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "GPMO Time Tracker",
+      "name": "GPMO Time Tracker",
+      "full_name": "GPMO Time Tracker",
+      "folder": "GPMO Time Tracker",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "homelab",
+      "name": "homelab",
+      "full_name": "homelab",
+      "folder": "homelab",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "homelab-atlas",
+      "name": "homelab-atlas",
+      "full_name": "homelab-atlas",
+      "folder": "homelab-atlas",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "kept",
+      "name": "kept",
+      "full_name": "kept",
+      "folder": "kept",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "langley-halls",
+      "name": "langley-halls",
+      "full_name": "langley-halls",
+      "folder": "langley-halls",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "mirmicode",
+      "name": "mirmicode",
+      "full_name": "mirmicode",
+      "folder": "mirmicode",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "omp-remote",
+      "name": "omp-remote",
+      "full_name": "omp-remote",
+      "folder": "omp-remote",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "open-project-wiki-api",
+      "name": "open-project-wiki-api",
+      "full_name": "open-project-wiki-api",
+      "folder": "open-project-wiki-api",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "OpenProject",
+      "name": "OpenProject",
+      "full_name": "OpenProject",
+      "folder": "OpenProject",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "Policy Sentinel",
+      "name": "Policy Sentinel",
+      "full_name": "Policy Sentinel",
+      "folder": "Policy Sentinel",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "Policy Sentinel.git",
+      "name": "Policy Sentinel.git",
+      "full_name": "Policy Sentinel.git",
+      "folder": "Policy Sentinel.git",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "Proposal Generator",
+      "name": "Proposal Generator",
+      "full_name": "Proposal Generator",
+      "folder": "Proposal Generator",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "proposal-generator-client-export",
+      "name": "proposal-generator-client-export",
+      "full_name": "proposal-generator-client-export",
+      "folder": "proposal-generator-client-export",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "proposal-generator-north-star",
+      "name": "proposal-generator-north-star",
+      "full_name": "proposal-generator-north-star",
+      "folder": "proposal-generator-north-star",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "proposal-generator-wp766",
+      "name": "proposal-generator-wp766",
+      "full_name": "proposal-generator-wp766",
+      "folder": "proposal-generator-wp766",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "ribari-releases-0.4.5-beta.1",
+      "name": "ribari-releases-0.4.5-beta.1",
+      "full_name": "ribari-releases-0.4.5-beta.1",
+      "folder": "ribari-releases-0.4.5-beta.1",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "ROI Calculator",
+      "name": "ROI Calculator",
+      "full_name": "ROI Calculator",
+      "folder": "ROI Calculator",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "SHI Onboarding",
+      "name": "SHI Onboarding",
+      "full_name": "SHI Onboarding",
+      "folder": "SHI Onboarding",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "shi-account-strategy-workspace",
+      "name": "shi-account-strategy-workspace",
+      "full_name": "shi-account-strategy-workspace",
+      "folder": "shi-account-strategy-workspace",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "shi-onboarding",
+      "name": "shi-onboarding",
+      "full_name": "shi-onboarding",
+      "folder": "shi-onboarding",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "shi-presentation-builder",
+      "name": "shi-presentation-builder",
+      "full_name": "shi-presentation-builder",
+      "folder": "shi-presentation-builder",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "strata-kickstarter-site",
+      "name": "strata-kickstarter-site",
+      "full_name": "strata-kickstarter-site",
+      "folder": "strata-kickstarter-site",
+      "private": null,
+      "html_url": null
+    },
+    {
+      "id": "tin-man",
+      "name": "tin-man",
+      "full_name": "tin-man",
+      "folder": "tin-man",
+      "private": null,
+      "html_url": null
+    }
+  ],
+  "camps": [
+    {
+      "folder": "agent-operating-charter",
+      "path": "/Users/howard/Developer/agent-operating-charter",
+      "repo": null,
+      "label": "agent-operating-charter",
+      "id": "agent-operating-charter",
+      "has_git": true
+    },
+    {
+      "folder": "agentinfra",
+      "path": "/Users/howard/Developer/agentinfra",
+      "repo": null,
+      "label": "agentinfra",
+      "id": "agentinfra",
+      "has_git": true
+    },
+    {
+      "folder": "agentos",
+      "path": "/Users/howard/Developer/agentos",
+      "repo": null,
+      "label": "agentos",
+      "id": "agentos",
+      "has_git": true
+    },
+    {
+      "folder": "agentvault",
+      "path": "/Users/howard/Developer/agentvault",
+      "repo": null,
+      "label": "agentvault",
+      "id": "agentvault",
+      "has_git": true
+    },
+    {
+      "folder": "AgentVault-lauryn-chuckd-activation",
+      "path": "/Users/howard/Developer/AgentVault-lauryn-chuckd-activation",
+      "repo": null,
+      "label": "AgentVault-lauryn-chuckd-activation",
+      "id": "AgentVault-lauryn-chuckd-activation",
+      "has_git": true
+    },
+    {
+      "folder": "agentworkforce",
+      "path": "/Users/howard/Developer/agentworkforce",
+      "repo": null,
+      "label": "agentworkforce",
+      "id": "agentworkforce",
+      "has_git": true
+    },
+    {
+      "folder": "agentworkforce-capable-agents",
+      "path": "/Users/howard/Developer/agentworkforce-capable-agents",
+      "repo": null,
+      "label": "agentworkforce-capable-agents",
+      "id": "agentworkforce-capable-agents",
+      "has_git": true
+    },
+    {
+      "folder": "agentworkforce-command-center-contracts-v1",
+      "path": "/Users/howard/Developer/agentworkforce-command-center-contracts-v1",
+      "repo": null,
+      "label": "agentworkforce-command-center-contracts-v1",
+      "id": "agentworkforce-command-center-contracts-v1",
+      "has_git": true
+    },
+    {
+      "folder": "agentworkforce-outlook-owner",
+      "path": "/Users/howard/Developer/agentworkforce-outlook-owner",
+      "repo": null,
+      "label": "agentworkforce-outlook-owner",
+      "id": "agentworkforce-outlook-owner",
+      "has_git": true
+    },
+    {
+      "folder": "agentworkforce-runtime",
+      "path": "/Users/howard/Developer/agentworkforce-runtime",
+      "repo": null,
+      "label": "agentworkforce-runtime",
+      "id": "agentworkforce-runtime",
+      "has_git": true
+    },
+    {
+      "folder": "agentworkforce-runtime-multi-google",
+      "path": "/Users/howard/Developer/agentworkforce-runtime-multi-google",
+      "repo": null,
+      "label": "agentworkforce-runtime-multi-google",
+      "id": "agentworkforce-runtime-multi-google",
+      "has_git": true
+    },
+    {
+      "folder": "AI Lab Pitch",
+      "path": "/Users/howard/Developer/AI Lab Pitch",
+      "repo": null,
+      "label": "AI Lab Pitch",
+      "id": "AI Lab Pitch",
+      "has_git": false
+    },
+    {
+      "folder": "AI Stack Observatory",
+      "path": "/Users/howard/Developer/AI Stack Observatory",
+      "repo": null,
+      "label": "AI Stack Observatory",
+      "id": "AI Stack Observatory",
+      "has_git": false
+    },
+    {
+      "folder": "AIC Kiro",
+      "path": "/Users/howard/Developer/AIC Kiro",
+      "repo": null,
+      "label": "AIC Kiro",
+      "id": "AIC Kiro",
+      "has_git": true
+    },
+    {
+      "folder": "AIC Kiro Live",
+      "path": "/Users/howard/Developer/AIC Kiro Live",
+      "repo": null,
+      "label": "AIC Kiro Live",
+      "id": "AIC Kiro Live",
+      "has_git": false
+    },
+    {
+      "folder": "aickiro-live",
+      "path": "/Users/howard/Developer/aickiro-live",
+      "repo": null,
+      "label": "aickiro-live",
+      "id": "aickiro-live",
+      "has_git": false
+    },
+    {
+      "folder": "Airtable Open Project",
+      "path": "/Users/howard/Developer/Airtable Open Project",
+      "repo": null,
+      "label": "Airtable Open Project",
+      "id": "Airtable Open Project",
+      "has_git": false
+    },
+    {
+      "folder": "airtable-scraper-profile",
+      "path": "/Users/howard/Developer/airtable-scraper-profile",
+      "repo": null,
+      "label": "airtable-scraper-profile",
+      "id": "airtable-scraper-profile",
+      "has_git": false
+    },
+    {
+      "folder": "Airtable-Whiteboard",
+      "path": "/Users/howard/Developer/Airtable-Whiteboard",
+      "repo": null,
+      "label": "Airtable-Whiteboard",
+      "id": "Airtable-Whiteboard",
+      "has_git": true
+    },
+    {
+      "folder": "airtableToXLS",
+      "path": "/Users/howard/Developer/airtableToXLS",
+      "repo": null,
+      "label": "airtableToXLS",
+      "id": "airtableToXLS",
+      "has_git": false
+    },
+    {
+      "folder": "antigravity-panel",
+      "path": "/Users/howard/Developer/antigravity-panel",
+      "repo": null,
+      "label": "antigravity-panel",
+      "id": "antigravity-panel",
+      "has_git": true
+    },
+    {
+      "folder": "availability-broker",
+      "path": "/Users/howard/Developer/availability-broker",
+      "repo": null,
+      "label": "availability-broker",
+      "id": "availability-broker",
+      "has_git": true
+    },
+    {
+      "folder": "basic-memory",
+      "path": "/Users/howard/Developer/basic-memory",
+      "repo": null,
+      "label": "basic-memory",
+      "id": "basic-memory",
+      "has_git": false
+    },
+    {
+      "folder": "buzz",
+      "path": "/Users/howard/Developer/buzz",
+      "repo": null,
+      "label": "buzz",
+      "id": "buzz",
+      "has_git": true
+    },
+    {
+      "folder": "buzz-inline-thread-replies",
+      "path": "/Users/howard/Developer/buzz-inline-thread-replies",
+      "repo": null,
+      "label": "buzz-inline-thread-replies",
+      "id": "buzz-inline-thread-replies",
+      "has_git": true
+    },
+    {
+      "folder": "chrome-airtable-profile",
+      "path": "/Users/howard/Developer/chrome-airtable-profile",
+      "repo": null,
+      "label": "chrome-airtable-profile",
+      "id": "chrome-airtable-profile",
+      "has_git": false
+    },
+    {
+      "folder": "cmux-minimax-read-aloud-pr",
+      "path": "/Users/howard/Developer/cmux-minimax-read-aloud-pr",
+      "repo": null,
+      "label": "cmux-minimax-read-aloud-pr",
+      "id": "cmux-minimax-read-aloud-pr",
+      "has_git": true
+    },
+    {
+      "folder": "cmux-wp-750-read-aloud",
+      "path": "/Users/howard/Developer/cmux-wp-750-read-aloud",
+      "repo": null,
+      "label": "cmux-wp-750-read-aloud",
+      "id": "cmux-wp-750-read-aloud",
+      "has_git": true
+    },
+    {
+      "folder": "Codex",
+      "path": "/Users/howard/Developer/Codex",
+      "repo": null,
+      "label": "Codex",
+      "id": "Codex",
+      "has_git": false
+    },
+    {
+      "folder": "compare_solutions_csv",
+      "path": "/Users/howard/Developer/compare_solutions_csv",
+      "repo": null,
+      "label": "compare_solutions_csv",
+      "id": "compare_solutions_csv",
+      "has_git": false
+    },
+    {
+      "folder": "content-os-publisher",
+      "path": "/Users/howard/Developer/content-os-publisher",
+      "repo": null,
+      "label": "content-os-publisher",
+      "id": "content-os-publisher",
+      "has_git": true
+    },
+    {
+      "folder": "dtr-app",
+      "path": "/Users/howard/Developer/dtr-app",
+      "repo": null,
+      "label": "dtr-app",
+      "id": "dtr-app",
+      "has_git": true
+    },
+    {
+      "folder": "dtr-site",
+      "path": "/Users/howard/Developer/dtr-site",
+      "repo": null,
+      "label": "dtr-site",
+      "id": "dtr-site",
+      "has_git": true
+    },
+    {
+      "folder": "dtr-site-live-roll-radar-cdx070526",
+      "path": "/Users/howard/Developer/dtr-site-live-roll-radar-cdx070526",
+      "repo": null,
+      "label": "dtr-site-live-roll-radar-cdx070526",
+      "id": "dtr-site-live-roll-radar-cdx070526",
+      "has_git": false
+    },
+    {
+      "folder": "dtr-site-redesign-cdx070426",
+      "path": "/Users/howard/Developer/dtr-site-redesign-cdx070426",
+      "repo": null,
+      "label": "dtr-site-redesign-cdx070426",
+      "id": "dtr-site-redesign-cdx070426",
+      "has_git": false
+    },
+    {
+      "folder": "dtr-site-redesign-crs070426",
+      "path": "/Users/howard/Developer/dtr-site-redesign-crs070426",
+      "repo": null,
+      "label": "dtr-site-redesign-crs070426",
+      "id": "dtr-site-redesign-crs070426",
+      "has_git": true
+    },
+    {
+      "folder": "dtr-site-redesign-fable",
+      "path": "/Users/howard/Developer/dtr-site-redesign-fable",
+      "repo": null,
+      "label": "dtr-site-redesign-fable",
+      "id": "dtr-site-redesign-fable",
+      "has_git": true
+    },
+    {
+      "folder": "goalpost",
+      "path": "/Users/howard/Developer/goalpost",
+      "repo": null,
+      "label": "goalpost",
+      "id": "goalpost",
+      "has_git": false
+    },
+    {
+      "folder": "GPMO Time Tracker",
+      "path": "/Users/howard/Developer/GPMO Time Tracker",
+      "repo": null,
+      "label": "GPMO Time Tracker",
+      "id": "GPMO Time Tracker",
+      "has_git": true
+    },
+    {
+      "folder": "homelab",
+      "path": "/Users/howard/Developer/homelab",
+      "repo": null,
+      "label": "homelab",
+      "id": "homelab",
+      "has_git": true
+    },
+    {
+      "folder": "homelab-atlas",
+      "path": "/Users/howard/Developer/homelab-atlas",
+      "repo": null,
+      "label": "homelab-atlas",
+      "id": "homelab-atlas",
+      "has_git": true
+    },
+    {
+      "folder": "kept",
+      "path": "/Users/howard/Developer/kept",
+      "repo": null,
+      "label": "kept",
+      "id": "kept",
+      "has_git": true
+    },
+    {
+      "folder": "langley-halls",
+      "path": "/Users/howard/Developer/langley-halls",
+      "repo": null,
+      "label": "langley-halls",
+      "id": "langley-halls",
+      "has_git": true
+    },
+    {
+      "folder": "mirmicode",
+      "path": "/Users/howard/Developer/mirmicode",
+      "repo": null,
+      "label": "mirmicode",
+      "id": "mirmicode",
+      "has_git": true
+    },
+    {
+      "folder": "omp-remote",
+      "path": "/Users/howard/Developer/omp-remote",
+      "repo": null,
+      "label": "omp-remote",
+      "id": "omp-remote",
+      "has_git": true
+    },
+    {
+      "folder": "open-project-wiki-api",
+      "path": "/Users/howard/Developer/open-project-wiki-api",
+      "repo": null,
+      "label": "open-project-wiki-api",
+      "id": "open-project-wiki-api",
+      "has_git": false
+    },
+    {
+      "folder": "OpenProject",
+      "path": "/Users/howard/Developer/OpenProject",
+      "repo": null,
+      "label": "OpenProject",
+      "id": "OpenProject",
+      "has_git": false
+    },
+    {
+      "folder": "Policy Sentinel",
+      "path": "/Users/howard/Developer/Policy Sentinel",
+      "repo": null,
+      "label": "Policy Sentinel",
+      "id": "Policy Sentinel",
+      "has_git": true
+    },
+    {
+      "folder": "Policy Sentinel.git",
+      "path": "/Users/howard/Developer/Policy Sentinel.git",
+      "repo": null,
+      "label": "Policy Sentinel.git",
+      "id": "Policy Sentinel.git",
+      "has_git": false
+    },
+    {
+      "folder": "Proposal Generator",
+      "path": "/Users/howard/Developer/Proposal Generator",
+      "repo": null,
+      "label": "Proposal Generator",
+      "id": "Proposal Generator",
+      "has_git": false
+    },
+    {
+      "folder": "proposal-generator-client-export",
+      "path": "/Users/howard/Developer/proposal-generator-client-export",
+      "repo": null,
+      "label": "proposal-generator-client-export",
+      "id": "proposal-generator-client-export",
+      "has_git": true
+    },
+    {
+      "folder": "proposal-generator-north-star",
+      "path": "/Users/howard/Developer/proposal-generator-north-star",
+      "repo": null,
+      "label": "proposal-generator-north-star",
+      "id": "proposal-generator-north-star",
+      "has_git": true
+    },
+    {
+      "folder": "proposal-generator-wp766",
+      "path": "/Users/howard/Developer/proposal-generator-wp766",
+      "repo": null,
+      "label": "proposal-generator-wp766",
+      "id": "proposal-generator-wp766",
+      "has_git": true
+    },
+    {
+      "folder": "ribari-releases-0.4.5-beta.1",
+      "path": "/Users/howard/Developer/ribari-releases-0.4.5-beta.1",
+      "repo": null,
+      "label": "ribari-releases-0.4.5-beta.1",
+      "id": "ribari-releases-0.4.5-beta.1",
+      "has_git": false
+    },
+    {
+      "folder": "ROI Calculator",
+      "path": "/Users/howard/Developer/ROI Calculator",
+      "repo": null,
+      "label": "ROI Calculator",
+      "id": "ROI Calculator",
+      "has_git": false
+    },
+    {
+      "folder": "SHI Onboarding",
+      "path": "/Users/howard/Developer/SHI Onboarding",
+      "repo": null,
+      "label": "SHI Onboarding",
+      "id": "SHI Onboarding",
+      "has_git": true
+    },
+    {
+      "folder": "shi-account-strategy-workspace",
+      "path": "/Users/howard/Developer/shi-account-strategy-workspace",
+      "repo": null,
+      "label": "shi-account-strategy-workspace",
+      "id": "shi-account-strategy-workspace",
+      "has_git": true
+    },
+    {
+      "folder": "shi-onboarding",
+      "path": "/Users/howard/Developer/shi-onboarding",
+      "repo": null,
+      "label": "shi-onboarding",
+      "id": "shi-onboarding",
+      "has_git": true
+    },
+    {
+      "folder": "shi-presentation-builder",
+      "path": "/Users/howard/Developer/shi-presentation-builder",
+      "repo": null,
+      "label": "shi-presentation-builder",
+      "id": "shi-presentation-builder",
+      "has_git": true
+    },
+    {
+      "folder": "strata-kickstarter-site",
+      "path": "/Users/howard/Developer/strata-kickstarter-site",
+      "repo": null,
+      "label": "strata-kickstarter-site",
+      "id": "strata-kickstarter-site",
+      "has_git": false
+    },
+    {
+      "folder": "tin-man",
+      "path": "/Users/howard/Developer/tin-man",
+      "repo": null,
+      "label": "tin-man",
+      "id": "tin-man",
+      "has_git": false
+    }
+  ]
+}

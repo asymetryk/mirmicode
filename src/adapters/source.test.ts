@@ -714,7 +714,8 @@ describe("resolveSnapshot", () => {
       "example/synthetic",
       ...allRepos.repos,
     ]);
-    expect(result.snapshot.bases.find((base) => base.repo === "asymetryk/buzz")?.units).toEqual([]);
+    const catalogCamp = allRepos.repos.find((name) => name.toLowerCase() !== "example/synthetic");
+    expect(result.snapshot.bases.find((base) => base.repo === catalogCamp)?.units).toEqual([]);
     expect(result.fallbackReason).toBeNull();
   });
 
@@ -786,7 +787,10 @@ describe("cahq working set sample", () => {
       "example/charter",
       "example/ops-board",
     ]);
-    expect(result.snapshot.bases.find((base) => base.repo === "asymetryk/buzz")?.units).toEqual([]);
+    const catalogCamp = allRepos.repos.find(
+      (name) => !["asymetryk/mirmicode", "example/charter", "example/ops-board"].includes(name.toLowerCase()),
+    );
+    expect(result.snapshot.bases.find((base) => base.repo === catalogCamp)?.units).toEqual([]);
     const units = result.snapshot.bases.reduce((sum, base) => sum + base.units.length, 0);
     expect(units).toBe(7);
   });
