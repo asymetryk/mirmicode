@@ -7,11 +7,15 @@ import { normalizeWorkingSetPayload } from "./normalize";
  *
  * Live bases and units are an unauthenticated GET of a JSON document:
  * `VITE_WORKING_SET_URL` at startup, or a URL pasted in the data-source panel.
- * The tailnet host below is the intended target. This module never fabricates
- * a live snapshot. DNS, HTTP, JSON, and empty-payload failures return the
- * committed sample fixture plus a fallback reason.
+ * The deployed map bakes a same-origin path. Caddy on the pod proxies that
+ * path to CAHQ. This module never fabricates a live snapshot. DNS, HTTP,
+ * JSON, and empty-payload failures return the committed sample fixture plus
+ * a fallback reason.
  */
 export const CAHQ_WORKING_SET_ORIGIN = "https://cahq.tail21f530.ts.net";
+
+/** Browser path. Caddy strips `/working-set` and forwards the rest to CAHQ. */
+export const SAME_ORIGIN_WORKING_SET_PATH = "/working-set/api/v1/working-set";
 
 export const WORKING_SET_URL_KEY = "mirmicode.workingSetUrl";
 export const WORKING_SET_SOURCE_KEY = "mirmicode.dataSource";
@@ -58,8 +62,9 @@ export async function loadWorkingSet(
   url: string,
   fetchImpl: typeof fetch = fetch,
   now = new Date(),
+  base?: string,
 ): Promise<MapSnapshot> {
-  const parsed = parseWorkingSetUrl(url);
+  const parsed = parseWorkingSetUrl(url, base);
   const response = await fetchImpl(parsed.toString(), {
     method: "GET",
     headers: { Accept: "application/json" },
@@ -96,32 +101,33 @@ export async function resolveSnapshot(
   url: string | null | undefined,
   fetchImpl: typeof fetch = fetch,
   now = new Date(),
+  base?: string,
 ): Promise<ResolveResult> {
   const trimmed = url?.trim() ?? "";
   if (!trimmed) {
     return { snapshot: loadFixture(now), fallbackReason: null };
   }
   try {
-    const snapshot = await loadWorkingSet(trimmed, fetchImpl, now);
+    const snapshot = await loadWorkingSet(trimmed, fetchImpl, now, base);
     return { snapshot, fallbackReason: null };
   } catch (error) {
     return {
       snapshot: loadFixture(now),
-      fallbackReason: fallbackReasonFor(error, trimmed),
+      fallbackReason: fallbackReasonFor(error, trimmed, base),
     };
   }
 }
 
-function fallbackReasonFor(error: unknown, url: string): string {
+function fallbackReasonFor(error: unknown, url: string, base?: string): string {
   const detail = readableReason(error).replace(/\.+$/, "");
-  const host = hostnameOf(url);
+  const host = hostnameOf(url, base);
   const where = host ? ` at ${host}` : "";
   return `Fixture fallback. ${detail}${where}.`;
 }
 
-function hostnameOf(url: string): string | null {
+function hostnameOf(url: string, base?: string): string | null {
   try {
-    return new URL(url).hostname || null;
+    return parseWorkingSetUrl(url, base).hostname || null;
   } catch {
     return null;
   }
@@ -132,13 +138,11 @@ function readableReason(error: unknown): string {
   return "Working Set could not be reached (network, DNS, TLS, or CORS failure).";
 }
 
-export function parseWorkingSetUrl(url: string): URL {
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    throw new WorkingSetError("Working Set URL is not a valid URL.");
-  }
+export function parseWorkingSetUrl(url: string, base?: string): URL {
+  const trimmed = url.trim();
+  const parsed = trimmed.startsWith("/") && !trimmed.startsWith("//")
+    ? parseSameOriginPath(trimmed, base)
+    : parseAbsoluteUrl(trimmed);
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     throw new WorkingSetError("Working Set URL must be http or https.");
   }
@@ -150,4 +154,46 @@ export function parseWorkingSetUrl(url: string): URL {
   }
   parsed.hash = "";
   return parsed;
+}
+
+function parseAbsoluteUrl(url: string): URL {
+  try {
+    return new URL(url);
+  } catch {
+    throw new WorkingSetError("Working Set URL is not a valid URL.");
+  }
+}
+
+function parseSameOriginPath(path: string, base?: string): URL {
+  const origin = pageOrigin(base);
+  let parsed: URL;
+  try {
+    parsed = new URL(path, origin);
+  } catch {
+    throw new WorkingSetError("Working Set URL is not a valid URL.");
+  }
+  if (parsed.origin !== origin) {
+    throw new WorkingSetError("Working Set path must stay on this origin.");
+  }
+  return parsed;
+}
+
+function pageOrigin(base?: string): string {
+  const candidate = base?.trim() || (typeof window !== "undefined" ? window.location.origin : "");
+  if (!candidate) {
+    throw new WorkingSetError("Working Set path needs a page origin.");
+  }
+  let originUrl: URL;
+  try {
+    originUrl = new URL(candidate);
+  } catch {
+    throw new WorkingSetError("Working Set path needs a page origin.");
+  }
+  if (originUrl.username || originUrl.password) {
+    throw new WorkingSetError("Working Set URL must not include credentials.");
+  }
+  if (originUrl.protocol !== "http:" && originUrl.protocol !== "https:") {
+    throw new WorkingSetError("Working Set URL must be http or https.");
+  }
+  return originUrl.origin;
 }

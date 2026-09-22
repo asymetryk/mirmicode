@@ -1,0 +1,30 @@
+{
+	admin off
+	auto_https off
+}
+
+:8080 {
+	encode gzip
+
+	handle /healthz {
+		respond "ok" 200
+	}
+
+	handle /working-set/* {
+		uri strip_prefix /working-set
+		reverse_proxy https://{$FORWARD_LISTEN} {
+			header_up Host {$WORKING_SET_UPSTREAM_HOST}
+			__AUTH_HEADER__
+			transport http {
+				tls
+				tls_server_name {$WORKING_SET_UPSTREAM_HOST}
+			}
+		}
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

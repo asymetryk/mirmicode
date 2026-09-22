@@ -1,0 +1,181 @@
+# Mirmicode on asym-k3s, pinned to asym-k1.
+# Public name: https://mirmicode.tail21f530.ts.net via tailscale serve.
+# Pod to CAHQ: userspace SOCKS5 on 127.0.0.1:1055, then Caddy TLS to
+# https://cahq.tail21f530.ts.net. Browser path is /working-set/api/v1/working-set.
+#
+# Tailscale image digest is the pin from public ai-stack-observatory
+# deployment/k3s/ingress.yaml. agentinfra was not readable from this
+# workspace. If deploy/k3s/working-set-ui uses a different digest, secret
+# key, or state volume, prefer that before apply. See the README.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mirmicode-tailscale-state
+  namespace: mirmicode
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 256Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mirmicode
+  namespace: mirmicode
+  labels:
+    app.kubernetes.io/name: mirmicode
+    app.kubernetes.io/part-of: mirmicode
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mirmicode
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mirmicode
+        app.kubernetes.io/part-of: mirmicode
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: asym-k1
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      containers:
+        - name: caddy
+          image: mirmicode.local/web:latest
+          imagePullPolicy: Never
+          env:
+            - name: WORKING_SET_UPSTREAM_HOST
+              value: cahq.tail21f530.ts.net
+            - name: WORKING_SET_UPSTREAM_PORT
+              value: "443"
+            - name: SOCKS_ADDR
+              value: 127.0.0.1:1055
+            - name: FORWARD_LISTEN
+              value: 127.0.0.1:8443
+            - name: WORKING_SET_TOKEN_FILE
+              value: /run/secrets/working-set/token
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+            failureThreshold: 36
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: "1"
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+          volumeMounts:
+            - name: caddy-template
+              mountPath: /etc/mirmicode/Caddyfile.template
+              subPath: Caddyfile.template
+              readOnly: true
+            - name: working-set-token
+              mountPath: /run/secrets/working-set
+              readOnly: true
+        - name: tailscale
+          image: docker.io/tailscale/tailscale@sha256:d54b2e6a9c09f0e5ec52e82b9ad4af3d446b54a7c08075e92f11c39dd410105f
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "/usr/local/bin/k3s-identity-entrypoint.sh"]
+          env:
+            - name: TS_HOSTNAME
+              value: mirmicode
+            - name: TS_SERVE_TARGET
+              value: http://127.0.0.1:8080
+            - name: TS_SOCKET
+              value: /tmp/tailscaled.sock
+            - name: TS_STATE_DIR
+              value: /var/lib/tailscale
+            - name: TS_AUTHKEY_FILE
+              value: /run/secrets/tailscale/authkey
+            - name: TS_ADVERTISE_TAGS
+              value: tag:homelab-sidecar
+            - name: TS_SOCKS5_SERVER
+              value: 127.0.0.1:1055
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -ec
+                - 'tailscale --socket=/tmp/tailscaled.sock status --json | grep -Eq ''"BackendState": ?"Running"'''
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 18
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: tailscale-state
+              mountPath: /var/lib/tailscale
+            - name: tailscale-entrypoint
+              mountPath: /usr/local/bin/k3s-identity-entrypoint.sh
+              subPath: ts-entrypoint.sh
+              readOnly: true
+            - name: tailscale-auth
+              mountPath: /run/secrets/tailscale
+              readOnly: true
+            - name: tailscale-tmp
+              mountPath: /tmp
+      volumes:
+        - name: tailscale-state
+          persistentVolumeClaim:
+            claimName: mirmicode-tailscale-state
+        - name: tailscale-entrypoint
+          configMap:
+            name: mirmicode-tailscale-entrypoint
+            defaultMode: 365
+        - name: caddy-template
+          configMap:
+            name: mirmicode-caddy
+            defaultMode: 420
+        - name: tailscale-auth
+          secret:
+            secretName: mirmicode-tailscale-auth
+            items:
+              - key: authkey
+                path: authkey
+        - name: working-set-token
+          secret:
+            secretName: mirmicode-working-set
+            optional: true
+            items:
+              - key: token
+                path: token
+        - name: tailscale-tmp
+          emptyDir: {}

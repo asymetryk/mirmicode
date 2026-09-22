@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { CAHQ_WORKING_SET_ORIGIN } from "../adapters/source";
+import { CAHQ_WORKING_SET_ORIGIN, SAME_ORIGIN_WORKING_SET_PATH } from "../adapters/source";
 import { factionName, postureLabel, postureOf } from "../factions";
 import { formatAbsolute, formatLastTouched, harnessSlug, unitContext } from "../format";
 import { roleLabel, unitRole } from "../rtsArt";
@@ -137,19 +137,19 @@ export function Inspector({
           <label htmlFor="working-set-url">Working Set URL</label>
           <input
             id="working-set-url"
-            type="url"
+            type="text"
             inputMode="url"
             spellCheck={false}
             autoComplete="off"
-            placeholder={CAHQ_WORKING_SET_ORIGIN}
+            placeholder={SAME_ORIGIN_WORKING_SET_PATH}
             value={urlDraft}
             onChange={(event) => onUrlDraft(event.target.value)}
           />
           <p className="help">
-            Unauthenticated GET of Working Set JSON. On the tailnet, start from{" "}
-            {CAHQ_WORKING_SET_ORIGIN} or set <code>VITE_WORKING_SET_URL</code>. If the
-            request fails or the document has no bases, the map stays on the sample fixture
-            and the banner names the reason.
+            Unauthenticated GET of Working Set JSON. The deployed map uses{" "}
+            <code>{SAME_ORIGIN_WORKING_SET_PATH}</code> on this origin. Caddy proxies that
+            path to {CAHQ_WORKING_SET_ORIGIN}. If the request fails or the document has no
+            bases, the map stays on the sample fixture and the banner names the reason.
           </p>
           <div className="actions">
             <button type="submit" disabled={loading || urlDraft.trim() === ""}>
