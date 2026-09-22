@@ -148,7 +148,10 @@ function readUnit(
   const label = scrubSensitivePath(
     bound(readString(annotation?.label) ?? readString(record.label) ?? threadName),
   );
-  // Same order as Last prompt / hard-filter snippet. Public BIP drops the text but keeps existence.
+  // Same order as Last prompt / hard-filter snippet. Keep in sync with
+  // promptFieldKeys in deploy/k3s/mirmicode/proxy/scrub.go.
+  // Public BIP drops the text but keeps existence. The pod scrubber nulls
+  // these fields and sets hasContextSnippet so the hard filter still matches.
   const resolvedPrompt =
     readString(observed?.lastUserPrompt) ??
     readString(observed?.last_user_prompt) ??
@@ -161,7 +164,7 @@ function readUnit(
     readString(record.prompt) ??
     readString(record.input) ??
     readString(annotation?.note);
-  const hasContextSnippet = resolvedPrompt !== null;
+  const hasContextSnippet = resolvedPrompt !== null || record.hasContextSnippet === true;
   const lastPrompt = shouldScrubPrompts() ? null : resolvedPrompt;
   return {
     id: uniqueId(rawId, seenUnitIds),

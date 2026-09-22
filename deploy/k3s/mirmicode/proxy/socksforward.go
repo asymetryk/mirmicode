@@ -1,6 +1,9 @@
 // SOCKS5 CONNECT forwarder for the Tailscale userspace sidecar.
-// Caddy speaks TLS to 127.0.0.1; this process asks tailscaled to resolve
-// the MagicDNS name and carry the bytes.
+// Private deploys: Caddy speaks TLS to 127.0.0.1 and this process asks
+// tailscaled to resolve the MagicDNS name and carry the bytes.
+// Public deploys (PUBLIC_MODE on, full live off): this process also serves
+// a loopback HTTP scrubber. Caddy sends /working-set there; the scrubber
+// dials the same SOCKS target, then nulls prompt fields in the JSON.
 package main
 
 import (
@@ -22,6 +25,15 @@ func main() {
 	if err != nil || port < 1 || port > 65535 || !validDNSName(host) {
 		fmt.Fprintln(os.Stderr, "socksforward: upstream host or port is invalid")
 		os.Exit(2)
+	}
+
+	if promptsScrubEnabled() {
+		// Public BIP only. Private deploys leave PUBLIC_MODE unset and Caddy
+		// keeps speaking TLS straight to this TCP forwarder.
+		if err := startPromptScrubProxy(); err != nil {
+			fmt.Fprintf(os.Stderr, "socksforward: scrub proxy: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	ln, err := net.Listen("tcp", listen)

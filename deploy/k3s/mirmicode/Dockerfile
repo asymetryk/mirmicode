@@ -13,13 +13,15 @@ RUN npm ci
 COPY . .
 ARG VITE_WORKING_SET_URL=/working-set/api/v1/working-set
 ENV VITE_WORKING_SET_URL=$VITE_WORKING_SET_URL
-# Public BIP (mirmicode.asymetryk.com): bake VITE_PUBLIC_MODE=1 so prompts scrub.
-# Tailnet image leaves this unset. Runtime PUBLIC_MODE on the pod can also flip it.
+# Public BIP (mirmicode.asymetryk.com): bake VITE_PUBLIC_MODE=1 so the UI scrubs.
+# Tailnet image leaves this unset. Runtime PUBLIC_MODE=1 on the public pod
+# rewrites runtime-config.js and scrubs Working Set JSON. Bake-time alone does
+# not scrub the API, so the same image can serve the private tailnet.
 ARG VITE_PUBLIC_MODE=
 ENV VITE_PUBLIC_MODE=$VITE_PUBLIC_MODE
 ARG VITE_PUBLIC_FULL_LIVE=
 ENV VITE_PUBLIC_FULL_LIVE=$VITE_PUBLIC_FULL_LIVE
-RUN npm test && npm run build
+RUN npm test && npm run build && node scripts/check-dist-runtime-config.mjs
 
 FROM caddy:2-alpine
 COPY deploy/k3s/mirmicode/Caddyfile.template /etc/mirmicode/Caddyfile.template

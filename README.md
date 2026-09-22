@@ -21,9 +21,9 @@ Labhand applies. This repo does not run `kubectl` from a cloud VM.
 | Surface | Mode | Prompts |
 | --- | --- | --- |
 | `mirmicode.tail21f530.ts.net` | Private (default) | Shows `observed.lastUserPrompt` / aliases as **Last prompt** |
-| `mirmicode.asymetryk.com` | Public / read-only | Scrubs prompts; popover/tooltips show **Thread** (label) or omit the snippet hero |
+| `mirmicode.asymetryk.com` | Public / read-only | Scrubs prompts in the UI and in the Working Set JSON; popover/tooltips show **Thread** (label) or omit the snippet hero |
 
-Public mode still draws bases, units, filters, Unassigned, status, lifecycle, presence, and freshness. It drops `lastUserPrompt`, `last_user_prompt`, flat prompt aliases, and `annotation.note` used as a prompt. Obvious absolute home paths and `.jsonl` paths in labels/thread names are redacted when scrubbing.
+Public mode still draws bases, units, filters, Unassigned, status, lifecycle, presence, and freshness. It drops `lastUserPrompt`, `last_user_prompt`, flat prompt aliases, and `annotation.note` used as a prompt. On the public pod those fields are nulled in the `/working-set` JSON before the browser sees them, and `hasContextSnippet: true` is set when a snippet existed so the hard filter can keep the unit. Obvious absolute home paths and `.jsonl` paths in labels/thread names are redacted in the UI when scrubbing.
 
 **Flags (pick one layer):**
 
@@ -31,10 +31,12 @@ Public mode still draws bases, units, filters, Unassigned, status, lifecycle, pr
 | --- | --- | --- |
 | `VITE_PUBLIC_MODE=1` | Bake-time (`.env`, Docker `ARG`) | off |
 | `VITE_PUBLIC_FULL_LIVE=1` | Bake-time escape hatch: keep prompts on a public build | off |
-| `PUBLIC_MODE=1` | Runtime env on the web/Caddy container; rewrites `/runtime-config.js` | unset (bake-time wins) |
-| `PUBLIC_FULL_LIVE=1` | Runtime full-live override | unset |
+| `PUBLIC_MODE=1` | Runtime env on the web/Caddy container. Rewrites `/runtime-config.js` and scrubs Working Set JSON on `/working-set` | unset (private passthrough) |
+| `PUBLIC_FULL_LIVE=1` | Runtime full-live override: keep prompt text in the UI and skip the JSON scrub | unset |
 
-Labhand / Abby: set **`PUBLIC_MODE=1`** on the public CF Tunnel deploy only. Leave the existing tailnet deploy unset so prompts stay visible there. Do not turn on `PUBLIC_FULL_LIVE` for the public hostname unless you intentionally want prompts on the open map.
+Labhand / Abby: set **`PUBLIC_MODE=1`** on the public CF Tunnel deploy only. That one flag covers the UI and the Working Set JSON. Leave the existing tailnet deploy unset so prompts stay visible there. Do not turn on `PUBLIC_FULL_LIVE` for the public hostname unless you intentionally want prompts on the open map.
+
+`/runtime-config.js` is a real file from `public/` (Vite copies it into the image). Caddy serves that path with `Cache-Control: no-store` and does not fall through to `index.html`. After deploying the public pod, purge the Cloudflare cache for `https://mirmicode.asymetryk.com/runtime-config.js` so an older HTML response is not reused. A shared image is enough: bake-time `MIRMICODE_PUBLIC_MODE=1` is optional and only affects the UI fallback when runtime config leaves `publicMode` unset. The API scrub follows runtime `PUBLIC_MODE` on that pod.
 
 ```bash
 # Bake a public image (optional; runtime PUBLIC_MODE is enough for a shared image):
@@ -55,7 +57,7 @@ What the pod does:
 - Caddy serves the Vite build on port 8080 inside the pod.
 - The image bakes `VITE_WORKING_SET_URL=/working-set/api/v1/working-set`. The browser calls its own origin. CAHQ does not send CORS, and the browser never talks to it.
 - A userspace Tailscale sidecar (`tag:homelab-sidecar`, hostname `mirmicode`) runs `tailscale serve --https=443` at that Caddy port. MagicDNS name: `mirmicode.tail21f530.ts.net`.
-- Caddy reverse-proxies `/working-set/*` through the sidecar's SOCKS5 port (`127.0.0.1:1055`) to **https://cahq.tail21f530.ts.net**. Stripping `/working-set` leaves `/api/v1/working-set`. `working-set.tail21f530.ts.net` is stale and is not the upstream.
+- Caddy reverse-proxies `/working-set/*` through the sidecar's SOCKS5 port (`127.0.0.1:1055`) to **https://cahq.tail21f530.ts.net**. Stripping `/working-set` leaves `/api/v1/working-set`. `working-set.tail21f530.ts.net` is stale and is not the upstream. With `PUBLIC_MODE=1` (and `PUBLIC_FULL_LIVE` unset), Caddy sends that path to a loopback scrubber in the same process. The scrubber dials CAHQ over the same SOCKS port, nulls prompt fields, and sets `hasContextSnippet`. `PUBLIC_MODE` unset keeps the direct TLS proxy, so the private tailnet response is unchanged.
 - A later in-cluster caller could use a ClusterIP Service on port 8080. v1 does not ship that Service. The browser surface is the Tailscale hostname.
 
 ### Secrets
@@ -263,7 +265,7 @@ Flat rows do not invent a second unit from a parent harness when `units` or `age
 | Operator hidden | `annotation.hidden`, then flat `hidden` | Boolean `true` hides the unit. Any other value, including the string `"true"`, does not. |
 | Stale snapshot | `snapshot.stale` | Boolean `true` shows a refresh-failed banner. It does not hide units. Missing or non-boolean stays quiet. |
 | Unit label | `annotation.label`, flat `label`, then `thread_name` / `threadName` | First nonblank string wins. |
-| Last prompt | `observed.lastUserPrompt`, then `observed.last_user_prompt`, then flat `last_prompt`, `lastPrompt`, `last_user_message`, `lastUserMessage`, `user_prompt`, `userPrompt`, `prompt`, `input`, then `annotation.note` | First nonblank string wins; non-string and blank values are skipped. The published observed prompt is at most 240 characters and is kept in full for the tooltip. Never derived from `annotation.label`. Units without a usable value are hard-hidden from the map. **Public BIP** (`VITE_PUBLIC_MODE` / `PUBLIC_MODE`) drops displayed prompt text unless `VITE_PUBLIC_FULL_LIVE` / `PUBLIC_FULL_LIVE` is set, but still keeps `hasContextSnippet` so the hard filter can show those units without leaking text. |
+| Last prompt | `observed.lastUserPrompt`, then `observed.last_user_prompt`, then flat `last_prompt`, `lastPrompt`, `last_user_message`, `lastUserMessage`, `user_prompt`, `userPrompt`, `prompt`, `input`, then `annotation.note` | First nonblank string wins; non-string and blank values are skipped. The published observed prompt is at most 240 characters and is kept in full for the tooltip. Never derived from `annotation.label`. Units without a usable value are hard-hidden from the map. **Public BIP** (`PUBLIC_MODE=1` on the pod, or bake-time `VITE_PUBLIC_MODE`) drops displayed prompt text unless full live is set. The public pod also nulls those JSON fields and sets `hasContextSnippet: true` when a snippet existed, which the client honors so the hard filter can show the unit without the text. |
 | Last touched | `annotation.updated_at`, `observed.updated_at`, then flat `updated_at`, `updatedAt`, `last_touched`, or `lastTouched` | The base shows the latest valid unit time. |
 | Placement | `x`, `y` on the base | Optional numbers in `0..1`. Map presentation only. Ignored when out of range. |
 

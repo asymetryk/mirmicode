@@ -22,6 +22,17 @@
 		}
 	}
 
+	# Exact file. Do not try_files this path onto index.html: a missing
+	# runtime-config.js was served as HTML and Cloudflare cached it.
+	# Cache-Control no-store so a PUBLIC_MODE change is not stuck at the edge.
+	# header is deferred in Caddy 2, so Content-Type wins over file_server.
+	handle /runtime-config.js {
+		root * /srv
+		header Cache-Control "no-store"
+		header Content-Type "application/javascript; charset=utf-8"
+		file_server
+	}
+
 	handle {
 		root * /srv
 		try_files {path} /index.html
