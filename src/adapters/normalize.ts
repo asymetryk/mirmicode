@@ -10,7 +10,7 @@ export type NormalizedPayload = {
 /**
  * Maps a Working Set JSON payload into bases and the units on them.
  * A base is a repo. Each unit is one agent: harness = faction, model = unit type.
- * Flat rows that share a repo collapse into one base.
+ * Flat and nested Working Set rows that share a repo collapse into one base.
  * Unknown fields are dropped. Transcript bodies are never read.
  */
 export function normalizeWorkingSetPayload(payload: unknown): NormalizedPayload {
@@ -42,7 +42,7 @@ export function normalizeWorkingSetPayload(payload: unknown): NormalizedPayload 
     if (nested) {
       nested.forEach((unitEntry, unitIndex) => {
         if (!unitEntry || typeof unitEntry !== "object" || Array.isArray(unitEntry)) {
-          issues.push(`Dropped unit ${unitIndex + 1} on ${repo}: expected an object.`);
+          issues.push(`Dropped unit ${unitIndex + 1} in record ${index + 1}: expected an object.`);
           return;
         }
         base.units.push(readUnit(unitEntry as Record<string, unknown>, repo, seenUnitIds));
@@ -56,7 +56,7 @@ export function normalizeWorkingSetPayload(payload: unknown): NormalizedPayload 
   const bases = order.map((key) => {
     const base = byRepo.get(key);
     if (!base) {
-      throw new Error(`Missing base ${key}`);
+      throw new Error("Missing normalized base.");
     }
     return {
       id: base.id,
@@ -123,18 +123,26 @@ function readUnit(
   repo: string,
   seenUnitIds: Map<string, number>,
 ): Unit {
+  const observed = readObject(record.observed);
+  const annotation = readObject(record.annotation);
   const harness = bound(readHarness(record)) ?? "unknown";
   const model = bound(readModel(record)) ?? "unknown";
   const threadName = bound(readString(record.thread_name) ?? readString(record.threadName));
   const rawId =
-    bound(readString(record.id)) ?? fallbackUnitId(repo, harness, model, threadName);
+    bound(readString(record.item_id) ?? readString(record.id)) ??
+    fallbackUnitId(repo, harness, model, threadName);
   return {
     id: uniqueId(rawId, seenUnitIds),
     harness,
     model,
     threadName,
-    label: bound(readString(record.label)),
-    status: bound(readString(record.status)),
+    label: bound(readString(annotation?.label) ?? readString(record.label) ?? threadName),
+    status: bound(
+      readString(annotation?.status) ??
+        readString(observed?.lifecycle) ??
+        readString(observed?.presence) ??
+        readString(record.status),
+    ),
     updatedAt: readUpdatedAt(record),
   };
 }
@@ -155,7 +163,11 @@ function readRecords(
 }
 
 function readRepo(record: Record<string, unknown>): string | null {
-  for (const key of ["repo", "repository", "project", "full_name"] as const) {
+  if ("observed" in record || "annotation" in record) {
+    const observed = readObject(record.observed);
+    return readString(observed?.repo_name) ?? readString(observed?.repo) ?? "Unassigned";
+  }
+  for (const key of ["repo_name", "repo", "repository", "project", "full_name"] as const) {
     const value = readString(record[key]);
     if (value) return value;
   }
@@ -172,7 +184,12 @@ function readRepo(record: Record<string, unknown>): string | null {
 }
 
 function readHarness(record: Record<string, unknown>): string {
-  const value = readString(record.harness) ?? readString(record.surface);
+  const observed = readObject(record.observed);
+  const value =
+    readString(observed?.surface) ??
+    readString(observed?.harness) ??
+    readString(record.harness) ??
+    readString(record.surface);
   return value ? canonicalHarness(value) : "unknown";
 }
 
@@ -187,13 +204,18 @@ function canonicalHarness(value: string): string {
 }
 
 function readModel(record: Record<string, unknown>): string {
-  const value = readString(record.model);
+  const observed = readObject(record.observed);
+  const value = readString(observed?.model) ?? readString(record.model);
   if (!value || value.toLowerCase() === "unknown") return "unknown";
   return value;
 }
 
 function readUpdatedAt(record: Record<string, unknown>): string {
+  const observed = readObject(record.observed);
+  const annotation = readObject(record.annotation);
   return (
+    readString(annotation?.updated_at) ??
+    readString(observed?.updated_at) ??
     readString(record.updated_at) ??
     readString(record.updatedAt) ??
     readString(record.last_touched) ??
@@ -209,6 +231,12 @@ function readPlace(record: Record<string, unknown>): { x: number; y: number } | 
   if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
   if (x < 0 || x > 1 || y < 0 || y > 1) return null;
   return { x, y };
+}
+
+function readObject(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
 }
 
 function readString(value: unknown): string | null {

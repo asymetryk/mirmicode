@@ -89,42 +89,52 @@ Each base carries a mixed squad, not one hero. `asymetryk/mirmicode` is a Cursor
 
 CAHQ Working Set is the live source of truth: metadata only, for Cursor, Codex, OhMyPi, and OpenCode surfaces. This client does not vendor that service. OpenCode still renders as its own faction color if a payload names it.
 
-Checked from the Cursor cloud VM on 2026-09-22: `https://working-set.tail21f530.ts.net` did not resolve (`Could not resolve host`). That name is Tailscale MagicDNS, and this VM is not on the tailnet. The private reference repo `asymetryk/agentinfra` (`source/working_set*`, `source/working-set-ui`, `deploy/k3s/working-set-ui/`) was not readable with this environment’s GitHub credential. No live JSON was fetched. The map does not report a live connection from here.
+Verified from Howard's tailnet Mac: DNS resolves, TLS certificate verification succeeds, `/` returns HTTP 200 HTML (the SPA), and `/api/v1/working-set` returns HTTP 200 `application/json`. The API does not send a CORS allow-origin header in the verified response, so use the same-origin development proxy below for browser access.
 
 ### What the client does
 
 - **Fixture path.** Default when `VITE_WORKING_SET_URL` is empty and this browser has not saved a URL. No network. `loadFixture()` normalizes `src/data/sample-bases.json`.
-- **Live path.** Paste a URL in **Data source**, or set `VITE_WORKING_SET_URL` (see `.env.example`). The browser sends an unauthenticated `GET` with `Accept: application/json`, `credentials: "omit"`, and `cache: "no-store"`. A JSON body with at least one base becomes the map. The status line reads `Working Set · N bases · M units`.
-- **Fallback.** DNS failure, HTTP error, non-JSON, an empty `bases`/`agents`/`units` list, or a URL with embedded credentials keeps the map on the sample fixture. A banner starts with `Fixture fallback.` and names the host.
+- **Live path.** Paste a URL in **Data source**, or set `VITE_WORKING_SET_URL` (see `.env.example`). A root URL without a query resolves to `/api/v1/working-set`; an explicit endpoint path or query is preserved. Fragments are removed. The browser sends an unauthenticated `GET` with `Accept: application/json`, `credentials: "omit"`, and `cache: "no-store"`. A JSON body with at least one base becomes the map. The status line reads `Live Working Set · N bases · M units` only after successful loading.
+- **Fallback.** DNS/TLS/network/CORS failure, HTTP error, non-JSON, an empty or unsupported document, an oversized response, or a URL with embedded credentials loads the committed sample fixture. The status says `Fixture · sample data`, and an alert starts with `Fixture fallback.` and explains the failure category. Browser fetch cannot distinguish DNS/TLS/CORS failures. Raw error text and response bodies are never included in that alert. This is not cached live data; no live connection is claimed.
 
 Startup URL precedence: a saved “use fixture” choice, then a URL saved in this browser, then `VITE_WORKING_SET_URL`, then the fixture.
 
 ### Point a tailnet machine at the live host
 
-1. Join the tailnet so MagicDNS resolves `*.tail21f530.ts.net`.
-2. See what the host returns:
+1. Join the tailnet so MagicDNS resolves `working-set.tail21f530.ts.net`.
+2. Create an uncommitted `.env.local`:
 
-   ```bash
-   curl -fsS -D - -H 'Accept: application/json' https://working-set.tail21f530.ts.net
+   ```dotenv
+   VITE_WORKING_SET_URL=http://127.0.0.1:5173/working-set/api/v1/working-set
    ```
 
-   If the body is a JSON document (a `bases`, `agents`, or `units` array, or flat rows), use that URL. If the body is the Working Set HTML UI, open the UI’s network log and copy the JSON request URL. Do not put a cookie, token, or userinfo in the URL.
-3. From this repo on that machine:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-   Set `VITE_WORKING_SET_URL` to the JSON URL, then `npm run dev`. Or paste the URL into **Data source** and press **Load**.
-4. If the service is reachable but sends no CORS headers, keep the browser on the dev server and proxy from the same machine:
+3. Start the same-origin development proxy from this Mac:
 
    ```bash
    WORKING_SET_PROXY_TARGET=https://working-set.tail21f530.ts.net npm run dev
    ```
 
-   Vite forwards `/working-set/...` to that origin with the prefix removed. Load `http://127.0.0.1:5173/working-set/<json-path>`. The proxy target is server-side only. Do not put tokens in the repo or in `VITE_` variables.
+4. Open **http://127.0.0.1:5173** (the hostname must match the configured URL). Vite forwards `/working-set/api/v1/working-set` to the tailnet API, removing `/working-set`. If this browser saved a fixture choice or an old URL, paste `http://127.0.0.1:5173/working-set/api/v1/working-set` into **Data source** and press **Load** to override it.
 
-There is no built-in path, auth header, or transcript fetch. If Working Set needs a credential, terminate that on a proxy you control. This client will not store one.
+With an origin that permits your browser via CORS, either direct setting works:
+
+```dotenv
+VITE_WORKING_SET_URL=https://working-set.tail21f530.ts.net
+# Equivalent explicit endpoint:
+# VITE_WORKING_SET_URL=https://working-set.tail21f530.ts.net/api/v1/working-set
+```
+
+Restart Vite after changing environment variables. `VITE_` values are public and embedded at build time. For a production build, set `VITE_WORKING_SET_URL` to an absolute API URL reachable by the browser through CORS or your deployment's same-origin reverse proxy, then run `npm run build`. The Vite development proxy is not included in the static build.
+
+To check transport without printing private response bodies:
+
+```bash
+curl --silent --show-error --output /dev/null \
+  --write-out 'HTTP %{http_code}; content type %{content_type}; TLS verify %{ssl_verify_result}\n' \
+  https://working-set.tail21f530.ts.net/api/v1/working-set
+```
+
+There is no auth header or transcript fetch. Do not put cookies, tokens, or userinfo in URLs or `VITE_` variables. If authentication is needed, terminate it on a proxy you control.
 
 ### Contract
 
@@ -133,25 +143,26 @@ There is no built-in path, auth header, or transcript fetch. If Working Set need
 - a top-level array, or
 - an object with a `bases`, `items`, `records`, `agents`, or `units` array (the first of those keys that is an array wins)
 
-Two record shapes collapse into the same map:
+Three record shapes collapse into the same map:
 
 1. **Grouped base.** One object per repo, with a `units` array (or `agents`, same meaning). This is the shape to prefer once Working Set can emit multi-unit rows.
 2. **Flat unit row.** One object per agent. Rows that share a repo, ignoring case, become one base with many units. A legacy single harness/model row is one unit on that repo.
+3. **Nested live item.** `items[]` contains `item_id`, `observed`, `annotation`, and `associations`. Repository metadata comes from `observed`; user overrides come from `annotation`. Missing nested repository metadata is retained under one **Unassigned** base. `source_label` is session-oriented and is never a base key.
 
 Flat rows do not invent a second unit from a parent harness when `units` or `agents` is present. The parent harness and model are ignored in that case.
 
 | Map field | Accepted keys | Notes |
 | --- | --- | --- |
-| Repo / base | `repo`, `repository`, `project`, `full_name`, or `base` | `base` may be a string or an object with `repo`, `repository`, `full_name`, or `name`. Records without a repo are dropped. Same repo merges. |
+| Repo / base | Nested: `observed.repo_name`, then `observed.repo`; flat: `repo_name`, `repo`, `repository`, `project`, `full_name`, or `base` | `base` may be a string or an object with `repo`, `repository`, `full_name`, or `name`. Nested items without a repo share Unassigned; flat records without a repo are dropped. Same repo merges case-insensitively. |
 | Base id | `id` on a grouped base | Optional. Derived from the repo when omitted. Duplicate base ids get a numeric suffix. On a flat row, `id` belongs to the unit. |
 | Base label | `label` on a grouped base | Human name for the repo. Flat-row `label` stays on the unit. |
 | Units | `units` or `agents` | Array of unit objects. Omit it and the record itself is one unit. |
-| Faction / harness | `harness` or `surface` | Lowercased. `oh-my-pi` and `open-code` fold onto `ohmypi` and `opencode` so the painted sprites match. Missing becomes `unknown`. |
-| Unit type / model | `model` | Blank or missing becomes `unknown`. |
+| Faction / harness | `observed.surface`, `observed.harness`, then flat `harness` or `surface` | Lowercased. `oh-my-pi` and `open-code` fold onto `ohmypi` and `opencode`. Missing becomes `unknown`. |
+| Unit type / model | `observed.model`, then flat `model` | Blank or missing becomes `unknown`. |
 | Thread | `thread_name` or `threadName` | Empty renders as an em dash. |
-| Status | `status` | Free text. `working`, `active`, and `busy` glow as working. `blocked`, `queued`, `stuck`, and `error` take the blocked slash. Anything else, including a missing status, is idle. The HUD still shows the raw status text. |
-| Unit label | `label` on a unit or flat row | Optional human label. |
-| Last touched | `updated_at`, `updatedAt`, `last_touched`, or `lastTouched` | ISO-8601 string. The base shows the latest unit time. |
+| Status | `annotation.status`, `observed.lifecycle`, `observed.presence`, then flat `status` | First nonblank string wins. `working`, `active`, and `busy` glow; `blocked`, `queued`, `stuck`, and `error` take the blocked slash. Other values are idle. |
+| Unit label | `annotation.label`, flat `label`, then `thread_name` / `threadName` | First nonblank string wins. |
+| Last touched | `annotation.updated_at`, `observed.updated_at`, then flat `updated_at`, `updatedAt`, `last_touched`, or `lastTouched` | The base shows the latest valid unit time. |
 | Placement | `x`, `y` on the base | Optional numbers in `0..1`. Map presentation only. Ignored when out of range. |
 
 Unknown fields are ignored, including any message or transcript body. Strings are capped at 180 characters. A grouped fixture record looks like this:

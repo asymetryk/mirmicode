@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import {
   WORKING_SET_SOURCE_KEY,
@@ -21,11 +21,13 @@ export function App() {
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [attached, setAttached] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  const requestVersion = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
+    const version = ++requestVersion.current;
     void apply(readStartupUrl(), (next, reason) => {
-      if (cancelled) return;
+      if (cancelled || version !== requestVersion.current) return;
       setSnapshot(next);
       setFallbackReason(reason);
       setLoading(false);
@@ -73,8 +75,10 @@ export function App() {
     event.preventDefault();
     const url = urlDraft.trim();
     remember(url);
+    const version = ++requestVersion.current;
     setLoading(true);
     await apply(url, (next, reason) => {
+      if (version !== requestVersion.current) return;
       setSnapshot(next);
       setFallbackReason(reason);
       setLoading(false);
@@ -84,8 +88,10 @@ export function App() {
   function onUseFixture() {
     remember("");
     setUrlDraft("");
+    const version = ++requestVersion.current;
     setLoading(true);
     void apply("", (next, reason) => {
+      if (version !== requestVersion.current) return;
       setSnapshot(next);
       setFallbackReason(reason);
       setLoading(false);
@@ -163,7 +169,7 @@ function statusLine(snapshot: MapSnapshot | null, loading: boolean): string {
   const units = snapshot.bases.reduce((sum, base) => sum + base.units.length, 0);
   const count = `${snapshot.bases.length} ${snapshot.bases.length === 1 ? "base" : "bases"} · ${units} units`;
   if (loading) return `Loading… · ${count}`;
-  if (snapshot.source === "working-set") return `Working Set · ${count}`;
+  if (snapshot.source === "working-set") return `Live Working Set · ${count}`;
   return `Fixture · sample data · ${count}`;
 }
 

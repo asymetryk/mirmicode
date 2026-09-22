@@ -16,6 +16,9 @@ export const CAHQ_WORKING_SET_ORIGIN = "https://working-set.tail21f530.ts.net";
 export const WORKING_SET_URL_KEY = "mirmicode.workingSetUrl";
 export const WORKING_SET_SOURCE_KEY = "mirmicode.dataSource";
 
+
+/** Only adapter-owned diagnostics may be displayed; fetch errors can contain secrets. */
+class WorkingSetError extends Error {}
 export type ResolveResult = {
   snapshot: MapSnapshot;
   fallbackReason: string | null;
@@ -65,21 +68,21 @@ export async function loadWorkingSet(
     cache: "no-store",
   });
   if (!response.ok) {
-    throw new Error(`Working Set responded ${response.status}.`);
+    throw new WorkingSetError(`Working Set responded ${response.status}.`);
   }
   const text = await response.text();
   if (text.length > 1_000_000) {
-    throw new Error("Working Set response is too large.");
+    throw new WorkingSetError("Working Set response is too large.");
   }
   let body: unknown;
   try {
     body = JSON.parse(text) as unknown;
   } catch {
-    throw new Error("Working Set response was not JSON.");
+    throw new WorkingSetError("Working Set response was not JSON.");
   }
   const normalized = normalizeWorkingSetPayload(body);
   if (normalized.bases.length === 0) {
-    throw new Error(normalized.issues[0] ?? "Working Set payload had no bases.");
+    throw new WorkingSetError(normalized.issues[0] ?? "Working Set payload had no bases.");
   }
   return {
     source: "working-set",
@@ -125,9 +128,8 @@ function hostnameOf(url: string): string | null {
 }
 
 function readableReason(error: unknown): string {
-  if (error instanceof TypeError) return "Working Set could not be reached.";
-  const raw = error instanceof Error && error.message ? error.message : "Working Set request failed.";
-  return /[.!?]$/.test(raw) ? raw : `${raw}.`;
+  if (error instanceof WorkingSetError) return error.message;
+  return "Working Set could not be reached (network, DNS, TLS, or CORS failure).";
 }
 
 export function parseWorkingSetUrl(url: string): URL {
@@ -135,13 +137,17 @@ export function parseWorkingSetUrl(url: string): URL {
   try {
     parsed = new URL(url);
   } catch {
-    throw new Error("Working Set URL is not a valid URL.");
+    throw new WorkingSetError("Working Set URL is not a valid URL.");
   }
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    throw new Error("Working Set URL must be http or https.");
+    throw new WorkingSetError("Working Set URL must be http or https.");
   }
   if (parsed.username || parsed.password) {
-    throw new Error("Working Set URL must not include credentials.");
+    throw new WorkingSetError("Working Set URL must not include credentials.");
   }
+  if (parsed.pathname === "/" && !parsed.search) {
+    parsed.pathname = "/api/v1/working-set";
+  }
+  parsed.hash = "";
   return parsed;
 }
