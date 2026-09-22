@@ -11,7 +11,7 @@ import { normalizeWorkingSetPayload } from "./normalize";
  * a live snapshot. DNS, HTTP, JSON, and empty-payload failures return the
  * committed sample fixture plus a fallback reason.
  */
-export const CAHQ_WORKING_SET_ORIGIN = "https://working-set.tail21f530.ts.net";
+export const CAHQ_WORKING_SET_ORIGIN = "https://cahq.tail21f530.ts.net";
 
 export const WORKING_SET_URL_KEY = "mirmicode.workingSetUrl";
 export const WORKING_SET_SOURCE_KEY = "mirmicode.dataSource";

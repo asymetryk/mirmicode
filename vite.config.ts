@@ -9,6 +9,9 @@ export default defineConfig({
     host: "127.0.0.1",
     port: 5173,
     strictPort: true,
+    // Vite 6 rejects unknown Host headers. A leading dot allows this tailnet
+    // suffix and every MagicDNS name under it (Tailscale Serve, future K3s).
+    allowedHosts: [".tail21f530.ts.net"],
     proxy: workingSetProxyTarget
       ? {
           "/working-set": {
