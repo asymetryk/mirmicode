@@ -1,344 +1,378 @@
 {
-  "fetched_at": "2026-09-22T21:43:33Z",
-  "source": "baserow-camp-associations-888-status-ok",
   "camps": [
     {
-      "repo_key": "agentinfra",
-      "repo_label": "agentinfra",
-      "stage": "active",
       "aliases": [
         "agentinfra",
         "cahq",
         "coding-agent-hq"
       ],
       "github_url": "https://github.com/asymetryk/agentinfra",
+      "one_liner": "Private/local platform stack for persistent agents: Baserow, Zulip, OmniRoute, Working Set, MCP routers, K3s deploy wiring.",
       "open_project": {
         "id": 55,
         "key": "coding-agent-hq",
         "name": "Coding Agent HQ",
-        "url": "https://openproject.tail21f530.ts.net/projects/coding-agent-hq",
-        "status": "ok"
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/coding-agent-hq"
       },
-      "one_liner": "Private/local platform stack for persistent agents: Baserow, Zulip, OmniRoute, Working Set, MCP routers, K3s deploy wiring."
+      "repo_key": "agentinfra",
+      "repo_label": "agentinfra",
+      "stage": "active"
     },
     {
-      "repo_key": "agentos",
-      "repo_label": "agentos",
-      "stage": "active",
       "aliases": [
         "agentos"
       ],
       "github_url": "https://github.com/asymetryk/agentos",
+      "one_liner": "Control-plane–first AgentOS 2.0: public modular core + private adapter packs; typed provider contracts and guarded writes.",
       "open_project": {
         "id": 17,
         "key": "repo-agentos",
         "name": "Repo: AgentOS",
-        "url": "https://openproject.tail21f530.ts.net/projects/repo-agentos",
-        "status": "ok"
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/repo-agentos"
       },
-      "one_liner": "Control-plane\u2013first AgentOS 2.0: public modular core + private adapter packs; typed provider contracts and guarded writes."
+      "repo_key": "agentos",
+      "repo_label": "agentos",
+      "stage": "active"
     },
     {
-      "repo_key": "agentvault",
-      "repo_label": "agentvault",
-      "stage": "active",
       "aliases": [
         "agentvault"
       ],
       "github_url": "https://github.com/asymetryk/agentvault",
+      "one_liner": "Memory/knowledge backend for persistent agents: Markdown vault, OKF v0.2 bundles, compiled wiki layer, MCP/gateway surface.",
       "open_project": {
         "id": 18,
         "key": "repo-agentvault",
         "name": "Repo: AgentVault",
-        "url": "https://openproject.tail21f530.ts.net/projects/repo-agentvault",
-        "status": "ok"
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/repo-agentvault"
       },
-      "one_liner": "Memory/knowledge backend for persistent agents: Markdown vault, OKF v0.2 bundles, compiled wiki layer, MCP/gateway surface."
+      "repo_key": "agentvault",
+      "repo_label": "agentvault",
+      "stage": "active"
     },
     {
-      "repo_key": "agentworkforce",
-      "repo_label": "agentworkforce",
-      "stage": "active",
       "aliases": [
         "agentworkforce"
       ],
       "github_url": "https://github.com/asymetryk/agentworkforce",
+      "one_liner": "Organization layer for agent people/roles/personas, starter-team MVP, Command Center contracts, Intake Steward and CPO charters.",
       "open_project": {
         "id": 19,
         "key": "repo-agentworkforce",
         "name": "Repo: Agent Workforce",
-        "url": "https://openproject.tail21f530.ts.net/projects/repo-agentworkforce",
-        "status": "ok"
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/repo-agentworkforce"
       },
-      "one_liner": "Organization layer for agent people/roles/personas, starter-team MVP, Command Center contracts, Intake Steward and CPO charters."
+      "repo_key": "agentworkforce",
+      "repo_label": "agentworkforce",
+      "stage": "active"
     },
     {
-      "repo_key": "agentworkforce-runtime",
-      "repo_label": "agentworkforce-runtime",
-      "stage": "mvp",
       "aliases": [
         "agentworkforce-runtime"
       ],
       "github_url": "https://github.com/asymetryk/agentworkforce-runtime",
+      "one_liner": "Manifest-driven shared runtime harness (Agents SDK + OmniRoute m3); sealed Missy continuation; OP lifecycle via Agent Tools.",
       "open_project": {
         "id": 20,
         "key": "repo-agentworkforce-runtime",
         "name": "Repo: Agent Workforce Runtime",
-        "url": "https://openproject.tail21f530.ts.net/projects/repo-agentworkforce-runtime",
-        "status": "ok"
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/repo-agentworkforce-runtime"
       },
-      "one_liner": "Manifest-driven shared runtime harness (Agents SDK + OmniRoute m3); sealed Missy continuation; OP lifecycle via Agent Tools."
+      "repo_key": "agentworkforce-runtime",
+      "repo_label": "agentworkforce-runtime",
+      "stage": "mvp"
     },
     {
-      "repo_key": "AI Stack Observatory",
-      "repo_label": "AI Stack Observatory",
-      "stage": "active",
       "aliases": [
         "AI Stack Observatory",
         "ai-stack-observatory"
       ],
       "github_url": "https://github.com/asymetryk/ai-stack-observatory",
+      "one_liner": "Personal control plane for AI stack decision intelligence: paste a GitHub URL → USE/EVALUATE/WATCH/IGNORE/REPLACE/RETIRE.",
       "open_project": {
         "id": 52,
         "key": "repo-ai-stack-observatory",
         "name": "Repo: AI Stack Observatory",
-        "url": "https://openproject.tail21f530.ts.net/projects/repo-ai-stack-observatory",
-        "status": "ok"
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/repo-ai-stack-observatory"
       },
-      "one_liner": "Personal control plane for AI stack decision intelligence: paste a GitHub URL \u2192 USE/EVALUATE/WATCH/IGNORE/REPLACE/RETIRE."
+      "repo_key": "AI Stack Observatory",
+      "repo_label": "AI Stack Observatory",
+      "stage": "active"
     },
     {
-      "repo_key": "AIC Kiro",
-      "repo_label": "AIC Kiro",
-      "stage": "active",
       "aliases": [
         "AIC Kiro",
         "aic-kiro"
       ],
       "github_url": "https://github.com/asymetryk/aic-kiro",
+      "one_liner": "Infrastructure Design Platform (IDP): rack layouts, cable/power design, NL interface — FastAPI + React (AIC Kiro product).",
       "open_project": {
         "id": 13,
         "key": "repo-aic-kiro",
         "name": "Repo: AIC Kiro",
-        "url": "https://openproject.tail21f530.ts.net/projects/repo-aic-kiro",
-        "status": "ok"
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/repo-aic-kiro"
       },
-      "one_liner": "Infrastructure Design Platform (IDP): rack layouts, cable/power design, NL interface \u2014 FastAPI + React (AIC Kiro product)."
+      "repo_key": "AIC Kiro",
+      "repo_label": "AIC Kiro",
+      "stage": "active"
     },
     {
-      "repo_key": "content-os-publisher",
-      "repo_label": "content-os-publisher",
-      "stage": "active",
+      "aliases": [
+        "aickiro-live"
+      ],
+      "github_url": "https://github.com/asymetryk/aic-kiro",
+      "one_liner": "Live/deploy camp for AIC Kiro; OP aliases to same project as aic-kiro (repo-aic-kiro). No separate GitHub repo named aickiro-live.",
+      "open_project": {
+        "id": 13,
+        "key": "repo-aic-kiro",
+        "name": "Repo: AIC Kiro",
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/repo-aic-kiro"
+      },
+      "repo_key": "aickiro-live",
+      "repo_label": "aickiro-live",
+      "stage": "unknown"
+    },
+    {
       "aliases": [
         "content-os-publisher"
       ],
       "github_url": "https://github.com/asymetryk/content-os-publisher",
+      "one_liner": "Glue service for Content OS Airtable: promote Pocket/Baserow intake and publish Platform Versions via Postiz/Substack worker.",
       "open_project": {
         "id": 57,
         "key": "content-os-publisher",
         "name": "Content OS Publisher",
-        "url": "https://openproject.tail21f530.ts.net/projects/content-os-publisher",
-        "status": "ok"
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/content-os-publisher"
       },
-      "one_liner": "Glue service for Content OS Airtable: promote Pocket/Baserow intake and publish Platform Versions via Postiz/Substack worker."
+      "repo_key": "content-os-publisher",
+      "repo_label": "content-os-publisher",
+      "stage": "active"
     },
     {
-      "repo_key": "dtr-app",
-      "repo_label": "dtr-app",
-      "stage": "active",
       "aliases": [
         "dtr-app"
       ],
       "github_url": "https://github.com/asymetryk/dtr-app",
+      "one_liner": "Down To Roll MVP app: Next.js + Supabase + Mapbox; sessions, chat, map discovery; Capacitor mobile shells; CF Workers deploy.",
       "open_project": {
         "id": 23,
         "key": "repo-dtr-app",
         "name": "Repo: dtr-app",
-        "url": "https://openproject.tail21f530.ts.net/projects/repo-dtr-app",
-        "status": "ok"
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/repo-dtr-app"
       },
-      "one_liner": "Down To Roll MVP app: Next.js + Supabase + Mapbox; sessions, chat, map discovery; Capacitor mobile shells; CF Workers deploy."
+      "repo_key": "dtr-app",
+      "repo_label": "dtr-app",
+      "stage": "active"
     },
     {
-      "repo_key": "dtr-site",
-      "repo_label": "dtr-site",
-      "stage": "mvp",
       "aliases": [
         "dtr-site"
       ],
       "github_url": "https://github.com/asymetryk/dtr-site",
+      "one_liner": "Down to Roll marketing site (Next.js static → Cloudflare Pages): academies + practitioners conversion pages.",
       "open_project": {
         "id": 24,
         "key": "repo-dtr-site",
         "name": "Repo: dtr-site",
-        "url": "https://openproject.tail21f530.ts.net/projects/repo-dtr-site",
-        "status": "ok"
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/repo-dtr-site"
       },
-      "one_liner": "Down to Roll marketing site (Next.js static \u2192 Cloudflare Pages): academies + practitioners conversion pages."
+      "repo_key": "dtr-site",
+      "repo_label": "dtr-site",
+      "stage": "mvp"
     },
     {
-      "repo_key": "GPMO Time Tracker",
-      "repo_label": "GPMO Time Tracker",
-      "stage": "mvp",
       "aliases": [
         "GPMO Time Tracker",
         "gpmo-time-tracker"
       ],
       "github_url": "https://github.com/asymetryk/gpmo-time-tracker",
+      "one_liner": "Airtable Daily Log → OmniRoute MiniMax parse/match → Work Log Entries; Cloudflare Tunnel to OmniRoute; no Worker required.",
       "open_project": {
         "id": 29,
         "key": "repo-gpmo-time-tracker",
         "name": "Repo: GPMO Time Tracker",
-        "url": "https://openproject.tail21f530.ts.net/projects/repo-gpmo-time-tracker",
-        "status": "ok"
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/repo-gpmo-time-tracker"
       },
-      "one_liner": "Airtable Daily Log \u2192 OmniRoute MiniMax parse/match \u2192 Work Log Entries; Cloudflare Tunnel to OmniRoute; no Worker required."
+      "repo_key": "GPMO Time Tracker",
+      "repo_label": "GPMO Time Tracker",
+      "stage": "mvp"
     },
     {
-      "repo_key": "homelab",
-      "repo_label": "homelab",
-      "stage": "active",
       "aliases": [
         "homelab",
         "homelab-poc"
       ],
       "github_url": "https://github.com/asymetryk/homelab",
+      "one_liner": "Core infrastructure notes/tooling: hosts, network, storage, backups, OpenBao, mission-control; agent runtime moved to sibling repos.",
       "open_project": {
         "id": 3,
         "key": "homelab-poc",
         "name": "Homelab Backlog POC",
-        "url": "https://openproject.tail21f530.ts.net/projects/homelab-poc",
-        "status": "ok"
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/homelab-poc"
       },
-      "one_liner": "Core infrastructure notes/tooling: hosts, network, storage, backups, OpenBao, mission-control; agent runtime moved to sibling repos."
+      "repo_key": "homelab",
+      "repo_label": "homelab",
+      "stage": "active"
     },
     {
-      "repo_key": "omp-remote",
-      "repo_label": "omp-remote",
-      "stage": "idea",
       "aliases": [
         "omp-remote"
       ],
       "github_url": "https://github.com/asymetryk/omp-remote",
+      "one_liner": "Native iPhone companion for live Oh My Pi sessions: notifications, Q&A, permission approvals; public authenticated relay planned.",
       "open_project": {
         "id": 58,
         "key": "omp-remote",
         "name": "OMP Remote",
-        "url": "https://openproject.tail21f530.ts.net/projects/omp-remote",
-        "status": "ok"
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/omp-remote"
       },
-      "one_liner": "Native iPhone companion for live Oh My Pi sessions: notifications, Q&A, permission approvals; public authenticated relay planned."
+      "repo_key": "omp-remote",
+      "repo_label": "omp-remote",
+      "stage": "idea"
     },
     {
-      "repo_key": "Policy Sentinel",
-      "repo_label": "Policy Sentinel",
-      "stage": "mvp",
       "aliases": [
         "Policy Sentinel",
         "policy-sentinel"
       ],
       "github_url": "https://github.com/asymetryk/policy-sentinel",
+      "one_liner": "GPMO Airtable Enterprise policy watchdog: hourly ingest, policy evaluation, findings + Interfaces UX.",
       "open_project": {
         "id": 50,
         "key": "repo-policy-sentinel",
         "name": "Policy Sentinel",
-        "url": "https://openproject.tail21f530.ts.net/projects/repo-policy-sentinel",
-        "status": "ok"
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/repo-policy-sentinel"
       },
-      "one_liner": "GPMO Airtable Enterprise policy watchdog: hourly ingest, policy evaluation, findings + Interfaces UX."
+      "repo_key": "Policy Sentinel",
+      "repo_label": "Policy Sentinel",
+      "stage": "mvp"
     },
     {
-      "repo_key": "Proposal Generator",
-      "repo_label": "Proposal Generator",
-      "stage": "active",
       "aliases": [
         "Proposal Generator",
         "proposal-generator"
       ],
       "github_url": "https://github.com/asymetryk/proposal-generator",
+      "one_liner": "Integrated Rack Proposal Generator: RAC visuals + SOW builder on Cloudflare Workers/D1/R2; SHI Presentation Builder aesthetic.",
       "open_project": {
         "id": 51,
         "key": "repo-proposal-generator",
         "name": "Repo: Proposal Generator",
-        "url": "https://openproject.tail21f530.ts.net/projects/repo-proposal-generator",
-        "status": "ok"
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/repo-proposal-generator"
       },
-      "one_liner": "Integrated Rack Proposal Generator: RAC visuals + SOW builder on Cloudflare Workers/D1/R2; SHI Presentation Builder aesthetic."
+      "repo_key": "Proposal Generator",
+      "repo_label": "Proposal Generator",
+      "stage": "active"
     },
     {
-      "repo_key": "shi-onboarding",
-      "repo_label": "shi-onboarding",
-      "stage": "mvp",
+      "aliases": [
+        "shi-account-strategy-workspace"
+      ],
+      "github_url": "https://github.com/asymetryk/shi-account-strategy-workspace",
+      "one_liner": "Internal SHI account-strategy and stakeholder-mapping workspace (GitHub description); repository is empty on GitHub.",
+      "open_project": {
+        "id": 54,
+        "key": "repo-shi-account-strategy-workspace",
+        "name": "SHI Account Strategy Workspace",
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/repo-shi-account-strategy-workspace"
+      },
+      "repo_key": "shi-account-strategy-workspace",
+      "repo_label": "shi-account-strategy-workspace",
+      "stage": "idea"
+    },
+    {
       "aliases": [
         "shi-onboarding"
       ],
       "github_url": "https://github.com/asymetryk/shi-onboarding",
+      "one_liner": "RICOS: SHI Rack Integration Customer Onboarding System — Airtable template docs, schema, operating model handoff.",
       "open_project": {
         "id": 27,
         "key": "repo-shi-onboarding",
         "name": "Repo: SHI Onboarding / RICOS",
-        "url": "https://openproject.tail21f530.ts.net/projects/repo-shi-onboarding",
-        "status": "ok"
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/repo-shi-onboarding"
       },
-      "one_liner": "RICOS: SHI Rack Integration Customer Onboarding System \u2014 Airtable template docs, schema, operating model handoff."
+      "repo_key": "shi-onboarding",
+      "repo_label": "shi-onboarding",
+      "stage": "mvp"
     },
     {
-      "repo_key": "shi-presentation-builder",
-      "repo_label": "shi-presentation-builder",
-      "stage": "active",
       "aliases": [
         "shi-presentation-builder"
       ],
       "github_url": "https://github.com/asymetryk/shi-presentation-builder",
+      "one_liner": "Why SHI for Infrastructure Presentation Builder: Vinext/Workers app with D1 editing, Baserow feedback mode, R2 assets.",
       "open_project": {
         "id": 49,
         "key": "repo-shi-presentation-builder",
         "name": "Repo: SHI Presentation Builder",
-        "url": "https://openproject.tail21f530.ts.net/projects/repo-shi-presentation-builder",
-        "status": "ok"
+        "status": "ok",
+        "url": "https://openproject.tail21f530.ts.net/projects/repo-shi-presentation-builder"
       },
-      "one_liner": "Why SHI for Infrastructure Presentation Builder: Vinext/Workers app with D1 editing, Baserow feedback mode, R2 assets."
+      "repo_key": "shi-presentation-builder",
+      "repo_label": "shi-presentation-builder",
+      "stage": "active"
     }
   ],
+  "fetched_at": "2026-09-22T22:14:28Z",
+  "source": "baserow-camp-associations-888-status-ok",
   "units": [
     {
+      "destination": {
+        "kind": "repo",
+        "value": "asymetryk/agentinfra"
+      },
+      "harness": "grokbot",
       "id": "ws_0F3pln8ebCqeCKzB_G459OfPN8RiMe-Rb3Spdj-O9ZU",
-      "repo_key": "agentinfra",
-      "harness": "grokbot",
       "model": "Abby",
-      "status": "open",
-      "destination": {
-        "kind": "repo",
-        "value": "asymetryk/agentinfra"
-      },
-      "updated_at": "2026-09-22T20:14:17.871922Z",
-      "thread_name": "Abby"
-    },
-    {
-      "id": "ws_nBjIwhklgOHJWZM70f3q1KPVl7BnzpG0-gmW_xOhM7A",
       "repo_key": "agentinfra",
-      "harness": "grokbot",
-      "model": "Forge",
       "status": "open",
+      "thread_name": "Abby",
+      "updated_at": "2026-09-22T20:14:17.871922Z"
+    },
+    {
       "destination": {
         "kind": "repo",
         "value": "asymetryk/agentinfra"
       },
-      "updated_at": "2026-09-22T20:14:17.871922Z",
-      "thread_name": "Forge"
+      "harness": "grokbot",
+      "id": "ws_nBjIwhklgOHJWZM70f3q1KPVl7BnzpG0-gmW_xOhM7A",
+      "model": "Forge",
+      "repo_key": "agentinfra",
+      "status": "open",
+      "thread_name": "Forge",
+      "updated_at": "2026-09-22T20:14:17.871922Z"
     },
     {
-      "id": "ws_EKM-TwtcmulYM5RU1DqqxXDBAlYEHipsVsDq5C-GGVE",
-      "repo_key": "homelab",
-      "harness": "grokbot",
-      "model": "Labhand",
-      "status": "open",
       "destination": {
         "kind": "repo",
         "value": "asymetryk/homelab"
       },
-      "updated_at": "2026-09-22T20:14:17.871922Z",
-      "thread_name": "Labhand"
+      "harness": "grokbot",
+      "id": "ws_EKM-TwtcmulYM5RU1DqqxXDBAlYEHipsVsDq5C-GGVE",
+      "model": "Labhand",
+      "repo_key": "homelab",
+      "status": "open",
+      "thread_name": "Labhand",
+      "updated_at": "2026-09-22T20:14:17.871922Z"
     }
   ]
 }
