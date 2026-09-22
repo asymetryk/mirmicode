@@ -206,7 +206,9 @@ export function outpostSrc(harness: string): string | null {
 
 /**
  * v2 unit sprite for this harness and model.
- * Unknown harnesses use the neutral body when that file was staged.
+ * Unknown harnesses, including Grok Bot, use the neutral body when that file was staged.
+ * No grokbot-painted sheet exists. Grok* / Walker is `neutral-walker-07.png`
+ * (same role map as MiniMax → mirmi). The map washes that body bone-white in CSS.
  * Returns null when nothing in v2 matches — caller falls back to the v1 hero.
  */
 export function unitSrc(harness: string, model: string): string | null {
@@ -243,20 +245,35 @@ export function markerSrc(harness: string, posture: "idle" | "working"): string 
 }
 
 /**
+ * Factions that can claim a camp's kit.
+ * Grok Bot is last: it has no painted sheet, so a win still draws the neutral kit.
+ * Ties break toward Cursor, then Codex, then OhMyPi, then Grok Bot.
+ */
+const CAMP_FACTIONS = ["cursor", "codex", "ohmypi", "grokbot"] as const;
+
+function campFaction(harness: string | null | undefined): string | null {
+  const painted = paintedFaction(harness);
+  if (painted) return painted;
+  if (canonicalHarness(harness ?? "") === "grokbot") return "grokbot";
+  return null;
+}
+
+/**
  * Building art follows the faction with the most units on the repo.
- * Ties break toward Cursor, then Codex, then OhMyPi.
- * Returns null when the repo has no unit from a painted faction.
+ * Ties break toward Cursor, then Codex, then OhMyPi, then Grok Bot.
+ * Returns null when the repo has no unit from a camp faction.
+ * A Grok Bot win still uses the neutral sheet: no grokbot paint is staged.
  */
 export function dominantFaction(units: Array<{ harness: string }>): string | null {
   const counts = new Map<string, number>();
   for (const unit of units) {
-    const key = paintedFaction(unit.harness);
+    const key = campFaction(unit.harness);
     if (!key) continue;
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   let best: string | null = null;
   let bestCount = 0;
-  for (const faction of OUTPOST_FACTIONS) {
+  for (const faction of CAMP_FACTIONS) {
     const count = counts.get(faction) ?? 0;
     if (count > bestCount) {
       best = faction;

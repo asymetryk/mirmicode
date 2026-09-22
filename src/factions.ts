@@ -1,18 +1,28 @@
-export const FACTION_ORDER = ["cursor", "codex", "ohmypi"] as const;
+export const FACTION_ORDER = ["cursor", "codex", "ohmypi", "grokbot"] as const;
 
 /**
- * Painted faction id.
+ * First-class faction ids the legend always lists.
  * `omp`, `oh-my-pi`, and `OhMyPi` fold onto `ohmypi` so sprites stay on that body.
  * The display name is always OhMyPi; callers must not show the raw `omp` token.
+ * `grok-bot`, `grok_bot`, and `Grok Bot` fold onto `grokbot`. Display is always Grok Bot.
  */
 export function canonicalHarness(value: string): string {
   const compact = value.toLowerCase().replace(/[^a-z0-9]+/g, "");
   if (compact === "cursor") return "cursor";
   if (compact === "codex") return "codex";
   if (compact === "ohmypi" || compact === "omp") return "ohmypi";
+  if (compact === "grokbot") return "grokbot";
   if (compact === "opencode") return "opencode";
   if (compact === "unknown") return "unknown";
   return value.trim().toLowerCase();
+}
+
+/** Harness tokens a Working Set `source` field may name. Other source strings are ignored. */
+const KNOWN_SOURCE_FACTIONS = new Set(["cursor", "codex", "ohmypi", "opencode", "grokbot"]);
+
+export function knownSourceFaction(value: string): string | null {
+  const key = canonicalHarness(value);
+  return KNOWN_SOURCE_FACTIONS.has(key) ? key : null;
 }
 
 export const UNIT_TYPES = [
@@ -45,6 +55,8 @@ export function factionName(harness: string): string {
       return "Codex";
     case "ohmypi":
       return "OhMyPi";
+    case "grokbot":
+      return "Grok Bot";
     case "opencode":
       return "OpenCode";
     case "unknown":

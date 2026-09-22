@@ -169,6 +169,17 @@
           "last_prompt": "Triage this Cursor unit whose lifecycle is still unknown."
         },
         {
+          "id": "mirmicode-grokbot",
+          "harness": "grokbot",
+          "model": "Grok-4.6",
+          "thread_name": "grok-camp",
+          "status": "working",
+          "presence": "present",
+          "lifecycle": "idle",
+          "updated_at": "2026-09-22T11:40:00Z",
+          "last_prompt": "Hold the Grok Bot camp on mirmicode with a real context snippet."
+        },
+        {
           "id": "mirmicode-operator-hidden",
           "harness": "codex",
           "model": "Luna",
@@ -258,6 +269,17 @@
           "status": "idle",
           "updated_at": "2026-09-21T09:30:00Z",
           "last_prompt": "Continue work on review with an honest context snippet."
+        },
+        {
+          "id": "charter-grokbot",
+          "harness": "grok-bot",
+          "model": "Walker",
+          "thread_name": "grok-charter",
+          "status": "idle",
+          "presence": "present",
+          "lifecycle": "idle",
+          "updated_at": "2026-09-22T10:15:00Z",
+          "last_prompt": "Keep this Grok Bot walker on the charter repo."
         },
         {
           "id": "charter-ohmypi-sol",
@@ -610,6 +632,17 @@
           "lifecycle": "Unknown",
           "updated_at": "2026-09-18T08:05:00Z",
           "last_prompt": "Second collector sorted last in Unassigned."
+        },
+        {
+          "id": "unassigned-grokbot",
+          "harness": "Grok Bot",
+          "model": "Walker",
+          "thread_name": "grok-hq",
+          "status": "working",
+          "presence": "present",
+          "lifecycle": "idle",
+          "updated_at": "2026-09-22T09:05:00Z",
+          "last_prompt": "Park this Grok Bot on the Unassigned outpost until a repo is known."
         },
         {
           "id": "unassigned-codex-unknown",
