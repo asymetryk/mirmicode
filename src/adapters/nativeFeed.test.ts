@@ -166,12 +166,24 @@ describe("parseNativeFeedSnapshot", () => {
     const snapshot = await loadNativeFeedFixture(fetchImpl, new Date("2026-09-22T16:00:00Z"));
 
     expect(snapshot.source).toBe(NATIVE_FEED_SOURCE);
-    expect(snapshot.bases.map((b) => b.repo).sort()).toEqual([
-      "asymetryk/agentinfra",
-      "asymetryk/homelab",
-      "asymetryk/policy-sentinel",
-    ]);
-    expect(snapshot.bases.flatMap((b) => b.units).length).toBeGreaterThan(0);
+    // Derive expectations from the actual fixture instead of hard-coding the
+    // old 3-camp stub. The fixture is the source of truth here.
+    const parsedFixture = loadNativeFeed(fixture).snapshot;
+    expect(snapshot.bases.map((b) => b.repo).sort()).toEqual(
+      parsedFixture.bases.map((b) => b.repo).sort(),
+    );
+    expect(snapshot.bases).toHaveLength(parsedFixture.bases.length);
+    expect(snapshot.fetchedAt).toBe(parsedFixture.fetchedAt);
+    // Units must round-trip: every unit in the parsed fixture must appear.
+    expect(snapshot.bases.flatMap((b) => b.units).length).toBe(
+      parsedFixture.bases.flatMap((b) => b.units).length,
+    );
+    for (const base of snapshot.bases) {
+      expect(base.repo.length).toBeGreaterThan(0);
+      for (const unit of base.units) {
+        expect(unit.lastPrompt).toBeNull();
+      }
+    }
     for (const url of requested) {
       expect(url).not.toContain(CAHQ_WORKING_SET_ORIGIN);
       expect(url).not.toContain("cahq.tail21f530.ts.net");
