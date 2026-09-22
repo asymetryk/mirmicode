@@ -30,39 +30,52 @@ describe("exactToken", () => {
 describe("noiseReason", () => {
   const on = DEFAULT_NOISE_FILTER;
 
-  it("hard-hides not_seen, archived, and annotation.hidden", () => {
+  it("hard-hides not_seen and annotation.hidden, and dims archived until asked", () => {
     expect(noiseReason({ presence: "not_seen", lifecycle: "idle" }, on)).toBe("not_seen");
     expect(noiseReason({ presence: "NOT_SEEN", lifecycle: null }, on)).toBe("not_seen");
-    expect(noiseReason({ presence: "present", lifecycle: "archived" }, on)).toBe("archived");
+    expect(noiseReason({ presence: "present", lifecycle: "archived" }, on)).toBeNull();
     expect(noiseReason({ presence: "present", lifecycle: "idle", hidden: true }, on)).toBe("hidden");
+    expect(
+      noiseReason({ presence: "present", lifecycle: "archived" }, { hideNoise: true, hideDetached: false, hideArchived: true }),
+    ).toBe("archived");
   });
 
-  it("keeps detached and unknown visible, including a stale snapshot's units", () => {
+  it("keeps archived, detached, and unknown visible, including a stale snapshot's units", () => {
     expect(noiseReason({ presence: "present", lifecycle: "detached" }, on)).toBeNull();
+    expect(noiseReason({ presence: "present", lifecycle: "archived" }, on)).toBeNull();
     expect(noiseReason({ presence: "present", lifecycle: "unknown", harness: "cursor" }, on)).toBeNull();
     expect(noiseReason({ presence: "present", lifecycle: "idle" }, on)).toBeNull();
     expect(noiseReason({ presence: "not-seen", lifecycle: "idle" }, on)).toBeNull();
     expect(noiseReason({ presence: null, lifecycle: null }, on)).toBeNull();
-    expect(noiseReason({ presence: "present", lifecycle: "detached" }, { hideNoise: true, hideDetached: true })).toBe("detached");
-    expect(noiseReason({ presence: "not_seen", lifecycle: "archived", hidden: true }, { hideNoise: false, hideDetached: false })).toBeNull();
+    expect(
+      noiseReason({ presence: "present", lifecycle: "detached" }, { hideNoise: true, hideDetached: true, hideArchived: false }),
+    ).toBe("detached");
+    expect(
+      noiseReason(
+        { presence: "not_seen", lifecycle: "archived", hidden: true },
+        { hideNoise: false, hideDetached: false, hideArchived: false },
+      ),
+    ).toBeNull();
 
     const { bases, stale } = normalizeWorkingSetPayload({
       snapshot: { stale: true },
       items: [
         { item_id: "still-here", observed: { repo_name: "example/kept", lifecycle: "idle", presence: "present" } },
-        { item_id: "gone", observed: { repo_name: "example/kept", lifecycle: "archived", presence: "present" } },
+        { item_id: "cold", observed: { repo_name: "example/kept", lifecycle: "archived", presence: "present" } },
       ],
     });
     expect(stale).toBe(true);
     const filtered = applyNoiseFilter(bases, DEFAULT_NOISE_FILTER);
-    expect(filtered.bases[0]?.units.map((unit) => unit.id)).toEqual(["still-here"]);
-    expect(filtered.hiddenCount).toBe(1);
+    expect(filtered.bases[0]?.units.map((unit) => unit.id)).toEqual(["still-here", "cold"]);
+    expect(unitEmphasis(filtered.bases[0]!.units[1]!, "example/kept")).toBe("dim");
+    expect(filtered.hiddenCount).toBe(0);
   });
 });
 
 describe("unitEmphasis", () => {
-  it("dims detached and unknown, and demotes repo-less Cursor unknowns further", () => {
+  it("dims archived, detached, and unknown, and demotes repo-less Cursor unknowns further", () => {
     expect(unitEmphasis({ presence: "present", lifecycle: "idle" }, "example/repo")).toBe("normal");
+    expect(unitEmphasis({ presence: "present", lifecycle: "archived" }, "example/repo")).toBe("dim");
     expect(unitEmphasis({ presence: "present", lifecycle: "detached" }, "example/repo")).toBe("dim");
     expect(unitEmphasis({ presence: "present", lifecycle: "unknown", harness: "cursor" }, "example/repo")).toBe("dim");
     expect(unitEmphasis({ presence: "present", lifecycle: "unknown", harness: "codex" }, "Unassigned")).toBe("dim");
@@ -84,13 +97,15 @@ describe("applyNoiseFilter", () => {
       ],
     });
     const filtered = applyNoiseFilter(bases, DEFAULT_NOISE_FILTER);
-    expect(filtered.hiddenCount).toBe(2);
-    expect(filtered.bases.map((base) => base.repo)).toEqual(["Unassigned", "example/kept"]);
+    expect(filtered.hiddenCount).toBe(1);
+    expect(filtered.bases.map((base) => base.repo)).toEqual(["Unassigned", "example/kept", "example/empty"]);
     expect(filtered.bases[0]?.units.map((unit) => unit.id)).toEqual(["detached", "bc-cloud"]);
     expect(unitEmphasis(filtered.bases[0]!.units[0]!, "Unassigned")).toBe("dim");
     expect(unitEmphasis(filtered.bases[0]!.units[1]!, "Unassigned")).toBe("collector");
     expect(drawsUnitTokens("Unassigned")).toBe(false);
     expect(filtered.bases[1]?.units.map((unit) => unit.id)).toEqual(["kept"]);
+    expect(filtered.bases[2]?.units.map((unit) => unit.id)).toEqual(["archived"]);
+    expect(unitEmphasis(filtered.bases[2]!.units[0]!, "example/empty")).toBe("dim");
   });
 
   it("does not throw when presence, lifecycle, and freshness are missing", () => {
@@ -104,21 +119,17 @@ describe("applyNoiseFilter", () => {
 });
 
 describe("sample fixture noise", () => {
-  it("hides not_seen, archived, and operator-hidden, and keeps detached plus collectors", () => {
+  it("hides not_seen and operator-hidden, and keeps archived, detached, and collectors", () => {
     const snapshot = loadFixture();
     expect(snapshot.stale).toBe(false);
     const filtered = applyNoiseFilter(snapshot.bases, DEFAULT_NOISE_FILTER);
     const visibleIds = filtered.bases.flatMap((base) => base.units.map((unit) => unit.id));
-    const hiddenIds = [
-      "mirmicode-not-seen",
-      "mirmicode-not-seen-spaced",
-      "mirmicode-archived",
-      "mirmicode-operator-hidden",
-      "unassigned-archived",
-    ];
+    const hiddenIds = ["mirmicode-not-seen", "mirmicode-not-seen-spaced", "mirmicode-operator-hidden"];
     for (const id of hiddenIds) expect(visibleIds).not.toContain(id);
 
     expect(visibleIds).toContain("mirmicode-grok");
+    expect(visibleIds).toContain("mirmicode-archived");
+    expect(visibleIds).toContain("unassigned-archived");
     expect(visibleIds).toContain("mirmicode-detached");
     expect(visibleIds).toContain("mirmicode-cursor-unknown");
     expect(visibleIds).toContain("bc-collector");
@@ -140,7 +151,10 @@ describe("sample fixture noise", () => {
     });
     expect(grok?.lastPrompt).toMatch(/last-prompt/i);
 
-    const withoutDetached = applyNoiseFilter(snapshot.bases, { hideNoise: true, hideDetached: true });
+    const archived = snapshot.bases.flatMap((base) => base.units).find((unit) => unit.id === "mirmicode-archived");
+    expect(unitEmphasis(archived!, "asymetryk/mirmicode")).toBe("dim");
+
+    const withoutDetached = applyNoiseFilter(snapshot.bases, { hideNoise: true, hideDetached: true, hideArchived: false });
     const stillVisible = withoutDetached.bases.flatMap((base) => base.units.map((unit) => unit.id));
     expect(stillVisible).not.toContain("mirmicode-detached");
     expect(stillVisible).not.toContain("unassigned-detached");
@@ -188,7 +202,9 @@ describe("live feed shape", () => {
 
     const filtered = applyNoiseFilter(normalized.bases, DEFAULT_NOISE_FILTER);
     const visible = filtered.bases.flatMap((base) => base.units);
-    expect(visible.some((unit) => unit.presence === "not_seen" || unit.lifecycle === "archived")).toBe(false);
+    expect(visible.some((unit) => unit.presence === "not_seen")).toBe(false);
+    expect(visible.filter((unit) => unit.lifecycle === "archived")).toHaveLength(SHAPE.archived);
+    expect(visible.filter((unit) => unit.lifecycle === "archived").every((unit) => unitEmphasis(unit) === "dim")).toBe(true);
     expect(visible.some((unit) => unit.lifecycle === "detached")).toBe(true);
     expect(visible.some((unit) => unit.lifecycle === "unknown")).toBe(true);
     expect(filtered.bases.filter((base) => !drawsUnitTokens(base.repo))).toHaveLength(1);
@@ -205,9 +221,13 @@ describe("live feed shape", () => {
     expect(unassigned?.units.slice(-collectors.length).every((unit) => unitEmphasis(unit, "Unassigned") === "collector")).toBe(true);
     expect(visible.length + filtered.hiddenCount).toBe(SHAPE.items);
 
-    const detachedHidden = applyNoiseFilter(normalized.bases, { hideNoise: true, hideDetached: true });
+    const detachedHidden = applyNoiseFilter(normalized.bases, { hideNoise: true, hideDetached: true, hideArchived: false });
     expect(detachedHidden.bases.flatMap((base) => base.units).some((unit) => unit.lifecycle === "detached")).toBe(false);
     expect(detachedHidden.hiddenCount).toBe(filtered.hiddenCount + SHAPE.detached);
+
+    const archivedHidden = applyNoiseFilter(normalized.bases, { hideNoise: true, hideDetached: false, hideArchived: true });
+    expect(archivedHidden.bases.flatMap((base) => base.units).some((unit) => unit.lifecycle === "archived")).toBe(false);
+    expect(archivedHidden.hiddenCount).toBe(filtered.hiddenCount + SHAPE.archived);
   });
 });
 

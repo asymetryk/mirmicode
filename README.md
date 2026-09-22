@@ -88,7 +88,7 @@ npm run preview
 
 Drag to pan. Scroll to zoom. **Select** a unit to read its harness, model, thread, status, and lifecycle in the HUD. **Attach** locks the view on that unit’s base. The **minimap** jumps the view. Escape detaches. These are view controls. The map does not send orders to agents.
 
-The **Noise** switch starts on. It hides `presence` `not_seen`, `lifecycle` `archived`, and `annotation.hidden` true. `detached` stays on the map dimmer until **Hide detached** is turned on. `unknown` stays visible and dimmer. A Cursor unit with `lifecycle` `unknown` and no repo is dimmed further inside Unassigned. **Unassigned** is one outpost with a count. Select it to open that list in the HUD. Counts come from the loaded snapshot. They are not a fixed demo size.
+The **Noise** switch starts on. It hides `presence` `not_seen` and `annotation.hidden` true. `archived` and `detached` stay on the map dimmer until **Hide archived** or **Hide detached** is turned on. `unknown` stays visible and dimmer. A Cursor unit with `lifecycle` `unknown` and no repo is dimmed further inside Unassigned. **Unassigned** is one outpost with a count. Select it to open that list in the HUD. Counts come from the loaded snapshot. They are not a fixed demo size.
 
 The legend under the title groups the atlas: faction bodies, the ten unit types, and the field (buildings and resource props). It does not list every file in the pack.
 
@@ -275,13 +275,13 @@ When the live payload uses different names, extend the alias lists in `normalize
 
 ![Unassigned drilldown list](docs/unassigned-list.png)
 
-**Hide not seen, archived, and operator-hidden** defaults to on (`mirmicode.hideNoise`). **Hide detached** defaults to off (`mirmicode.hideDetached`). This browser remembers both. The status line counts visible bases and units, then adds a hidden count when a filter removed any. Those counts are computed from the snapshot.
+**Hide not seen and operator-hidden** defaults to on (`mirmicode.hideNoise`). **Hide archived** defaults to off (`mirmicode.hideArchived`). **Hide detached** defaults to off (`mirmicode.hideDetached`). This browser remembers each switch. The status line counts visible bases and units, then adds a hidden count when a filter removed any. Those counts are computed from the snapshot.
 
 | Rule | Default | Effect |
 | --- | --- | --- |
 | Not seen | On | Hide when `presence` is `not_seen` |
-| Archived | On | Hard-hide when `lifecycle` is `archived` |
 | Operator hidden | On | Hide when `annotation.hidden` is boolean `true` |
+| Archived | Dim, hide optional | Stay on the map, drawn dimmer. **Hide archived** removes them |
 | Detached | Dim, hide optional | Stay on the map, drawn dimmer. **Hide detached** removes them |
 | Unknown lifecycle | Dim | Stay visible, drawn dimmer. Unclear or cold, not dead |
 | Repo-less Cursor unknown | Demote | Dimmed further and listed last in the Unassigned drilldown. Not removed |
@@ -291,7 +291,7 @@ Comparison is trim and case fold on those exact strings. A missing, blank, or no
 
 An item is Unassigned only when `observed.repo` and `observed.repo_name` are both missing or blank. One of those fields is enough to place it on that repo.
 
-Hidden units remain in the snapshot. Turning the noise switch off draws `not_seen`, `archived`, and operator-hidden units again. Unknown stays dim either way. A base whose units are all hidden leaves the map until one of them passes.
+Hidden units remain in the snapshot. Turning the noise switch off draws `not_seen` and operator-hidden units again. Archived stays dim unless **Hide archived** is on. Unknown stays dim either way. A base whose units are all hidden leaves the map until one of them passes.
 
 ### Unassigned
 

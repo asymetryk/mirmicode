@@ -16,6 +16,7 @@ import type { MapSnapshot } from "./types";
 
 const HIDE_NOISE_KEY = "mirmicode.hideNoise";
 const HIDE_DETACHED_KEY = "mirmicode.hideDetached";
+const HIDE_ARCHIVED_KEY = "mirmicode.hideArchived";
 
 export function App() {
   const [urlDraft, setUrlDraft] = useState(readStartupUrl);
@@ -127,6 +128,11 @@ export function App() {
     writeFlag(HIDE_DETACHED_KEY, value);
   }
 
+  function onHideArchived(value: boolean) {
+    setFilter((current) => ({ ...current, hideArchived: value }));
+    writeFlag(HIDE_ARCHIVED_KEY, value);
+  }
+
   const banner = [fallbackReason, staleNote, snapshot?.notice].filter(Boolean).join(" ") || null;
 
   return (
@@ -152,9 +158,11 @@ export function App() {
         bases={positioned}
         hideNoise={filter.hideNoise}
         hideDetached={filter.hideDetached}
+        hideArchived={filter.hideArchived}
         hiddenCount={filtered.hiddenCount}
         onHideNoise={onHideNoise}
         onHideDetached={onHideDetached}
+        onHideArchived={onHideArchived}
       />
       <MapStage
         key={`${snapshot?.source ?? "pending"}:${snapshot?.fetchedAt ?? "0"}`}
@@ -213,6 +221,7 @@ function readNoiseFilter(): NoiseFilter {
   return {
     hideNoise: readFlag(HIDE_NOISE_KEY, DEFAULT_NOISE_FILTER.hideNoise),
     hideDetached: readFlag(HIDE_DETACHED_KEY, DEFAULT_NOISE_FILTER.hideDetached),
+    hideArchived: readFlag(HIDE_ARCHIVED_KEY, DEFAULT_NOISE_FILTER.hideArchived),
   };
 }
 

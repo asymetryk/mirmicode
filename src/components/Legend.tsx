@@ -19,18 +19,22 @@ type LegendProps = {
   bases: CampaignBase[];
   hideNoise: boolean;
   hideDetached: boolean;
+  hideArchived: boolean;
   hiddenCount: number;
   onHideNoise: (value: boolean) => void;
   onHideDetached: (value: boolean) => void;
+  onHideArchived: (value: boolean) => void;
 };
 
 export function Legend({
   bases,
   hideNoise,
   hideDetached,
+  hideArchived,
   hiddenCount,
   onHideNoise,
   onHideDetached,
+  onHideArchived,
 }: LegendProps) {
   const harnesses = bases.flatMap((base) => base.units.map((unit) => unit.harness));
   const factions = legendFactions(harnesses);
@@ -80,7 +84,15 @@ export function Legend({
             checked={hideNoise}
             onChange={(event) => onHideNoise(event.target.checked)}
           />
-          Hide not seen, archived, and operator-hidden
+          Hide not seen and operator-hidden
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={hideArchived}
+            onChange={(event) => onHideArchived(event.target.checked)}
+          />
+          Hide archived
         </label>
         <label>
           <input

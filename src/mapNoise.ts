@@ -4,15 +4,18 @@ import type { CampaignBase } from "./types";
 export const UNASSIGNED_REPO = "Unassigned";
 
 export type NoiseFilter = {
-  /** Hide presence `not_seen`, lifecycle `archived`, and annotation.hidden true. */
+  /** Hide presence `not_seen` and annotation.hidden true. */
   hideNoise: boolean;
   /** Optional. Detached stays dimmed when this is off. */
   hideDetached: boolean;
+  /** Optional. Archived stays dimmed when this is off. */
+  hideArchived: boolean;
 };
 
 export const DEFAULT_NOISE_FILTER: NoiseFilter = {
   hideNoise: true,
   hideDetached: false,
+  hideArchived: false,
 };
 
 export type NoiseReason = "not_seen" | "archived" | "hidden" | "detached";
@@ -59,21 +62,21 @@ export function exactToken(value: unknown): string | null {
 }
 
 /**
- * Hard-hide reasons. Detached and unknown stay visible.
+ * Hard-hide reasons. Archived, detached, and unknown stay visible unless their optional switch is on.
  * snapshot.stale is not a hide signal.
  */
 export function noiseReason(unit: NoiseSubject, filter: NoiseFilter): NoiseReason | null {
   if (filter.hideNoise) {
     if (unit.hidden === true) return "hidden";
     if (exactToken(unit.presence) === NOT_SEEN) return "not_seen";
-    if (exactToken(unit.lifecycle) === ARCHIVED) return "archived";
   }
+  if (filter.hideArchived && exactToken(unit.lifecycle) === ARCHIVED) return "archived";
   if (filter.hideDetached && exactToken(unit.lifecycle) === DETACHED) return "detached";
   return null;
 }
 
 /**
- * Detached and unknown are cold, not dead.
+ * Archived, detached, and unknown are cold, not dead.
  * A Cursor unit with lifecycle unknown and no repo is dimmed further.
  */
 export function unitEmphasis(unit: NoiseSubject, repo = ""): Emphasis {
@@ -81,7 +84,7 @@ export function unitEmphasis(unit: NoiseSubject, repo = ""): Emphasis {
   if (lifecycle === UNKNOWN && exactToken(unit.harness) === CURSOR && isUnassignedRepo(repo)) {
     return "collector";
   }
-  if (lifecycle === DETACHED || lifecycle === UNKNOWN) return "dim";
+  if (lifecycle === ARCHIVED || lifecycle === DETACHED || lifecycle === UNKNOWN) return "dim";
   return "normal";
 }
 
