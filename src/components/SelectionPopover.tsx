@@ -217,7 +217,7 @@ function ProjectDestinations({ base }: { base: CampaignBase }) {
             <span>{label}</span>
             {url ? (
               <a href={url} target="_blank" rel="noreferrer">Open <span className="link-provenance">{provenance === "manual" ? "manual · unverified" : "source link"}</span></a>
-            ) : <span className="link-provenance">Not linked</span>}
+            ) : <span className="link-provenance">No browser link</span>}
           </li>
         ))}
       </ul>
