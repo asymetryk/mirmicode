@@ -135,6 +135,8 @@ export type CampaignBase = {
    * when no dossier entry exists for this base. Null for other feeds.
    */
   oneLiner: string | null;
+  /** Canonical Buzz channel UUID supplied by the verified repo registry. */
+  buzzChannelId?: string | null;
   units: Unit[];
   /** Shared operator-editable display overrides. */
   appearance?: CampAppearance;

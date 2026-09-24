@@ -156,6 +156,9 @@ class StoreTests(unittest.TestCase):
 
     def test_legacy_sessions_migrate_with_nullable_lifecycle_fields(self):
         legacy_schema = SCHEMA.replace(
+            "  observed_at TEXT NOT NULL,\n  buzz_channel_id TEXT\n",
+            "  observed_at TEXT NOT NULL\n",
+        ).replace(
             "  observed_at TEXT NOT NULL,\n  prompt_tldr TEXT,\n  started_at TEXT,\n"
             "  finished_at TEXT,\n  duration_ms INTEGER,\n  token_usage_json TEXT,\n  outcome_json TEXT\n",
             "  observed_at TEXT NOT NULL\n",
@@ -172,8 +175,10 @@ class StoreTests(unittest.TestCase):
             old_db.execute("INSERT INTO source_runs VALUES (?, ?, ?, ?)",
                             ("codex-local", "2026-09-24T10:00:00Z", 1, 1))
         with connect(self.db_path) as db:
+            repository_columns = {row["name"] for row in db.execute("PRAGMA table_info(repositories)")}
             columns = {row["name"] for row in db.execute("PRAGMA table_info(sessions)")}
             unit = snapshot(db)["units"][0]
+        self.assertIn("buzz_channel_id", repository_columns)
         self.assertTrue({"prompt_tldr", "started_at", "finished_at", "duration_ms",
                          "token_usage_json", "outcome_json"}.issubset(columns))
         for field in ("prompt_tldr", "started_at", "finished_at", "duration_ms",
@@ -210,6 +215,7 @@ class StoreTests(unittest.TestCase):
                 "repo_key": key, "label": "mirmicode", "stage": "unknown",
                 "openproject_url": "https://openproject.example/projects/repo-mirmicode",
                 "buzz_url": None,
+                "buzz_channel_id": "b9faf317-85e2-4a89-ab4e-592791f70f3c",
             }], "sessions": []})
             ingest(db, {"source": "codex-local", "repositories": [{"repo_key": key}],
                         "sessions": [{"id": "task-1", "repo_key": key, "harness": "Codex",
@@ -249,10 +255,11 @@ class StoreTests(unittest.TestCase):
     def test_partial_second_source_keeps_repository_associations(self):
         key = "github.com/asymetryk/mirmicode"
         with connect(self.db_path) as db:
-            ingest(db, {"source": "registry", "repositories": [{
+            ingest(db, {"source": "registry-seed", "repositories": [{
                 "repo_key": key,
                 "openproject_url": "https://openproject.example/projects/repo-mirmicode",
                 "buzz_url": "https://hive.example/channels/mirmicode",
+                "buzz_channel_id": "b9faf317-85e2-4a89-ab4e-592791f70f3c",
             }], "sessions": []})
             ingest(db, {"source": "codex-local", "repositories": [{
                 "repo_key": key, "label": "mirmicode",
@@ -262,6 +269,7 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(camp["open_project"]["url"],
                          "https://openproject.example/projects/repo-mirmicode")
         self.assertEqual(camp["buzz_url"], "https://hive.example/channels/mirmicode")
+        self.assertEqual(camp["buzz_channel_id"], "b9faf317-85e2-4a89-ab4e-592791f70f3c")
 
     def test_shared_metadata_is_durable_and_separate_from_observations(self):
         key = "github.com/asymetryk/mirmicode"

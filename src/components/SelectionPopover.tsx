@@ -208,7 +208,12 @@ function ProjectDestinations({ base }: { base: CampaignBase }) {
       url: base.links?.openProjectUrl ?? (base.linkProvenance?.openProjectUrl === "manual" ? null : base.openProject?.href ?? null),
       provenance: base.linkProvenance?.openProjectUrl ?? (base.openProject?.href ? "observation" : "none"),
     },
-    { label: "Hive channel", url: base.links?.buzzUrl, provenance: base.linkProvenance?.buzzUrl ?? "none" },
+    {
+      label: "Buzz channel",
+      url: base.buzzChannelId ? `buzz://channel/${base.buzzChannelId}` : null,
+      provenance: base.buzzChannelId ? "verified registry" : "none",
+    },
+    { label: "Manual Hive link", url: base.links?.buzzUrl, provenance: base.linkProvenance?.buzzUrl ?? "none" },
   ];
   return (
     <section className="project-destinations" aria-label="Project destinations">
@@ -218,7 +223,11 @@ function ProjectDestinations({ base }: { base: CampaignBase }) {
           <li key={label}>
             <span>{label}</span>
             {url ? (
-              <a href={url} target="_blank" rel="noreferrer">Open <span className="link-provenance">{provenance === "manual" ? "manual · unverified" : "source link"}</span></a>
+              <a href={url} target={url.startsWith("buzz:") ? undefined : "_blank"} rel="noreferrer">
+                Open <span className="link-provenance">
+                  {provenance === "manual" ? "manual · unverified" : provenance === "verified registry" ? "verified registry" : "source link"}
+                </span>
+              </a>
             ) : <span className="link-provenance">No browser link</span>}
           </li>
         ))}

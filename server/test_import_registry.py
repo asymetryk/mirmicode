@@ -59,8 +59,9 @@ class RegistrySeedTests(unittest.TestCase):
         registry = {
             "verified_origins": [
                 {"origin": "github.com/asymetryk/mirmicode", "openproject": op,
-                 "buzz": {"channel_id": "not-a-browser-url"}},
-                {"origin": "https://github.com/ASYMETRYK/MIRMICODE.git", "openproject": op},
+                 "buzz": {"channel_id": "b9faf317-85e2-4a89-ab4e-592791f70f3c"}},
+                {"origin": "https://github.com/ASYMETRYK/MIRMICODE.git", "openproject": op,
+                 "buzz": {"channel_id": "b9faf317-85e2-4a89-ab4e-592791f70f3c"}},
             ],
             "local_repositories": [{"name": "originless"}] * 4,
             "identity_pending": ["unresolved"],
@@ -78,6 +79,7 @@ class RegistrySeedTests(unittest.TestCase):
         self.assertEqual(camp["openproject_name"], op["identifier"])
         self.assertEqual(camp["openproject_url"], op["url"])
         self.assertIsNone(camp["buzz_url"])
+        self.assertEqual(camp["buzz_channel_id"], "b9faf317-85e2-4a89-ab4e-592791f70f3c")
         self.assertIsNone(camp["label"])
         self.assertIsNone(camp["stage"])
         self.assertEqual(result["summary"]["omissions"]["originless_local_repositories"], 4)
@@ -131,6 +133,17 @@ class RegistrySeedTests(unittest.TestCase):
         serialized = json.dumps(result)
         self.assertNotIn(local_origin, serialized)
         self.assertNotIn("/Users/howard/Documents/Development Projects", serialized)
+
+    def test_invalid_buzz_channel_ids_are_not_seeded_as_native_destinations(self):
+        result = build_seed({"verified_origins": [{
+            "origin": "github.com/asymetryk/mirmicode",
+            "openproject": {
+                "identifier": "repo-mirmicode",
+                "url": "https://openproject.example/projects/repo-mirmicode",
+            },
+            "buzz": {"channel_id": "not-a-uuid"},
+        }]})
+        self.assertIsNone(result["payload"]["repositories"][0]["buzz_channel_id"])
 
     def test_apply_uses_token_file_as_bearer_without_echoing_it(self):
         payload = {"source": "registry-seed", "repositories": [], "sessions": []}

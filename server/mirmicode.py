@@ -33,7 +33,8 @@ CREATE TABLE IF NOT EXISTS repositories (
   stage TEXT,
   one_liner TEXT,
   source TEXT NOT NULL,
-  observed_at TEXT NOT NULL
+  observed_at TEXT NOT NULL,
+  buzz_channel_id TEXT
 );
 CREATE TABLE IF NOT EXISTS sessions (
   id TEXT PRIMARY KEY,
@@ -97,6 +98,9 @@ def connect(db_path):
     db.execute("PRAGMA foreign_keys=ON")
     db.execute("PRAGMA journal_mode=WAL")
     db.executescript(SCHEMA)
+    repository_columns = {row["name"] for row in db.execute("PRAGMA table_info(repositories)")}
+    if "buzz_channel_id" not in repository_columns:
+        db.execute("ALTER TABLE repositories ADD COLUMN buzz_channel_id TEXT")
     # Existing UAT databases predate the lifecycle detail fields. Keep the
     # migration additive so opening one preserves observations and metadata.
     session_columns = {row["name"] for row in db.execute("PRAGMA table_info(sessions)")}
@@ -133,6 +137,15 @@ def validate_url(value, name):
     if parts.scheme not in ("https", "codex") or not parts.netloc:
         raise ValueError(f"{name} must be an https or codex URL")
     return value
+
+
+def validate_channel_id(value, name):
+    value = optional_string(value, name, 36)
+    if value is None:
+        return None
+    if not re.fullmatch(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}", value):
+        raise ValueError(f"{name} must be a UUID")
+    return value.lower()
 
 
 def validate_edit_url(value, name):
@@ -399,13 +412,17 @@ def ingest(db, payload):
             if not isinstance(entry, dict):
                 raise ValueError("repository must be an object")
             key = required_string(entry.get("repo_key"), "repo_key")
-            db.execute("""INSERT INTO repositories VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            db.execute("""INSERT INTO repositories (
+                repo_key, label, github_url, openproject_url, openproject_name,
+                buzz_url, stage, one_liner, source, observed_at, buzz_channel_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(repo_key) DO UPDATE SET
                 label=COALESCE(excluded.label, repositories.label),
                 github_url=COALESCE(excluded.github_url, repositories.github_url),
                 openproject_url=COALESCE(excluded.openproject_url, repositories.openproject_url),
                 openproject_name=COALESCE(excluded.openproject_name, repositories.openproject_name),
                 buzz_url=COALESCE(excluded.buzz_url, repositories.buzz_url),
+                buzz_channel_id=COALESCE(excluded.buzz_channel_id, repositories.buzz_channel_id),
                 stage=COALESCE(excluded.stage, repositories.stage),
                 one_liner=COALESCE(excluded.one_liner, repositories.one_liner),
                 source=excluded.source, observed_at=excluded.observed_at""", (
@@ -416,6 +433,8 @@ def ingest(db, payload):
                 validate_url(entry.get("buzz_url"), "buzz_url"),
                 optional_string(entry.get("stage"), "stage", 40),
                 optional_string(entry.get("one_liner"), "one_liner"), source, now,
+                validate_channel_id(entry.get("buzz_channel_id"), "buzz_channel_id")
+                if source == "registry-seed" else None,
             ))
         for entry in sessions:
             if not isinstance(entry, dict):
@@ -507,6 +526,7 @@ def snapshot(db, stale_after_seconds=180, include_prompt_tldr=False):
         camps.append({"repo_key": row["repo_key"], "repo_label": row["label"],
                       "github_url": links.get("github_url", row["github_url"]), "stage": row["stage"],
                       "one_liner": row["one_liner"],
+                      "buzz_channel_id": row["buzz_channel_id"],
                       "open_project": {"name": row["openproject_name"],
                                        "url": links.get("openproject_url", row["openproject_url"])}
                       if links.get("openproject_url", row["openproject_url"]) else None,

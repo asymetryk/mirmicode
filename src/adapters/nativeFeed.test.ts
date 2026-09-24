@@ -283,6 +283,7 @@ describe("parseNativeFeedSnapshot", () => {
       camps: [{
         repo_key: "agentinfra",
         github_url: "https://github.com/asymetryk/agentinfra",
+        buzz_channel_id: "b9faf317-85e2-4a89-ab4e-592791f70f3c",
         links: {
           github_url: "https://github.com/asymetryk/agentinfra",
           openproject_url: "https://openproject.example/projects/repo-agentinfra",
@@ -312,6 +313,7 @@ describe("parseNativeFeedSnapshot", () => {
         buzzUrl: null,
       },
       linkProvenance: { githubUrl: "observation", openProjectUrl: "manual", buzzUrl: "manual" },
+      buzzChannelId: "b9faf317-85e2-4a89-ab4e-592791f70f3c",
       latestThread: { id: "task-42", url: "codex://threads/task-42" },
     });
     expect(snapshot.bases[0]?.units[0]).toMatchObject({

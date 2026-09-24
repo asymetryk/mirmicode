@@ -38,6 +38,7 @@ export type NativeFeedCamp = {
     openproject_url?: string | null;
     buzz_url?: string | null;
   };
+  buzz_channel_id?: string | null;
   link_provenance?: {
     github_url?: "manual" | "observation" | "none";
     openproject_url?: "manual" | "observation" | "none";
@@ -170,6 +171,7 @@ export function parseNativeFeedSnapshot(snapshot: unknown): NativeFeedParseResul
       place: null,
       stage: stageFromString(camp.stage ?? null),
       oneLiner: oneLinerFromCamp(camp),
+      buzzChannelId: safeUuid(camp.buzz_channel_id),
       appearance: campAppearanceFrom(camp.appearance),
       links: linksFromCamp(camp),
       linkProvenance: linkProvenanceFrom(camp.link_provenance),
@@ -388,6 +390,12 @@ function safeHttps(value: unknown): string | null {
   } catch {
     return null;
   }
+}
+
+function safeUuid(value: unknown): string | null {
+  return typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+    ? value.toLowerCase() : null;
 }
 
 function latestThreadFrom(value: NativeFeedCamp["latest_thread"]): LatestThread | null {

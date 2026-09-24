@@ -39,6 +39,25 @@ SECRET_TOKEN = re.compile(
     r"sk-[A-Za-z0-9_-]{16,}|AKIA[A-Z0-9]{16}|eyJ[A-Za-z0-9_-]{12,})\b"
 )
 PROMPT_WORD = re.compile(r"[A-Za-z][A-Za-z0-9+#.-]{2,}")
+CODEX_SESSION_FILENAME = re.compile(
+    r"rollout-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-"
+    r"(?P<id>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.jsonl",
+    re.IGNORECASE,
+)
+CODEX_SESSION_ID = re.compile(
+    r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    re.IGNORECASE,
+)
+
+
+def native_codex_url(session_id, path):
+    """Link only a local Codex session whose metadata and filename agree."""
+    if not isinstance(session_id, str) or not CODEX_SESSION_ID.fullmatch(session_id):
+        return None
+    filename = CODEX_SESSION_FILENAME.fullmatch(Path(path).name)
+    if filename is None or filename.group("id").lower() != session_id.lower():
+        return None
+    return "codex://threads/" + session_id.lower()
 
 
 def canonical_remote(cwd):
@@ -280,7 +299,7 @@ def session_from_file(path, remote_cache, registry, now):
     session = {"id": session_id, "repo_key": repo_key,
                "harness": "Codex", "model": model,
                "thread_name": label or session_id[:8], "status": state,
-               "parent_id": parent, "native_url": None,
+               "parent_id": parent, "native_url": native_codex_url(session_id, path),
                "updated_at": updated_at, "prompt_tldr": prompt_tldr,
                "started_at": started_at, "finished_at": finished_at,
                "duration_ms": duration_ms, "token_usage": token_usage,

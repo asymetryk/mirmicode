@@ -7,6 +7,7 @@ import ipaddress
 import json
 import re
 import sys
+import uuid
 from pathlib import Path, PurePosixPath
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
@@ -88,6 +89,12 @@ def build_seed(registry):
         op = entry.get("openproject")
         identifier = op.get("identifier") if isinstance(op, dict) else None
         op_url = op.get("url") if isinstance(op, dict) else None
+        buzz = entry.get("buzz")
+        raw_channel_id = buzz.get("channel_id") if isinstance(buzz, dict) else None
+        try:
+            buzz_channel_id = str(uuid.UUID(raw_channel_id)) if isinstance(raw_channel_id, str) else None
+        except (ValueError, AttributeError):
+            buzz_channel_id = None
         if not isinstance(identifier, str) or not identifier.strip() or not isinstance(op_url, str) or not op_url.strip():
             missing_association_entries += 1
             continue
@@ -106,11 +113,15 @@ def build_seed(registry):
             continue
         if origin in repositories:
             existing = repositories[origin]
-            if (existing["openproject_name"], existing["openproject_url"]) != association:
+            if ((existing["openproject_name"], existing["openproject_url"]) != association
+                    or (existing["buzz_channel_id"] and buzz_channel_id
+                        and existing["buzz_channel_id"] != buzz_channel_id)):
                 repositories.pop(origin, None)
                 conflicted.add(origin)
                 conflicting_entries += 2
             else:
+                if existing["buzz_channel_id"] is None:
+                    existing["buzz_channel_id"] = buzz_channel_id
                 duplicate_entries += 1
             continue
         repositories[origin] = {
@@ -124,6 +135,7 @@ def build_seed(registry):
             "openproject_name": identifier,
             # The registry only has a Hive channel ID, not a verified browser URL.
             "buzz_url": None,
+            "buzz_channel_id": buzz_channel_id,
             # New camps normalize null to unknown; existing observed stages survive COALESCE.
             "stage": None,
             "one_liner": None,

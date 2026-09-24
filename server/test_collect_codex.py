@@ -32,8 +32,8 @@ class PromptPrivacyTests(unittest.TestCase):
 
 
 class SourceMetadataTests(unittest.TestCase):
-    def write_session(self, directory, events):
-        path = Path(directory) / "session.jsonl"
+    def write_session(self, directory, events, filename="session.jsonl"):
+        path = Path(directory) / filename
         path.write_text("".join(json.dumps(event) + "\n" for event in events), encoding="utf-8")
         return path
 
@@ -119,6 +119,45 @@ class SourceMetadataTests(unittest.TestCase):
             "input_tokens": None, "output_tokens": 3, "cached_input_tokens": None,
             "reasoning_output_tokens": None, "total_tokens": None,
         })
+
+    def test_native_url_requires_matching_codex_metadata_and_rollout_filename(self):
+        session_id = "01a0ceaf-c451-7f13-a104-de0966d48183"
+        events = [{"type": "session_meta", "payload": {
+            "id": session_id, "cwd": "/repo", "timestamp": "2026-09-24T08:00:00Z",
+        }}]
+        filename = f"rollout-2026-09-24T08-00-00-{session_id}.jsonl"
+        with tempfile.TemporaryDirectory() as directory:
+            _, session = self.collect(self.write_session(directory, events, filename))
+
+        self.assertEqual(session["native_url"], f"codex://threads/{session_id}")
+        self.assertNotIn("/repo", session["native_url"])
+
+    def test_native_url_is_omitted_for_malformed_or_mismatched_ids(self):
+        valid_id = "01a0ceaf-c451-7f13-a104-de0966d48183"
+        other_id = "01a0ceaf-c451-7f13-a104-de0966d48184"
+        for session_id in ("not-a-thread-id", "01a0ceaf-c451-7f13-a104-de0966d48183?x=1", other_id):
+            with self.subTest(session_id=session_id), tempfile.TemporaryDirectory() as directory:
+                events = [{"type": "session_meta", "payload": {
+                    "id": session_id, "cwd": "/repo", "timestamp": "2026-09-24T08:00:00Z",
+                }}]
+                filename = f"rollout-2026-09-24T08-00-00-{valid_id}.jsonl"
+                _, session = self.collect(self.write_session(directory, events, filename))
+
+            self.assertIsNone(session["native_url"])
+
+    def test_native_url_is_absent_without_session_id_or_codex_filename(self):
+        session_id = "01a0ceaf-c451-7f13-a104-de0966d48183"
+        events = [{"type": "session_meta", "payload": {
+            "cwd": "/repo", "timestamp": "2026-09-24T08:00:00Z",
+        }}]
+        with tempfile.TemporaryDirectory() as directory:
+            self.assertIsNone(self.collect(self.write_session(directory, events)))
+
+        events[0]["payload"]["id"] = session_id
+        with tempfile.TemporaryDirectory() as directory:
+            _, session = self.collect(self.write_session(directory, events))
+
+        self.assertIsNone(session["native_url"])
 
 
 if __name__ == "__main__":

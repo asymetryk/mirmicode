@@ -46,4 +46,6 @@ The first UAT uses SQLite and one writer. This is adequate for the current singl
 | 6. Multiplayer foundation ([WP #785](https://openproject.tail21f530.ts.net/work_packages/785)) | Multiple authenticated people can see the same state, claim a decision, discuss it, and avoid conflicting actions with audit and concurrency controls. | Roadmap. |
 | 7. Provider swap ([WP #786](https://openproject.tail21f530.ts.net/work_packages/786)) | Work, discussion, and harness adapters can be replaced using contract tests while the core and UI stay stable. | Roadmap. |
 
+The optional animated 3D visual track is scoped in [the prototype note](visual-3d-prototype.md). It follows the single-player observation and action loop; it does not gate that release.
+
 Promotion is evidence-based: local checks, exact K3s image/UAT, review, merge, and production browser acceptance are separate gates. Production currently serves the legacy feed and remains the rollback path. The `/Users/howard/Developer` audit is a separate inventory of broken Git markers, duplicate clones, and dirty trees; it must not become an implicit deletion or global `git worktree prune` step.
