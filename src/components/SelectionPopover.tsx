@@ -100,6 +100,14 @@ export function SelectionPopover({
             <Fact label="Last touched" value={formatLastTouched(unit.updatedAt, now)} detail={absolute} />
           </dl>
           {unit.nativeUrl ? <p><a href={unit.nativeUrl} target="_blank" rel="noreferrer">Open this task</a></p> : null}
+          {harnessSlug(unit.harness) === "codex" ? (
+            <WorkerGroupInspector
+              base={base}
+              selected={unit}
+              now={now}
+              onSelectUnit={onSelectUnit}
+            />
+          ) : null}
         </>
       ) : (
         <>
@@ -235,6 +243,107 @@ function LatestThreadLink({ base, now }: { base: CampaignBase; now: number }) {
         </>
       )}
     </section>
+  );
+}
+
+type WorkerGroupEntry = { unit: Unit; depth: number };
+
+function WorkerGroupInspector({
+  base,
+  selected,
+  now,
+  onSelectUnit,
+}: {
+  base: CampaignBase;
+  selected: Unit;
+  now: number;
+  onSelectUnit: (baseId: string, unitId: string) => void;
+}) {
+  const byId = new Map(base.units.map((entry) => [entry.id, entry]));
+  let root = selected;
+  const ancestorPath = new Set([selected.id]);
+  let missingParent = false;
+  let cyclicParent = false;
+
+  while (root.parentId?.trim()) {
+    const parent = byId.get(root.parentId.trim());
+    if (!parent) {
+      missingParent = true;
+      break;
+    }
+    if (ancestorPath.has(parent.id)) {
+      cyclicParent = true;
+      break;
+    }
+    ancestorPath.add(parent.id);
+    root = parent;
+  }
+
+  const children = new Map<string, Unit[]>();
+  for (const entry of base.units) {
+    const parentId = entry.parentId?.trim();
+    if (!parentId || !byId.has(parentId)) continue;
+    const siblings = children.get(parentId) ?? [];
+    siblings.push(entry);
+    children.set(parentId, siblings);
+  }
+
+  const entries: WorkerGroupEntry[] = [];
+  const visited = new Set<string>();
+  function visit(entry: Unit, depth: number) {
+    if (visited.has(entry.id)) return;
+    visited.add(entry.id);
+    entries.push({ unit: entry, depth });
+    for (const child of children.get(entry.id) ?? []) visit(child, depth + 1);
+  }
+  visit(root, 0);
+
+  const subagentCount = entries.length - 1;
+  const summary = missingParent
+    ? `Orphaned / ungrouped · ${subagentCount} linked descendants`
+    : cyclicParent
+      ? `Unresolved parent cycle · ${subagentCount} linked descendants`
+      : subagentCount === 0
+        ? "No linked subagents"
+        : `${subagentCount} linked subagents`;
+
+  return (
+    <details className="worker-group">
+      <summary>Codex worker group · {summary}</summary>
+      {missingParent ? <p className="help">The selected worker references a parent that is not present in this camp snapshot.</p> : null}
+      {cyclicParent ? <p className="help">Parent references form a cycle; showing only the resolvable linked units.</p> : null}
+      <ul className="roster" aria-label="Linked workers">
+        {entries.map(({ unit: entry, depth }) => {
+          const level = depth === 0 ? (missingParent ? "Orphaned / ungrouped" : "Group root") : depth === 1 ? "Direct subagent" : `Descendant subagent · level ${depth}`;
+          const state = [
+            entry.status?.trim() ? `Status ${entry.status.trim()}` : null,
+            entry.lifecycle?.trim() ? `Lifecycle ${entry.lifecycle.trim()}` : null,
+          ].filter(Boolean).join(" · ") || "State unknown";
+          const lastSeen = formatLastTouched(entry.updatedAt, now);
+          const selectedEntry = entry.id === selected.id;
+          return (
+            <li key={entry.id}>
+              <button
+                type="button"
+                className={selectedEntry ? "roster-unit is-selected" : "roster-unit"}
+                data-faction={harnessSlug(entry.harness)}
+                data-posture={visualPosture(postureSignal(entry.status, entry.lifecycle))}
+                data-worker-id={entry.id}
+                aria-pressed={selectedEntry}
+                aria-label={`${level}: ${entry.model}; ${state}; last seen ${lastSeen}`}
+                onClick={() => onSelectUnit(base.id, entry.id)}
+              >
+                <span>
+                  <strong>{entry.model}</strong>
+                  <span className="roster-meta">{level} · {state} · Last seen {lastSeen}</span>
+                </span>
+              </button>
+              {!selectedEntry && entry.nativeUrl ? <p><a href={entry.nativeUrl} target="_blank" rel="noreferrer">Open task</a></p> : null}
+            </li>
+          );
+        })}
+      </ul>
+    </details>
   );
 }
 
