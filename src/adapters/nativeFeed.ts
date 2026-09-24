@@ -223,6 +223,10 @@ function normalizeRepoKey(value: unknown): string | null {
 }
 
 function repoFromCamp(camp: NativeFeedCamp): string | null {
+  if (typeof camp.repo_key === "string" && camp.repo_key.startsWith("local:sha256:") &&
+      typeof camp.repo_label === "string" && camp.repo_label.trim()) {
+    return camp.repo_label.trim();
+  }
   const url = typeof camp.github_url === "string" ? camp.github_url : "";
   const trimmed = url.trim();
   if (trimmed) {

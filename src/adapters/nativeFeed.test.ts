@@ -41,6 +41,18 @@ const VALID_SNAPSHOT = {
 };
 
 describe("parseNativeFeedSnapshot", () => {
+  it("uses the safe display label for an opaque local repository identity", () => {
+    const key = `local:sha256:${"a".repeat(64)}`;
+    const { snapshot } = loadNativeFeed({
+      fetched_at: "2026-09-22T15:00:00Z",
+      camps: [{ repo_key: key, repo_label: "Policy Sentinel", github_url: null, stage: null }],
+      units: [],
+    });
+    expect(snapshot.bases[0]?.repo).toBe("Policy Sentinel");
+    expect(snapshot.bases[0]?.repoKey).toBe(key);
+    expect(snapshot.bases[0]?.stage).toBe("unknown");
+  });
+
   it("loads camps and units from a valid snapshot and tags source as native", () => {
     const { snapshot, rejected } = loadNativeFeed(VALID_SNAPSHOT, new Date("2026-09-22T16:00:00Z"));
 
