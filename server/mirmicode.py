@@ -21,6 +21,7 @@ from urllib.parse import urlsplit
 MAX_INGEST_BYTES = 2_000_000
 EDITOR_SESSION_SECONDS = 8 * 60 * 60
 EDITOR_COOKIE = "mirmicode_editor"
+STATIC_SOURCES = {"registry-seed"}
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS repositories (
   repo_key TEXT PRIMARY KEY,
@@ -402,6 +403,8 @@ def snapshot(db, stale_after_seconds=180):
     now = datetime.now(timezone.utc)
     stale_sources = set()
     for run in runs:
+        if run["source"] in STATIC_SOURCES:
+            continue
         observed = datetime.fromisoformat(run["observed_at"].replace("Z", "+00:00"))
         if (now - observed).total_seconds() > stale_after_seconds:
             stale_sources.add(run["source"])

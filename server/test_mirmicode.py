@@ -3,13 +3,14 @@ import http.client
 import tempfile
 import threading
 import unittest
+from datetime import datetime, timedelta, timezone
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 from collect_codex import last_event
 from mirmicode import (
     RevisionConflict, connect, ingest, make_handler, snapshot, update_metadata,
-    valid_editor_session,
+    utc_now, valid_editor_session,
 )
 
 
@@ -62,6 +63,37 @@ class StoreTests(unittest.TestCase):
         with connect(self.db_path) as db:
             result = snapshot(db)
         self.assertTrue(result["stale"])
+        self.assertEqual(result["units"], [])
+
+    def test_static_registry_seed_never_masks_codex_staleness(self):
+        key = "github.com/asymetryk/mirmicode"
+        with connect(self.db_path) as db:
+            ingest(db, {"source": "registry-seed", "repositories": [{
+                "repo_key": key, "label": "mirmicode", "stage": "unknown",
+                "openproject_url": "https://openproject.example/projects/repo-mirmicode",
+                "buzz_url": None,
+            }], "sessions": []})
+            ingest(db, {"source": "codex-local", "repositories": [{"repo_key": key}],
+                        "sessions": [{"id": "task-1", "repo_key": key, "harness": "Codex",
+                                      "status": "working", "updated_at": utc_now()}]})
+            stale_time = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat().replace("+00:00", "Z")
+            db.execute("UPDATE source_runs SET observed_at=? WHERE source IN ('registry-seed','codex-local')",
+                       (stale_time,))
+            result = snapshot(db)
+        self.assertTrue(result["stale"])
+        self.assertEqual(result["units"][0]["status"], "unknown")
+
+    def test_registry_seed_only_does_not_become_stale(self):
+        key = "github.com/asymetryk/mirmicode"
+        with connect(self.db_path) as db:
+            ingest(db, {"source": "registry-seed", "repositories": [{
+                "repo_key": key, "label": "mirmicode", "stage": "unknown",
+            }], "sessions": []})
+            stale_time = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat().replace("+00:00", "Z")
+            db.execute("UPDATE source_runs SET observed_at=? WHERE source='registry-seed'", (stale_time,))
+            result = snapshot(db)
+        self.assertFalse(result["stale"])
+        self.assertIsNone(result["notice"])
         self.assertEqual(result["units"], [])
 
     def test_complete_source_window_prunes_old_sessions(self):
