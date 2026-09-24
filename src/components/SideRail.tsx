@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import { useEffect, useRef, type FormEvent, type ReactNode } from "react";
 import { canonicalHarness, factionName, legendFactions, postureSignal } from "../factions";
 import { harnessSlug, unitContext } from "../format";
 import { isUnassignedRepo, unitEmphasis, type Emphasis } from "../mapNoise";
@@ -8,6 +8,7 @@ import { OpenProjectBlock } from "./OpenProjectBlock";
 import { UnitFigure } from "./UnitFigure";
 
 type SideRailProps = {
+  inspector?: ReactNode;
   bases: CampaignBase[];
   selectedBaseId: string | null;
   selectedUnitId: string | null;
@@ -31,6 +32,7 @@ type SideRailProps = {
 };
 
 export function SideRail({
+  inspector,
   bases,
   selectedBaseId,
   selectedUnitId,
@@ -53,6 +55,11 @@ export function SideRail({
   onUseFixture,
 }: SideRailProps) {
   const groups = factionGroups(bases);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (selectedBaseId) scrollRef.current?.scrollTo({ top: 0 });
+  }, [selectedBaseId, selectedUnitId]);
 
   return (
     <aside className="side-rail" aria-label="Forces">
@@ -62,7 +69,8 @@ export function SideRail({
           Hide
         </button>
       </div>
-      <div className="rail-scroll">
+      <div className="rail-scroll" ref={scrollRef}>
+        {inspector ? <div className="rail-inspector">{inspector}</div> : null}
         <section className="rail-section" aria-label="Camps">
           <h3>Camps</h3>
           <ul className="camp-list">
@@ -113,6 +121,8 @@ export function SideRail({
                         harness={entry.unit.harness}
                         model={entry.unit.model}
                         status={postureSignal(entry.unit.status, entry.unit.lifecycle)}
+                        appearanceRole={entry.unit.appearance?.unitRole}
+                        accentColor={entry.unit.appearance?.color}
                       />
                       <span>
                         <strong>{entry.unit.model}</strong>

@@ -1,7 +1,7 @@
 import feedV0Snapshot from "../../fixtures/feed-v0-snapshot.json";
 import { repoKey as canonicalRepoKey } from "../repos";
 import { stageFromString } from "../rtsArt";
-import type { CampaignBase, MapSnapshot, OpenProjectSummary, Unit } from "../types";
+import type { BuildingKind, CampAppearance, CampLinks, CampaignBase, LatestThread, LinkProvenance, MapSnapshot, OpenProjectSummary, Unit, UnitAppearance, UnitRole } from "../types";
 
 /**
  * mirmicode-native feed adapter (contract v0).
@@ -32,6 +32,23 @@ export type NativeFeedCamp = {
   } | null;
   one_liner?: string;
   aliases?: string[];
+  appearance?: { color?: unknown; building_set?: unknown };
+  links?: {
+    github_url?: string | null;
+    openproject_url?: string | null;
+    buzz_url?: string | null;
+  };
+  link_provenance?: {
+    github_url?: "manual" | "observation" | "none";
+    openproject_url?: "manual" | "observation" | "none";
+    buzz_url?: "manual" | "observation" | "none";
+  };
+  latest_thread?: {
+    id?: string;
+    title?: string | null;
+    url?: string;
+    updated_at?: string;
+  } | null;
 };
 
 export type NativeFeedDestination = {
@@ -48,6 +65,9 @@ export type NativeFeedUnit = {
   status?: string;
   destination?: NativeFeedDestination;
   updated_at?: string;
+  parent_id?: string | null;
+  native_url?: string | null;
+  appearance?: { color?: unknown; unit_role?: unknown };
 };
 
 export type NativeFeedSnapshot = {
@@ -55,6 +75,9 @@ export type NativeFeedSnapshot = {
   source?: string;
   camps?: NativeFeedCamp[];
   units?: NativeFeedUnit[];
+  stale?: boolean;
+  notice?: string | null;
+  metadata_revision?: number;
 };
 
 export type NativeFeedRejection = {
@@ -132,6 +155,8 @@ export function parseNativeFeedSnapshot(snapshot: unknown): NativeFeedParseResul
     const bucket = unitsByCamp.get(key) ?? [];
     bases.push({
       id: campIdFor(repo),
+      // Keep the source's canonical key for writes; `repo` is a display identity.
+      repoKey: typeof camp.repo_key === "string" && camp.repo_key.trim() ? camp.repo_key.trim() : key,
       repo,
       label: labelFromCamp(camp),
       openProject: openProjectFromCamp(camp),
@@ -139,6 +164,10 @@ export function parseNativeFeedSnapshot(snapshot: unknown): NativeFeedParseResul
       place: null,
       stage: stageFromString(camp.stage ?? null),
       oneLiner: oneLinerFromCamp(camp),
+      appearance: campAppearanceFrom(camp.appearance),
+      links: linksFromCamp(camp),
+      linkProvenance: linkProvenanceFrom(camp.link_provenance),
+      latestThread: latestThreadFrom(camp.latest_thread),
       units: bucket,
     });
   }
@@ -162,11 +191,21 @@ export function loadNativeFeed(
       source: NATIVE_FEED_SOURCE,
       fetchedAt,
       bases: parsed.bases,
-      notice: null,
-      stale: false,
+      notice: typeof (payload as NativeFeedSnapshot).notice === "string" ? (payload as NativeFeedSnapshot).notice! : null,
+      stale: (payload as NativeFeedSnapshot).stale === true,
+      metadataRevision: typeof (payload as NativeFeedSnapshot).metadata_revision === "number"
+        ? (payload as NativeFeedSnapshot).metadata_revision
+        : undefined,
     },
     rejected: parsed.rejected,
   };
+}
+
+/** Same-origin Mirmicode API, used by the standalone deployment. */
+export async function loadNativeFeedServer(fetchImpl: typeof fetch = fetch): Promise<MapSnapshot> {
+  const response = await fetchImpl("/api/v1/snapshot", { cache: "no-store" });
+  if (!response.ok) throw new Error(`Mirmicode feed returned HTTP ${response.status}.`);
+  return { ...loadNativeFeed(await response.json()).snapshot, source: "mirmicode" };
 }
 
 /** Module-baked fixture used by App when VITE_FEED_SOURCE=native. */
@@ -240,6 +279,82 @@ function toUnit(raw: NativeFeedUnit): Unit {
     freshness: null,
     hidden: false,
     updatedAt,
+    parentId: typeof raw.parent_id === "string" ? raw.parent_id : null,
+    nativeUrl: typeof raw.native_url === "string" && /^https:\/\/|^codex:\/\//.test(raw.native_url) ? raw.native_url : null,
+    appearance: unitAppearanceFrom(raw.appearance),
+  };
+}
+
+const BUILDING_KINDS = new Set<BuildingKind>(["pad", "depot", "turret", "refinery", "barracks", "lab"]);
+const UNIT_ROLES = new Set<UnitRole>([
+  "scout", "worker", "drone", "tankette", "walker", "medic", "mirmi-small", "mirmi-armed", "skiff", "builder",
+]);
+
+function validColor(value: unknown): string | null {
+  return typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value) ? value.toLowerCase() : null;
+}
+
+function campAppearanceFrom(value: unknown): CampAppearance {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return { color: null, buildingSet: null };
+  const source = value as Record<string, unknown>;
+  const buildingSet = Array.isArray(source.building_set) &&
+    source.building_set.every((kind) => typeof kind === "string" && BUILDING_KINDS.has(kind as BuildingKind))
+    ? [...new Set(source.building_set as BuildingKind[])] : null;
+  return { color: validColor(source.color), buildingSet };
+}
+
+function unitAppearanceFrom(value: unknown): UnitAppearance {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return { color: null, unitRole: null };
+  const source = value as Record<string, unknown>;
+  const unitRole = typeof source.unit_role === "string" && UNIT_ROLES.has(source.unit_role as UnitRole)
+    ? source.unit_role as UnitRole : null;
+  return { color: validColor(source.color), unitRole };
+}
+
+function linksFromCamp(camp: NativeFeedCamp): CampLinks {
+  const links = camp.links;
+  const github = links && Object.prototype.hasOwnProperty.call(links, "github_url") ? links.github_url : camp.github_url;
+  const openProject = links && Object.prototype.hasOwnProperty.call(links, "openproject_url")
+    ? links.openproject_url : openProjectFromCamp(camp)?.href ?? null;
+  const buzz = links && Object.prototype.hasOwnProperty.call(links, "buzz_url") ? links.buzz_url : null;
+  return {
+    githubUrl: safeHttps(github),
+    openProjectUrl: safeHttps(openProject),
+    buzzUrl: safeHttps(buzz),
+  };
+}
+
+function safeHttps(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  try {
+    return new URL(value).protocol === "https:" ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function latestThreadFrom(value: NativeFeedCamp["latest_thread"]): LatestThread | null {
+  if (!value || typeof value !== "object" || typeof value.id !== "string" ||
+      typeof value.updated_at !== "string") return null;
+  const url = typeof value.url === "string" && /^(https:\/\/|codex:\/\/)/.test(value.url)
+    ? value.url : null;
+  if (!url) return null;
+  return {
+    id: value.id,
+    title: typeof value.title === "string" ? value.title : null,
+    url,
+    updatedAt: value.updated_at,
+  };
+}
+
+function linkProvenanceFrom(value: NativeFeedCamp["link_provenance"]): LinkProvenance {
+  const allowed = new Set(["manual", "observation", "none"]);
+  const read = (item: unknown): "manual" | "observation" | "none" =>
+    typeof item === "string" && allowed.has(item) ? item as "manual" | "observation" | "none" : "none";
+  return {
+    githubUrl: read(value?.github_url),
+    openProjectUrl: read(value?.openproject_url),
+    buzzUrl: read(value?.buzz_url),
   };
 }
 

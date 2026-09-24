@@ -13,6 +13,8 @@ export function positionBases(bases: CampaignBase[]): PositionedBase[] {
   const unplaced = bases.filter((base) => base.place === null);
   const columns = Math.max(1, Math.ceil(Math.sqrt(unplaced.length || 1)));
   const rows = Math.max(1, Math.ceil(unplaced.length / columns));
+  const pitchX = Math.min(900, (WORLD.width - FIELD_MARGIN_X * 2) / Math.max(columns - 1, 1));
+  const pitchY = Math.min(760, (WORLD.height - FIELD_MARGIN_Y * 2) / Math.max(rows - 1, 1));
   let unplacedIndex = 0;
 
   return bases.map((base) => {
@@ -28,8 +30,8 @@ export function positionBases(bases: CampaignBase[]): PositionedBase[] {
     unplacedIndex += 1;
     return {
       ...base,
-      x: ((column + 0.5) / columns) * (WORLD.width - FIELD_MARGIN_X * 2) + FIELD_MARGIN_X,
-      y: ((row + 0.5) / rows) * (WORLD.height - FIELD_MARGIN_Y * 2) + FIELD_MARGIN_Y,
+      x: WORLD.width / 2 + (column - (columns - 1) / 2) * pitchX,
+      y: WORLD.height / 2 + (row - (rows - 1) / 2) * pitchY,
     };
   });
 }

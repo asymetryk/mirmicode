@@ -66,7 +66,7 @@ export function factionName(harness: string): string {
   }
 }
 
-export type Posture = "idle" | "working" | "blocked";
+export type Posture = "idle" | "working" | "blocked" | "completed";
 
 const TRIAGE_STATUS = new Set(["open", "done"]);
 
@@ -92,6 +92,7 @@ export function postureOf(status: string | null): Posture {
 export function postureLabel(posture: Posture): string {
   if (posture === "working") return "Working";
   if (posture === "blocked") return "Blocked";
+  if (posture === "completed") return "Completed";
   return "Idle";
 }
 

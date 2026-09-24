@@ -8,10 +8,11 @@ import {
   readStartupWorkingSetUrl,
   resolveSnapshot,
 } from "./adapters/source";
-import { loadNativeFeedFixture } from "./adapters/nativeFeed";
+import { loadNativeFeedFixture, loadNativeFeedServer } from "./adapters/nativeFeed";
 import campDossiers from "./data/camp-dossiers.json";
 import { CampDossierPanel } from "./components/CampDossierPanel";
 import { MapStage } from "./components/MapStage";
+import { MapHud } from "./components/MapHud";
 import { SelectionPopover } from "./components/SelectionPopover";
 import { SideRail } from "./components/SideRail";
 import { resolveDossier } from "./dossier";
@@ -48,7 +49,25 @@ export function App() {
       setFallbackReason(reason);
       setLoading(false);
     };
-    if (useNativeFeed()) {
+    if (useServerFeed()) {
+      void loadServer(commit);
+      const timer = window.setInterval(() => {
+        void loadNativeFeedServer().then((next) => {
+          if (!cancelled && version === requestVersion.current) {
+            setSnapshot(next);
+            setFallbackReason(null);
+          }
+        }).catch(() => {
+          if (!cancelled && version === requestVersion.current) {
+            setFallbackReason("Mirmicode feed is unavailable; showing the last observation.");
+          }
+        });
+      }, 15_000);
+      return () => {
+        cancelled = true;
+        window.clearInterval(timer);
+      };
+    } else if (useNativeFeed()) {
       void loadNative(commit);
     } else {
       void apply(readStartupUrl(), commit);
@@ -102,6 +121,10 @@ export function App() {
   );
   const selected = positioned.find((base) => base.id === selectedBaseId) ?? null;
   const selectedUnit = selected?.units.find((unit) => unit.id === selectedUnitId) ?? null;
+
+  useEffect(() => {
+    if (selectedBaseId) setRailOpen(true);
+  }, [selectedBaseId]);
 
   async function onLoadUrl(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -166,6 +189,16 @@ export function App() {
     writeFlag(RAIL_OPEN_KEY, value);
   }
 
+  function refreshLiveSnapshot() {
+    if (!useServerFeed()) return;
+    void loadNativeFeedServer().then((next) => {
+      setSnapshot(next);
+      setFallbackReason(null);
+    }).catch(() => {
+      setFallbackReason("Mirmicode feed is unavailable; showing the last observation.");
+    });
+  }
+
   return (
     <div className="app">
       <header className="topbar">
@@ -173,10 +206,13 @@ export function App() {
           <h1>Mirmicode</h1>
           <p className="tagline">Macro the project. Micro the agents.</p>
         </div>
+        <MapHud
+          bases={positioned}
+          sourceLabel={status}
+          observedAt={snapshot?.fetchedAt ?? null}
+          now={now}
+        />
         <div className="topbar-meta">
-          <p className="status" role="status">
-            {status}
-          </p>
           <p className="public-note">Build in public. Not monetized.</p>
         </div>
         {banner ? (
@@ -188,7 +224,7 @@ export function App() {
       <div className={railOpen ? "stage-shell is-rail-open" : "stage-shell"}>
         <div className="map-frame">
           <MapStage
-            key={`${snapshot?.source ?? "pending"}:${snapshot?.fetchedAt ?? "0"}`}
+            key={snapshot?.source ?? "pending"}
             bases={positioned}
             selectedBaseId={selectedBaseId}
             selectedUnitId={selectedUnitId}
@@ -202,25 +238,7 @@ export function App() {
               setSelectedUnitId(unitId);
             }}
             onClearSelection={onClearSelection}
-          >
-            <SelectionPopover
-              base={selected}
-              unit={selectedUnit}
-              attached={attached && selected !== null}
-              now={now}
-              onToggleAttach={onToggleAttach}
-              onClose={onClearSelection}
-              onSelectUnit={(baseId, unitId) => {
-                setSelectedBaseId(baseId);
-                setSelectedUnitId(unitId);
-              }}
-            />
-            <CampDossierPanel
-              base={selected}
-              dossier={selected ? resolveDossier(selected, dossierCatalog) : null}
-              onClose={onClearSelection}
-            />
-          </MapStage>
+          />
           {railOpen ? null : (
             <button
               type="button"
@@ -234,6 +252,28 @@ export function App() {
         </div>
         {railOpen ? (
           <SideRail
+            inspector={selected ? <>
+              <SelectionPopover
+                base={selected}
+                unit={selectedUnit}
+                attached={attached && selected !== null}
+                now={now}
+                metadataRevision={snapshot?.metadataRevision ?? null}
+                canEditMetadata={snapshot?.source === "mirmicode" && Boolean(selected.repoKey)}
+                onRefreshSnapshot={refreshLiveSnapshot}
+                onToggleAttach={onToggleAttach}
+                onClose={onClearSelection}
+                onSelectUnit={(baseId, unitId) => {
+                  setSelectedBaseId(baseId);
+                  setSelectedUnitId(unitId);
+                }}
+              />
+              <CampDossierPanel
+                base={selected}
+                dossier={snapshot?.source === "mirmicode" ? null : resolveDossier(selected, dossierCatalog)}
+                onClose={onClearSelection}
+              />
+            </> : null}
             bases={positioned}
             selectedBaseId={selectedBaseId}
             selectedUnitId={selectedUnitId}
@@ -248,7 +288,10 @@ export function App() {
             onHideNoise={onHideNoise}
             onHideDetached={onHideDetached}
             onHideArchived={onHideArchived}
-            onCollapse={() => onRailOpen(false)}
+            onCollapse={() => {
+              onClearSelection();
+              onRailOpen(false);
+            }}
             onSelectBase={(id) => {
               setSelectedBaseId(id);
               setSelectedUnitId(null);
@@ -280,6 +323,7 @@ function statusLine(
   const count = `${visible.length} ${visible.length === 1 ? "base" : "bases"} · ${units} units${hidden}`;
   if (loading) return `Loading… · ${count}`;
   if (snapshot.source === "working-set") return `Live Working Set · ${count}`;
+  if (snapshot.source === "mirmicode") return `Mirmicode live · ${count}`;
   if (snapshot.source === "native-feed") return `Native feed · ${count}`;
   return `Fixture · sample data · ${count}`;
 }
@@ -334,6 +378,17 @@ async function loadNative(
   }
 }
 
+async function loadServer(
+  commit: (snapshot: MapSnapshot, fallbackReason: string | null) => void,
+): Promise<void> {
+  try {
+    commit(await loadNativeFeedServer(), null);
+  } catch (error) {
+    commit({ source: "mirmicode", fetchedAt: new Date().toISOString(), bases: [],
+      stale: true, notice: "Waiting for a live Mirmicode feed." }, readableReason(error));
+  }
+}
+
 function loadFixtureForFallback(): MapSnapshot {
   // Fallback when the native feed fails to load: keep the existing fixture
   // behavior so the UI never blanks. The fixture is independent of the
@@ -350,8 +405,12 @@ function useNativeFeed(): boolean {
   return (import.meta.env.VITE_FEED_SOURCE ?? "").trim().toLowerCase() === "native";
 }
 
+function useServerFeed(): boolean {
+  return (import.meta.env.VITE_FEED_SOURCE ?? "").trim().toLowerCase() === "server";
+}
+
 function readStartupUrl(): string {
-  if (useNativeFeed()) return "";
+  if (useNativeFeed() || useServerFeed()) return "";
   const envUrl = import.meta.env.VITE_WORKING_SET_URL;
   try {
     return readStartupWorkingSetUrl(envUrl, localStorage);

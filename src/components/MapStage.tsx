@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
-import { postureOf, postureSignal, factionName } from "../factions";
+import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactNode } from "react";
+import { postureSignal, factionName } from "../factions";
 import { drawsUnitTokens, unitEmphasis } from "../mapNoise";
 import { harnessSlug, unitContext } from "../format";
 import {
@@ -27,7 +27,7 @@ import type { ViewState } from "../types";
 import { Cutout } from "./Cutout";
 import { Minimap } from "./Minimap";
 import { Outpost } from "./Outpost";
-import { UnitFigure } from "./UnitFigure";
+import { UnitFigure, visualPosture } from "./UnitFigure";
 
 type MapStageProps = {
   bases: PositionedBase[];
@@ -232,17 +232,22 @@ export function MapStage({
           // A bare camp with no faction claim still gets stage dressing so the
           // field has variety. We use a deterministic subset keyed by repo.
           const buildingKinds = dressBuildings
-            ? faction === null
+            ? base.appearance?.buildingSet ?? (faction === null
               ? bareBuildingSet(base.stage, base.repo)
-              : buildingSetForStage(base.stage)
+              : buildingSetForStage(base.stage))
             : [];
+          const siteStyle = {
+            left: base.x,
+            top: base.y,
+            "--shared-camp-color": base.appearance?.color ?? undefined,
+          } as CSSProperties;
           return (
             <div
               key={base.id}
               className="base-site"
               data-unassigned={unassigned ? "true" : "false"}
               data-stage={stageClassName(base.stage)}
-              style={{ left: base.x, top: base.y }}
+              style={siteStyle}
             >
               {buildingKinds
                 .filter((kind) => kind !== "pad")
@@ -301,13 +306,23 @@ export function MapStage({
                 : base.units.map((unit, index) => {
                 const slot = unitSlot(index, base.units.length);
                 const selected = unit.id === selectedUnitId;
-                const role = unitRole(unit.model);
+                const role = unit.appearance?.unitRole ?? unitRole(unit.model);
                 const typeLabel = role ? roleLabel(role) : unit.model;
                 const typeBit =
                   role && typeLabel.toLowerCase() !== unit.model.toLowerCase()
                     ? `${typeLabel} (${unit.model})`
                     : unit.model;
                 const posture = postureSignal(unit.status, unit.lifecycle);
+                const visualState = visualPosture(posture);
+                const visualLabel = visualState === "working"
+                  ? "Working"
+                  : visualState === "blocked"
+                    ? "Needs attention"
+                    : visualState === "completed"
+                      ? "Completed"
+                      : visualState === "idle"
+                        ? "Idle"
+                        : "Unknown";
                 return (
                   <button
                     key={unit.id}
@@ -317,12 +332,12 @@ export function MapStage({
                     data-unit-id={unit.id}
                     data-emphasis={unitEmphasis(unit, base.repo)}
                     data-faction={harnessSlug(unit.harness)}
-                    data-posture={postureOf(posture)}
+                    data-posture={visualState}
                     data-role={role ?? "other"}
                     aria-pressed={selected}
-                    aria-label={`${factionName(unit.harness)} ${typeBit}, ${unit.status ?? "idle"}, on ${base.repo}`}
+                    aria-label={`${factionName(unit.harness)} ${typeBit}, ${visualLabel}, on ${base.repo}`}
                     title={[`${factionName(unit.harness)} · ${unit.model}`, unitContext(unit)].filter(Boolean).join("\n")}
-                    style={{ left: slot.x, top: 108 + slot.y }}
+                    style={{ left: slot.x, top: 108 + slot.y, "--shared-unit-color": unit.appearance?.color ?? undefined } as CSSProperties}
                     onClick={() => onTokenClick(base.id, unit.id)}
                   >
                     <span className="unit-figure">
@@ -330,6 +345,7 @@ export function MapStage({
                         harness={unit.harness}
                         model={unit.model}
                         status={posture}
+                        appearanceRole={unit.appearance?.unitRole}
                         selected={selected}
                         showMarker
                       />
@@ -356,6 +372,7 @@ export function MapStage({
     </div>
   );
 }
+
 
 type DragState = {
   pointerId: number;

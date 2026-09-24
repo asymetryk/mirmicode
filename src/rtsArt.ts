@@ -105,9 +105,15 @@ const RESOURCE_LABEL: Record<ResourceKind, string> = {
 /** Same model always picks the same silhouette, on any faction body. */
 const ROLE_BY_MODEL: Record<string, UnitRole> = {
   astra: "scout",
+  gpt6astra: "scout",
   luna: "worker",
+  gpt6luna: "worker",
+  gpt56luna: "worker",
   terra: "drone",
+  gpt56terra: "drone",
   sol: "tankette",
+  gpt6sol: "tankette",
+  gpt56sol: "tankette",
   gemini: "medic",
   minimax: "mirmi-small",
   kimi: "mirmi-armed",

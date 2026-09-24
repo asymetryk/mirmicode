@@ -1,5 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { BUILDING_KINDS, bareBuildingSet, buildingSetForStage, stageFromString } from "./rtsArt";
+import { BUILDING_KINDS, bareBuildingSet, buildingSetForStage, stageFromString, unitRole, unitSrc } from "./rtsArt";
+
+describe("versioned GPT model silhouettes", () => {
+  it.each([
+    ["gpt-6-luna", "worker", "codex-worker-bot-02.png"],
+    ["gpt-5.6-luna", "worker", "codex-worker-bot-02.png"],
+    ["gpt-6-sol", "tankette", "codex-tankette-06.png"],
+    ["gpt-5.6-sol", "tankette", "codex-tankette-06.png"],
+    ["gpt-5.6-terra", "drone", "codex-drone-05.png"],
+    ["gpt-6-astra", "scout", "codex-scout-bot-01.png"],
+  ] as const)("maps %s to the %s silhouette on the Codex body", (model, role, sprite) => {
+    expect(unitRole(model)).toBe(role);
+    expect(unitSrc("codex", model)).toBe(`/rts-art-v2/units/${sprite}`);
+  });
+
+  it("does not treat unrelated versioned names as known model silhouettes", () => {
+    expect(unitRole("gpt-6-luna-like")).toBeNull();
+    expect(unitSrc("codex", "gpt-6-luna-like")).toBeNull();
+  });
+});
 
 describe("bareBuildingSet", () => {
   it("keeps the pad and uses the stage set as the upper bound", () => {

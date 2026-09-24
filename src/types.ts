@@ -1,4 +1,4 @@
-export type MapSource = "fixture" | "working-set" | "native-feed";
+export type MapSource = "fixture" | "working-set" | "native-feed" | "mirmicode";
 
 /** Camp lifecycle stage from the camp dossier. */
 export type CampStage = "idea" | "mvp" | "active" | "parked" | "archive" | "unknown";
@@ -38,6 +38,46 @@ export type Unit = {
   hidden: boolean;
   /** ISO-8601 timestamp, or "unknown" when the payload omitted it. */
   updatedAt: string;
+  /** Parent Codex task for a subagent; null for top-level or unknown. */
+  parentId?: string | null;
+  /** Verified native destination only; never synthesized from a session ID. */
+  nativeUrl?: string | null;
+  /** User-controlled map presentation, separate from source observations. */
+  appearance?: UnitAppearance;
+};
+
+export type BuildingKind = "pad" | "depot" | "turret" | "refinery" | "barracks" | "lab";
+export type UnitRole =
+  | "scout" | "worker" | "drone" | "tankette" | "walker" | "medic"
+  | "mirmi-small" | "mirmi-armed" | "skiff" | "builder";
+
+export type CampAppearance = {
+  color: string | null;
+  buildingSet: BuildingKind[] | null;
+};
+
+export type UnitAppearance = {
+  color: string | null;
+  unitRole: UnitRole | null;
+};
+
+export type CampLinks = {
+  githubUrl: string | null;
+  openProjectUrl: string | null;
+  buzzUrl: string | null;
+};
+
+export type LinkProvenance = {
+  githubUrl: "manual" | "observation" | "none";
+  openProjectUrl: "manual" | "observation" | "none";
+  buzzUrl: "manual" | "observation" | "none";
+};
+
+export type LatestThread = {
+  id: string;
+  title: string | null;
+  url: string;
+  updatedAt: string;
 };
 
 /** OpenProject project copied from Working Set associations. Null means none linked. */
@@ -51,6 +91,8 @@ export type OpenProjectSummary = {
 /** One project/repo on the campaign map. */
 export type CampaignBase = {
   id: string;
+  /** Stable canonical source key, used for shared metadata writes. */
+  repoKey?: string;
   repo: string;
   label: string | null;
   /** Aggregated from unit associations, else a repo map already on the payload. */
@@ -70,6 +112,14 @@ export type CampaignBase = {
    */
   oneLiner: string | null;
   units: Unit[];
+  /** Shared operator-editable display overrides. */
+  appearance?: CampAppearance;
+  /** Shared operator-editable destinations, overriding observed links. */
+  links?: CampLinks;
+  /** Manual edits are not equivalent to provider-verified destinations. */
+  linkProvenance?: LinkProvenance;
+  /** Most recent source-provided thread URL; null when no verified URL exists. */
+  latestThread?: LatestThread | null;
 };
 
 export type MapSnapshot = {
@@ -79,6 +129,8 @@ export type MapSnapshot = {
   notice: string | null;
   /** True when snapshot.stale is boolean true. A banner only; units stay. */
   stale: boolean;
+  /** Revision for optimistic concurrency on shared metadata edits. */
+  metadataRevision?: number;
 };
 
 export type ViewState = {
