@@ -50,7 +50,7 @@ export function UnitFigure({
 export function visualPosture(status: string | null): "working" | "blocked" | "idle" | "completed" | "unknown" {
   const key = (status ?? "").trim().toLowerCase();
   if (["working", "active", "busy"].includes(key)) return "working";
-  if (["blocked", "queued", "stuck", "error", "needs attention", "attention"].includes(key)) return "blocked";
+  if (["blocked", "queued", "stuck", "error", "needs-attention", "needs attention", "attention"].includes(key)) return "blocked";
   if (["done", "complete", "completed"].includes(key)) return "completed";
   if (key === "idle") return "idle";
   return "unknown";

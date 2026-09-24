@@ -20,7 +20,7 @@ import {
   BUILDING_OFFSET,
   type PositionedBase,
 } from "../layout";
-import type { ViewState } from "../types";
+import type { Unit, ViewState } from "../types";
 import { Cutout } from "./Cutout";
 import { Minimap } from "./Minimap";
 import { Outpost } from "./Outpost";
@@ -36,6 +36,25 @@ type MapStageProps = {
   onClearSelection: () => void;
   children?: ReactNode;
 };
+
+const MAP_UNIT_LIMIT = 6;
+
+/** The field is a status overview; the inspector retains every thread. */
+export function unitsForMap(units: Unit[], selectedUnitId: string | null): Unit[] {
+  if (units.length <= MAP_UNIT_LIMIT) return units;
+  const priority = (unit: Unit) => {
+    if (unit.id === selectedUnitId) return -1;
+    const posture = visualPosture(postureSignal(unit.status, unit.lifecycle));
+    if (posture === "blocked") return 0;
+    if (posture === "working") return 1;
+    if (posture === "completed") return 2;
+    return 3;
+  };
+  return [...units]
+    .sort((a, b) => priority(a) - priority(b) ||
+      b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id))
+    .slice(0, MAP_UNIT_LIMIT);
+}
 
 export function MapStage({
   bases,
@@ -70,13 +89,16 @@ export function MapStage({
       const rect = el.getBoundingClientRect();
       setViewport({ w: rect.width, h: rect.height });
       if (!fitted.current && bases.length > 0 && rect.width > 20 && rect.height > 20) {
-        setView(fitView(bases, rect.width, rect.height));
+        setView(fitView(bases.map((base) => ({
+          ...base,
+          units: unitsForMap(base.units, base.id === selectedBaseId ? selectedUnitId : null),
+        })), rect.width, rect.height));
         fitted.current = true;
       }
     });
     observer.observe(el);
     return () => observer.disconnect();
-  }, [bases]);
+  }, [bases, selectedBaseId, selectedUnitId]);
 
   useLayoutEffect(() => {
     if (!attached || !focus) return;
@@ -221,6 +243,8 @@ export function MapStage({
       >
         <p className="world-mark">Bases</p>
         {bases.map((base) => {
+          const mapUnits = unitsForMap(base.units, base.id === selectedBaseId ? selectedUnitId : null);
+          const hiddenUnitCount = base.units.length - mapUnits.length;
           const baseSelected = base.id === selectedBaseId;
           const faction = dominantFaction(base.units);
           const unassigned = !drawsUnitTokens(base.repo);
@@ -272,6 +296,8 @@ export function MapStage({
                 aria-label={
                   unassigned
                     ? `Unassigned, ${base.units.length} units`
+                    : hiddenUnitCount > 0
+                      ? `${base.repo}, ${mapUnits.length} of ${base.units.length} units shown on the map; all in Forces`
                     : bare
                       ? `${base.repo}, camp with no army`
                       : base.repo
@@ -280,12 +306,13 @@ export function MapStage({
               >
                 <Outpost faction={faction} stage={base.stage} selected={baseSelected} attached={baseSelected && attached} />
                 <span className="outpost-name">{unassigned ? "Unassigned" : base.repo}</span>
+                {hiddenUnitCount > 0 && !unassigned ? <span className="outpost-overflow">+{hiddenUnitCount} in Forces</span> : null}
                 {unassigned ? <span className="unassigned-count">{base.units.length}</span> : null}
               </button>
               {unassigned
                 ? null
-                : base.units.map((unit, index) => {
-                const slot = unitSlot(index, base.units.length);
+                : mapUnits.map((unit, index) => {
+                const slot = unitSlot(index, mapUnits.length);
                 const selected = unit.id === selectedUnitId;
                 const role = unit.appearance?.unitRole ?? unitRole(unit.model);
                 const typeLabel = role ? roleLabel(role) : unit.model;
