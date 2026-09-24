@@ -1,5 +1,6 @@
 import unittest
 import json
+import hashlib
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -35,6 +36,20 @@ class RegistrySeedTests(unittest.TestCase):
                 self.assertEqual(normalize_origin(value), expected)
         self.assertIsNone(normalize_origin("https://example.com/asymetryk/mirmicode"))
         self.assertIsNone(normalize_origin("github.com/asymetryk"))
+        self.assertEqual(
+            normalize_origin("origin.cursor.com/howard-shaw/ai-stack-observatory"),
+            "origin.cursor.com/howard-shaw/ai-stack-observatory",
+        )
+        self.assertEqual(
+            normalize_origin("https://origin.cursor.com/howard-shaw/ai-stack-observatory.git"),
+            "origin.cursor.com/howard-shaw/ai-stack-observatory",
+        )
+        local_origin = "local:/Users/howard/Documents/Development Projects/Policy Sentinel.git"
+        self.assertEqual(
+            normalize_origin(local_origin),
+            "local:sha256:" + hashlib.sha256(local_origin.encode("utf-8")).hexdigest(),
+        )
+        self.assertIsNone(normalize_origin("local:/Users/howard/../private/repo.git"))
 
     def test_builds_one_unknown_stage_camp_and_preserves_exact_openproject_association(self):
         op = {
@@ -91,6 +106,31 @@ class RegistrySeedTests(unittest.TestCase):
         self.assertEqual(result["summary"]["conflicting_entries_omitted"], 2)
         self.assertEqual(result["summary"]["omissions"]["invalid_origin_entries"], 1)
         self.assertEqual(result["summary"]["omissions"]["missing_openproject_association_entries"], 1)
+
+    def test_verified_non_github_origins_keep_identity_without_invented_browser_links(self):
+        local_origin = "local:/Users/howard/Documents/Development Projects/Policy Sentinel.git"
+        entries = [
+            ("origin.cursor.com/howard-shaw/ai-stack-observatory", "repo-ai-stack-observatory"),
+            (local_origin, "repo-policy-sentinel"),
+        ]
+        registry = {"verified_origins": [
+            {"origin": origin, "openproject": {
+                "identifier": identifier,
+                "url": f"https://openproject.example/projects/{identifier}",
+            }}
+            for origin, identifier in entries
+        ]}
+        result = build_seed(registry)
+        local_key = normalize_origin(local_origin)
+        cursor_key = normalize_origin(entries[0][0])
+        camps = {camp["repo_key"]: camp for camp in result["payload"]["repositories"]}
+        self.assertEqual(set(camps), {local_key, cursor_key})
+        self.assertIsNone(camps[local_key]["github_url"])
+        self.assertEqual(camps[local_key]["label"], "Policy Sentinel")
+        self.assertIsNone(camps[cursor_key]["github_url"])
+        serialized = json.dumps(result)
+        self.assertNotIn(local_origin, serialized)
+        self.assertNotIn("/Users/howard/Documents/Development Projects", serialized)
 
     def test_apply_uses_token_file_as_bearer_without_echoing_it(self):
         payload = {"source": "registry-seed", "repositories": [], "sessions": []}

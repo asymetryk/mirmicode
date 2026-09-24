@@ -2,34 +2,51 @@
 """Preview or seed verified repository associations into standalone Mirmicode."""
 
 import argparse
+import hashlib
 import ipaddress
 import json
 import re
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import ProxyHandler, Request, build_opener
 
 
 def normalize_origin(value):
-    """Return normalized github.com/owner/repo identity, or None."""
+    """Return a stable verified origin identity, or None for unsupported forms."""
     if not isinstance(value, str):
         return None
     raw = value.strip()
     if not raw:
         return None
+    # Local checkout paths have no browser destination and should never be
+    # exposed in the public snapshot or dry-run payload. Hash the exact
+    # absolute registry origin to get a stable opaque key.
+    if raw.startswith("local:/") and not any(ord(char) < 32 for char in raw):
+        local_path = raw[len("local:"):]
+        path_parts = PurePosixPath(local_path).parts
+        if ".." in path_parts:
+            return None
+        digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+        return "local:sha256:" + digest
     if raw.lower().startswith("git@github.com:"):
         path = raw.split(":", 1)[1]
+        host = "github.com"
     elif raw.lower().startswith("github.com/"):
+        host = "github.com"
         path = raw[len("github.com/"):]
+    elif raw.lower().startswith("origin.cursor.com/"):
+        host = "origin.cursor.com"
+        path = raw[len("origin.cursor.com/"):]
     else:
         try:
             parts = urlsplit(raw)
             port = parts.port
         except ValueError:
             return None
-        if parts.scheme not in ("https", "http", "ssh") or (parts.hostname or "").lower() != "github.com":
+        host = (parts.hostname or "").lower()
+        if parts.scheme not in ("https", "http", "ssh") or host not in ("github.com", "origin.cursor.com"):
             return None
         if parts.username and (parts.scheme != "ssh" or parts.username != "git"):
             return None
@@ -45,7 +62,7 @@ def normalize_origin(value):
     owner, repo = (part.lower() for part in pieces)
     if owner in (".", "..") or repo in (".", ".."):
         return None
-    return f"github.com/{owner}/{repo}"
+    return f"{host}/{owner}/{repo}"
 
 
 def build_seed(registry):
@@ -98,9 +115,11 @@ def build_seed(registry):
             continue
         repositories[origin] = {
             "repo_key": origin,
-            # Leave observation fields null so a seed cannot replace existing values.
-            "label": None,
-            "github_url": "https://" + origin,
+            # Keep collector observation fields null; local identities get a
+            # safe basename label without publishing their source path.
+            "label": local_display_label(entry.get("origin"), origin),
+            # Only GitHub identities have a verified browser URL in this registry.
+            "github_url": "https://" + origin if origin.startswith("github.com/") else None,
             "openproject_url": op_url,
             "openproject_name": identifier,
             # The registry only has a Hive channel ID, not a verified browser URL.
@@ -140,6 +159,17 @@ def build_seed(registry):
     }
     return {"summary": summary, "deduped_origins": sorted_origins,
             "conflicting_origins": sorted(conflicted), "payload": payload}
+
+
+def local_display_label(raw_origin, repo_key):
+    if not repo_key.startswith("local:sha256:") or not isinstance(raw_origin, str):
+        return None
+    name = PurePosixPath(raw_origin[len("local:"):]).name
+    if name.lower().endswith(".git"):
+        name = name[:-4]
+    # Keep a useful basename while excluding path/control data from the label.
+    name = "".join(char for char in name if ord(char) >= 32 and ord(char) != 127)
+    return name[:120] or "Local repository"
 
 
 def validate_endpoint(endpoint):
