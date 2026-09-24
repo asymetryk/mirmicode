@@ -8,7 +8,6 @@ import {
   buildingSetForStage,
   buildingSrc,
   dominantFaction,
-  resourceSrc,
   roleLabel,
   stageClassName,
   unitRole,
@@ -19,8 +18,6 @@ import {
   clamp,
   unitSlot,
   BUILDING_OFFSET,
-  RESOURCE_OFFSETS,
-  resourcePlacements,
   type PositionedBase,
 } from "../layout";
 import type { ViewState } from "../types";
@@ -223,7 +220,7 @@ export function MapStage({
         }}
       >
         <p className="world-mark">Bases</p>
-        {bases.map((base, baseIndex) => {
+        {bases.map((base) => {
           const baseSelected = base.id === selectedBaseId;
           const faction = dominantFaction(base.units);
           const unassigned = !drawsUnitTokens(base.repo);
@@ -266,22 +263,6 @@ export function MapStage({
                   </span>
                 );
               })}
-              {dressBuildings
-                ? resourcePlacements(baseIndex).map((prop) => {
-                    const slot = RESOURCE_OFFSETS[prop.slot];
-                    if (!slot) return null;
-                    return (
-                      <span
-                        key={`${prop.kind}-${prop.slot}`}
-                        className={`dressing resource resource-${prop.kind}`}
-                        style={{ left: slot.x, top: slot.y }}
-                        aria-hidden="true"
-                      >
-                        <Cutout src={resourceSrc(faction, prop.kind)} />
-                      </span>
-                    );
-                  })
-                : null}
               <button
                 type="button"
                 className="outpost"
