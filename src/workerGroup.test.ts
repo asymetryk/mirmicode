@@ -5,6 +5,23 @@ import { SelectionPopover } from "./components/SelectionPopover";
 import type { CampaignBase, Unit } from "./types";
 
 describe("selected Codex worker group inspector", () => {
+  it("renders task activity in the actual selected-unit inspector path", () => {
+    const selected = unit({
+      id: "codex-working",
+      status: "working",
+      activityStatus: "working",
+      promptTldr: "Prompt keywords: selected unit, task inspector",
+      taskStartedAt: "2026-09-23T12:29:30Z",
+    });
+    const markup = render(camp([selected]), selected);
+
+    expect(markup).toContain("Current task");
+    expect(markup).toContain("Task status: Working");
+    expect(markup).toContain("Prompt keywords: selected unit, task inspector");
+    expect(markup).toContain("30s");
+    expect(markup).toContain("Unknown / unassessed");
+  });
+
   it("shows the resolved root, descendants, state, last seen, and only verified task links", () => {
     const root = unit({ id: "codex-root", model: "GPT-6-Sol", status: "working", nativeUrl: "https://tasks.example.test/root" });
     const direct = unit({ id: "codex-direct", model: "GPT-6-Luna", parentId: root.id, status: "completed", nativeUrl: "https://tasks.example.test/direct" });

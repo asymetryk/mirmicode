@@ -3,6 +3,20 @@ export type MapSource = "fixture" | "working-set" | "native-feed" | "mirmicode";
 /** Camp lifecycle stage from the camp dossier. */
 export type CampStage = "idea" | "mvp" | "active" | "parked" | "archive" | "unknown";
 
+export type TaskTokenUsage = {
+  input_tokens: number | null;
+  output_tokens: number | null;
+  cached_input_tokens: number | null;
+  reasoning_output_tokens: number | null;
+  total_tokens: number | null;
+};
+
+export type TaskOutcome = {
+  state: string | null;
+  summary: string | null;
+  evidence: string[] | null;
+};
+
 /** One agent on a base. The harness is its faction. The model is its unit type. */
 export type Unit = {
   id: string;
@@ -28,6 +42,16 @@ export type Unit = {
   snippetExempt?: boolean;
   /** annotation.status, then flat status. Operator triage such as open or done. Not lifecycle. */
   status: string | null;
+  /** Captured task lifecycle, separate from the legacy operator triage status above. */
+  activityStatus?: string | null;
+  /** Compact last-prompt summary supplied by the task source; never a prompt body. */
+  promptTldr?: string | null;
+  taskStartedAt?: string | null;
+  taskFinishedAt?: string | null;
+  taskDurationMs?: number | null;
+  tokenUsage?: TaskTokenUsage | null;
+  /** Explicit source assessment only; lifecycle completion does not imply an outcome. */
+  outcome?: TaskOutcome | null;
   /** observed.lifecycle. Live values: idle, detached, archived, unknown. Null when absent. */
   lifecycle: string | null;
   /** observed.presence. Live values: present, not_seen. Null when absent. */

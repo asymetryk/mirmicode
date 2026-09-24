@@ -5,6 +5,7 @@ import { roleLabel, unitRole } from "../rtsArt";
 import type { CampaignBase, Unit } from "../types";
 import { OpenProjectBlock } from "./OpenProjectBlock";
 import { SharedMapSettings } from "./SharedMapSettings";
+import { TaskCard } from "./TaskCard";
 import { UnitFigure, visualPosture } from "./UnitFigure";
 
 type SelectionPopoverProps = {
@@ -70,6 +71,7 @@ export function SelectionPopover({
               {snippet}
             </p>
           ) : null}
+          <TaskCard unit={unit} now={now} />
           <div
             className="hud-figure"
             data-faction={harnessSlug(unit.harness)}

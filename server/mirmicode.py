@@ -46,7 +46,13 @@ CREATE TABLE IF NOT EXISTS sessions (
   native_url TEXT,
   updated_at TEXT NOT NULL,
   source TEXT NOT NULL,
-  observed_at TEXT NOT NULL
+  observed_at TEXT NOT NULL,
+  prompt_tldr TEXT,
+  started_at TEXT,
+  finished_at TEXT,
+  duration_ms INTEGER,
+  token_usage_json TEXT,
+  outcome_json TEXT
 );
 CREATE TABLE IF NOT EXISTS source_runs (
   source TEXT PRIMARY KEY,
@@ -91,6 +97,19 @@ def connect(db_path):
     db.execute("PRAGMA foreign_keys=ON")
     db.execute("PRAGMA journal_mode=WAL")
     db.executescript(SCHEMA)
+    # Existing UAT databases predate the lifecycle detail fields. Keep the
+    # migration additive so opening one preserves observations and metadata.
+    session_columns = {row["name"] for row in db.execute("PRAGMA table_info(sessions)")}
+    for name, declaration in (
+        ("prompt_tldr", "TEXT"),
+        ("started_at", "TEXT"),
+        ("finished_at", "TEXT"),
+        ("duration_ms", "INTEGER"),
+        ("token_usage_json", "TEXT"),
+        ("outcome_json", "TEXT"),
+    ):
+        if name not in session_columns:
+            db.execute(f"ALTER TABLE sessions ADD COLUMN {name} {declaration}")
     return db
 
 
@@ -310,7 +329,9 @@ def valid_editor_session(cookie_value, token, now=None):
     return hmac.compare_digest(editor_session_cookie(token, expires), cookie_value)
 
 
-def validate_timestamp(value, name):
+def validate_timestamp(value, name, nullable=False):
+    if nullable and value is None:
+        return None
     value = required_string(value, name, 64)
     try:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
@@ -319,6 +340,47 @@ def validate_timestamp(value, name):
     if parsed.tzinfo is None:
         raise ValueError(f"{name} must include a timezone")
     return value
+
+
+TOKEN_USAGE_FIELDS = (
+    "input_tokens", "output_tokens", "cached_input_tokens",
+    "reasoning_output_tokens", "total_tokens",
+)
+OUTCOME_STATES = {"achieved", "partial", "needs-help", "failed", "unassessed"}
+
+
+def validate_token_usage(value):
+    if value is None:
+        return None
+    if not isinstance(value, dict) or set(value) - set(TOKEN_USAGE_FIELDS):
+        raise ValueError("token_usage must be an object containing supported token fields")
+    result = {}
+    for name in TOKEN_USAGE_FIELDS:
+        count = value.get(name)
+        if count is not None and (isinstance(count, bool) or not isinstance(count, int) or count < 0):
+            raise ValueError(f"token_usage.{name} must be a nonnegative integer or null")
+        result[name] = count
+    return result
+
+
+def validate_outcome(value):
+    if value is None:
+        return None
+    if not isinstance(value, dict) or set(value) - {"state", "summary", "evidence"}:
+        raise ValueError("outcome must contain only state, summary, and evidence")
+    state = required_string(value.get("state"), "outcome.state", 80)
+    if state not in OUTCOME_STATES:
+        raise ValueError("outcome.state must be achieved, partial, needs-help, failed, or unassessed")
+    summary = optional_string(value.get("summary"), "outcome.summary", 2000)
+    evidence = value.get("evidence")
+    if evidence is not None:
+        if not isinstance(evidence, list) or len(evidence) > 20:
+            raise ValueError("outcome.evidence must be an array of at most 20 strings or null")
+        if any(not isinstance(item, str) or not item.strip() or len(item) > 1000 for item in evidence):
+            raise ValueError("outcome.evidence items must be nonempty strings of at most 1000 characters")
+    if state != "unassessed" and not evidence:
+        raise ValueError("assessed outcomes require at least one evidence item")
+    return {"state": state, "summary": summary, "evidence": evidence}
 
 
 def ingest(db, payload):
@@ -363,19 +425,39 @@ def ingest(db, payload):
             status = required_string(entry.get("status"), "status", 40)
             if status not in ("working", "completed", "needs-attention", "unknown"):
                 raise ValueError("invalid session status")
-            db.execute("""INSERT INTO sessions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            prompt_tldr = optional_string(entry.get("prompt_tldr"), "prompt_tldr", 1200)
+            started_at = validate_timestamp(entry.get("started_at"), "started_at", nullable=True)
+            finished_at = validate_timestamp(entry.get("finished_at"), "finished_at", nullable=True)
+            duration_ms = entry.get("duration_ms")
+            if duration_ms is not None and (
+                isinstance(duration_ms, bool) or not isinstance(duration_ms, int) or duration_ms < 0
+            ):
+                raise ValueError("duration_ms must be a nonnegative integer or null")
+            token_usage = validate_token_usage(entry.get("token_usage"))
+            outcome = validate_outcome(entry.get("outcome"))
+            db.execute("""INSERT INTO sessions (
+                id, repo_key, harness, model, thread_name, status, parent_id, native_url,
+                updated_at, source, observed_at, prompt_tldr, started_at, finished_at,
+                duration_ms, token_usage_json, outcome_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                 repo_key=excluded.repo_key, harness=excluded.harness,
                 model=excluded.model, thread_name=excluded.thread_name,
                 status=excluded.status, parent_id=excluded.parent_id,
                 native_url=excluded.native_url, updated_at=excluded.updated_at,
-                source=excluded.source, observed_at=excluded.observed_at""", (
+                source=excluded.source, observed_at=excluded.observed_at,
+                prompt_tldr=excluded.prompt_tldr, started_at=excluded.started_at,
+                finished_at=excluded.finished_at, duration_ms=excluded.duration_ms,
+                token_usage_json=excluded.token_usage_json, outcome_json=excluded.outcome_json""", (
                 session_id, repo_key, required_string(entry.get("harness"), "harness", 80),
                 optional_string(entry.get("model"), "model", 120),
                 optional_string(entry.get("thread_name"), "thread_name"), status,
                 optional_string(entry.get("parent_id"), "parent_id"),
                 validate_url(entry.get("native_url"), "native_url"),
                 validate_timestamp(entry.get("updated_at"), "updated_at"), source, now,
+                prompt_tldr, started_at, finished_at, duration_ms,
+                json.dumps(token_usage, separators=(",", ":")) if token_usage is not None else None,
+                json.dumps(outcome, separators=(",", ":")) if outcome is not None else None,
             ))
         # Each source publishes a complete recent window. Remove sessions that
         # fell outside it; otherwise yesterday's "working" units linger forever.
@@ -393,7 +475,7 @@ def ingest(db, payload):
     return {"source": source, "repositories": len(repositories), "sessions": len(sessions)}
 
 
-def snapshot(db, stale_after_seconds=180):
+def snapshot(db, stale_after_seconds=180, include_prompt_tldr=False):
     metadata_revision = db.execute("SELECT revision FROM metadata_state WHERE singleton=1").fetchone()["revision"]
     runs = db.execute("SELECT * FROM source_runs").fetchall()
     if not runs:
@@ -442,11 +524,17 @@ def snapshot(db, stale_after_seconds=180):
             row["status"] == "working" and (now - touched).total_seconds() > 900
         ) else row["status"]
         unit_appearance = read_settings(db, "unit", row["id"]).get("appearance", {})
+        token_usage = json.loads(row["token_usage_json"]) if row["token_usage_json"] else None
+        outcome = json.loads(row["outcome_json"]) if row["outcome_json"] else None
         units.append({"id": row["id"], "repo_key": row["repo_key"],
                       "harness": row["harness"], "model": row["model"],
                       "thread_name": row["thread_name"], "status": status,
                       "parent_id": row["parent_id"], "native_url": row["native_url"],
                       "updated_at": row["updated_at"],
+                      "prompt_tldr": row["prompt_tldr"] if include_prompt_tldr else None,
+                      "started_at": row["started_at"], "finished_at": row["finished_at"],
+                      "duration_ms": row["duration_ms"], "token_usage": token_usage,
+                      "outcome": outcome,
                       "appearance": {"color": unit_appearance.get("color"),
                                      "unit_role": unit_appearance.get("unit_role")},
                       "destination": {"kind": "repo", "value": row["repo_key"]}})
@@ -489,8 +577,10 @@ def make_handler(db_path, static_dir, token_file, editor_token_file):
                     db.execute("SELECT 1")
                 self._json(200, {"ok": True})
             elif path == "/api/v1/snapshot":
+                expected = self._editor_token()
+                include_prompt_tldr = expected is not None and self._cookie_session_valid(expected)
                 with connect(db_path) as db:
-                    self._json(200, snapshot(db))
+                    self._json(200, snapshot(db, include_prompt_tldr=include_prompt_tldr))
             elif path == "/api/v1/session":
                 expected = self._editor_token()
                 if expected is None:

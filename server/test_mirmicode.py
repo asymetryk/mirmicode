@@ -1,5 +1,6 @@
 import json
 import http.client
+import sqlite3
 import tempfile
 import threading
 import unittest
@@ -9,7 +10,7 @@ from pathlib import Path
 
 from collect_codex import last_event
 from mirmicode import (
-    RevisionConflict, connect, ingest, make_handler, snapshot, update_metadata,
+    EDITOR_COOKIE, RevisionConflict, SCHEMA, connect, ingest, make_handler, snapshot, update_metadata,
     utc_now, valid_editor_session,
 )
 
@@ -40,7 +41,144 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(len(result["camps"]), 1)
         self.assertEqual(len(result["units"]), 1)
         self.assertEqual(result["units"][0]["parent_id"], "parent-1")
-        self.assertNotIn("prompt", json.dumps(result).lower())
+        self.assertIsNone(result["units"][0]["prompt_tldr"])
+        self.assertIsNone(result["units"][0]["outcome"])
+        self.assertNotIn('"prompt":', json.dumps(result).lower())
+
+    def test_lifecycle_fields_round_trip_without_inferencing_success(self):
+        key = "github.com/asymetryk/mirmicode"
+        lifecycle = {
+            "prompt_tldr": "Add a nullable lifecycle contract",
+            "started_at": "2026-09-24T10:00:00Z",
+            "finished_at": "2026-09-24T10:02:03Z",
+            "duration_ms": 123000,
+            "token_usage": {
+                "input_tokens": 1200, "output_tokens": 320,
+                "cached_input_tokens": 200, "reasoning_output_tokens": 80,
+                "total_tokens": 1520,
+            },
+        }
+        payload = {"source": "codex-local", "repositories": [{"repo_key": key}],
+                   "sessions": [{"id": "task-1", "repo_key": key, "harness": "Codex",
+                                 "status": "completed", "updated_at": "2026-09-24T10:02:03Z",
+                                 **lifecycle}]}
+        with connect(self.db_path) as db:
+            ingest(db, payload)
+        with connect(self.db_path) as db:
+            unit = snapshot(db, include_prompt_tldr=True)["units"][0]
+        for field, value in lifecycle.items():
+            self.assertEqual(unit[field], value)
+        self.assertIsNone(unit["outcome"])
+        self.assertEqual(unit["status"], "completed")
+
+        explicit_outcome = {"state": "achieved", "summary": "Source reported success",
+                            "evidence": ["codex task result"]}
+        payload["sessions"][0]["outcome"] = explicit_outcome
+        with connect(self.db_path) as db:
+            ingest(db, payload)
+            unit = snapshot(db)["units"][0]
+        self.assertEqual(unit["outcome"], explicit_outcome)
+
+    def test_outcome_evidence_accepts_only_bounded_string_arrays(self):
+        invalid_values = (
+            None,
+            [],
+            "completed successfully",
+            {"url": "https://example.test/result"},
+            ["evidence", 7],
+            [""],
+            ["x" * 1001],
+            ["evidence"] * 21,
+        )
+        for evidence in invalid_values:
+            with self.subTest(evidence=type(evidence).__name__):
+                with connect(self.db_path) as db:
+                    payload = {
+                        "source": "codex-local",
+                        "repositories": [{"repo_key": "repo"}],
+                        "sessions": [{
+                            "id": "task-1", "repo_key": "repo", "harness": "Codex",
+                            "status": "completed", "updated_at": "2026-09-24T10:02:03Z",
+                            "outcome": {"state": "achieved", "evidence": evidence},
+                        }],
+                    }
+                    with self.assertRaises(ValueError):
+                        ingest(db, payload)
+                    self.assertEqual(db.execute("SELECT COUNT(*) FROM repositories").fetchone()[0], 0)
+
+    def test_public_snapshot_redacts_prompt_tldr_until_editor_session(self):
+        from mirmicode import editor_session_cookie
+
+        key = "github.com/asymetryk/mirmicode"
+        with connect(self.db_path) as db:
+            ingest(db, {"source": "codex-local", "repositories": [{"repo_key": key}],
+                        "sessions": [{"id": "task-1", "repo_key": key, "harness": "Codex",
+                                      "status": "completed", "updated_at": "2026-09-24T10:02:03Z",
+                                      "prompt_tldr": "Private prompt summary",
+                                      "started_at": "2026-09-24T10:00:00Z"}]})
+        token_path = Path(self.temp.name) / "editor-token"
+        token = "private-test-editor-token"
+        token_path.write_text(token, encoding="utf-8")
+        static_dir = Path(self.temp.name) / "static"
+        static_dir.mkdir()
+        handler = make_handler(self.db_path, static_dir, "missing-ingest", str(token_path))
+
+        def get_snapshot(cookie=None):
+            server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+            worker = threading.Thread(target=server.serve_forever, daemon=True)
+            worker.start()
+            try:
+                connection = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=2)
+                headers = {"Host": "mirmicode.example"}
+                if cookie is not None:
+                    headers["Cookie"] = f"{EDITOR_COOKIE}={cookie}"
+                connection.request("GET", "/api/v1/snapshot", headers=headers)
+                response = connection.getresponse()
+                result = response.status, json.loads(response.read())
+                connection.close()
+                return result
+            finally:
+                server.shutdown()
+                worker.join(timeout=2)
+                server.server_close()
+
+        anonymous_status, anonymous = get_snapshot()
+        expiry = int(datetime.now(timezone.utc).timestamp()) + 600
+        valid_cookie = editor_session_cookie(token, expiry)
+        authenticated_status, authenticated = get_snapshot(valid_cookie)
+        anonymous_unit = anonymous["units"][0]
+        authenticated_unit = authenticated["units"][0]
+        self.assertEqual(anonymous_status, 200)
+        self.assertIsNone(anonymous_unit["prompt_tldr"])
+        self.assertEqual(anonymous_unit["status"], "completed")
+        self.assertEqual(authenticated_status, 200)
+        self.assertEqual(authenticated_unit["prompt_tldr"], "Private prompt summary")
+
+    def test_legacy_sessions_migrate_with_nullable_lifecycle_fields(self):
+        legacy_schema = SCHEMA.replace(
+            "  observed_at TEXT NOT NULL,\n  prompt_tldr TEXT,\n  started_at TEXT,\n"
+            "  finished_at TEXT,\n  duration_ms INTEGER,\n  token_usage_json TEXT,\n  outcome_json TEXT\n",
+            "  observed_at TEXT NOT NULL\n",
+        )
+        with sqlite3.connect(self.db_path) as old_db:
+            old_db.executescript(legacy_schema)
+            old_db.execute("""INSERT INTO repositories
+                (repo_key, source, observed_at) VALUES (?, ?, ?)""",
+                ("repo", "codex-local", "2026-09-24T10:00:00Z"))
+            old_db.execute("""INSERT INTO sessions VALUES
+                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                ("old-task", "repo", "Codex", None, None, "completed", None,
+                 None, "2026-09-24T10:00:00Z", "codex-local", "2026-09-24T10:00:00Z"))
+            old_db.execute("INSERT INTO source_runs VALUES (?, ?, ?, ?)",
+                            ("codex-local", "2026-09-24T10:00:00Z", 1, 1))
+        with connect(self.db_path) as db:
+            columns = {row["name"] for row in db.execute("PRAGMA table_info(sessions)")}
+            unit = snapshot(db)["units"][0]
+        self.assertTrue({"prompt_tldr", "started_at", "finished_at", "duration_ms",
+                         "token_usage_json", "outcome_json"}.issubset(columns))
+        for field in ("prompt_tldr", "started_at", "finished_at", "duration_ms",
+                      "token_usage", "outcome"):
+            self.assertIsNone(unit[field])
 
     def test_invalid_session_rolls_back_entire_batch(self):
         payload = {"source": "codex-local", "repositories": [{"repo_key": "repo"}],

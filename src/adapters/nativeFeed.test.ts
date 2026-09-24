@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import fixture from "../../fixtures/feed-v0-snapshot.json";
 import { CAHQ_WORKING_SET_ORIGIN } from "./source";
+import { setPublicModeForTests } from "../publicMode";
 import {
   NATIVE_FEED_SOURCE,
   loadNativeFeed,
@@ -41,6 +42,46 @@ const VALID_SNAPSHOT = {
 };
 
 describe("parseNativeFeedSnapshot", () => {
+  it("maps task-card fields and keeps lifecycle status separate from legacy triage", () => {
+    const { snapshot } = loadNativeFeed({
+      camps: [{ repo_key: "agentinfra", github_url: "https://github.com/asymetryk/agentinfra" }],
+      units: [{
+        ...VALID_SNAPSHOT.units[0],
+        status: "needs-attention",
+        prompt_tldr: "Review the desktop inspector.",
+        started_at: "2026-09-24T10:00:00Z",
+        finished_at: null,
+        duration_ms: 45_000,
+        token_usage: { input_tokens: 80, total_tokens: 80 },
+        outcome: { state: "needs-help", summary: "Awaiting review", evidence: ["No browser evidence"] },
+      }],
+    });
+    const unit = snapshot.bases[0]?.units[0];
+
+    expect(unit).toMatchObject({
+      status: "needs-attention",
+      activityStatus: "needs-attention",
+      promptTldr: "Review the desktop inspector.",
+      taskStartedAt: "2026-09-24T10:00:00Z",
+      taskDurationMs: 45_000,
+      tokenUsage: { input_tokens: 80, total_tokens: 80 },
+      outcome: { state: "needs-help", summary: "Awaiting review", evidence: ["No browser evidence"] },
+    });
+  });
+
+  it("passes through an API-provided keyword sketch in public mode after server authorization", () => {
+    setPublicModeForTests({ publicMode: true });
+    try {
+      const { snapshot } = loadNativeFeed({
+        camps: [{ repo_key: "agentinfra", github_url: "https://github.com/asymetryk/agentinfra" }],
+        units: [{ ...VALID_SNAPSHOT.units[0], prompt_tldr: "Prompt keywords: authorized detail" }],
+      });
+      expect(snapshot.bases[0]?.units[0]?.promptTldr).toBe("Prompt keywords: authorized detail");
+    } finally {
+      setPublicModeForTests(null);
+    }
+  });
+
   it("uses the safe display label for an opaque local repository identity", () => {
     const key = `local:sha256:${"a".repeat(64)}`;
     const { snapshot } = loadNativeFeed({

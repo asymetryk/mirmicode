@@ -1,7 +1,7 @@
 import feedV0Snapshot from "../../fixtures/feed-v0-snapshot.json";
 import { repoKey as canonicalRepoKey } from "../repos";
 import { stageFromString } from "../rtsArt";
-import type { BuildingKind, CampAppearance, CampLinks, CampaignBase, LatestThread, LinkProvenance, MapSnapshot, OpenProjectSummary, Unit, UnitAppearance, UnitRole } from "../types";
+import type { BuildingKind, CampAppearance, CampLinks, CampaignBase, LatestThread, LinkProvenance, MapSnapshot, OpenProjectSummary, TaskOutcome, TaskTokenUsage, Unit, UnitAppearance, UnitRole } from "../types";
 
 /**
  * mirmicode-native feed adapter (contract v0).
@@ -63,6 +63,12 @@ export type NativeFeedUnit = {
   model?: string;
   thread_name?: string;
   status?: string;
+  prompt_tldr?: string | null;
+  started_at?: string | null;
+  finished_at?: string | null;
+  duration_ms?: number | null;
+  token_usage?: Partial<TaskTokenUsage> | null;
+  outcome?: Partial<TaskOutcome> | null;
   destination?: NativeFeedDestination;
   updated_at?: string;
   parent_id?: string | null;
@@ -263,7 +269,13 @@ function toUnit(raw: NativeFeedUnit): Unit {
   const harness = typeof raw.harness === "string" && raw.harness.trim() ? raw.harness.trim() : PLACEHOLDER;
   const model = typeof raw.model === "string" && raw.model.trim() ? raw.model.trim() : PLACEHOLDER;
   const threadName = typeof raw.thread_name === "string" && raw.thread_name.trim() ? raw.thread_name.trim() : null;
-  const status = typeof raw.status === "string" && raw.status.trim() ? raw.status.trim() : null;
+  const sourceStatus = typeof raw.status === "string" && raw.status.trim() ? raw.status.trim() : null;
+  const activityStatus = sourceStatus && ["working", "completed", "needs-attention", "unknown"].includes(sourceStatus)
+    ? sourceStatus
+    : null;
+  // Preserve the preexisting map posture input; the task card consumes the
+  // additional activityStatus field without changing current map behavior.
+  const status = sourceStatus;
   const updatedAt = typeof raw.updated_at === "string" && raw.updated_at ? raw.updated_at : PLACEHOLDER;
   // The native feed never carries prompt bodies. lastPrompt stays null so the
   // public-mode scrubber is a no-op for this source. snippetExempt lets the
@@ -278,6 +290,15 @@ function toUnit(raw: NativeFeedUnit): Unit {
     hasContextSnippet: false,
     snippetExempt: true,
     status,
+    activityStatus,
+    // Public snapshots are redacted by the API; an included value means the
+    // server verified the private editor session for this request.
+    promptTldr: readNullableString(raw.prompt_tldr),
+    taskStartedAt: readNullableString(raw.started_at),
+    taskFinishedAt: readNullableString(raw.finished_at),
+    taskDurationMs: readNullableNumber(raw.duration_ms),
+    tokenUsage: normalizeTokenUsage(raw.token_usage),
+    outcome: normalizeOutcome(raw.outcome),
     lifecycle: null,
     presence: null,
     freshness: null,
@@ -287,6 +308,38 @@ function toUnit(raw: NativeFeedUnit): Unit {
     nativeUrl: typeof raw.native_url === "string" && /^https:\/\/|^codex:\/\//.test(raw.native_url) ? raw.native_url : null,
     appearance: unitAppearanceFrom(raw.appearance),
   };
+}
+
+function readNullableString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function readNullableNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+function normalizeTokenUsage(value: unknown): TaskTokenUsage | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const raw = value as Partial<TaskTokenUsage>;
+  const normalized = {
+    input_tokens: readNullableNumber(raw.input_tokens),
+    output_tokens: readNullableNumber(raw.output_tokens),
+    cached_input_tokens: readNullableNumber(raw.cached_input_tokens),
+    reasoning_output_tokens: readNullableNumber(raw.reasoning_output_tokens),
+    total_tokens: readNullableNumber(raw.total_tokens),
+  };
+  return Object.values(normalized).some((count) => count !== null) ? normalized : null;
+}
+
+function normalizeOutcome(value: unknown): TaskOutcome | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const raw = value as Partial<TaskOutcome>;
+  const state = readNullableString(raw.state);
+  const summary = readNullableString(raw.summary);
+  const evidence = Array.isArray(raw.evidence)
+    ? raw.evidence.filter((item): item is string => typeof item === "string" && item.trim().length > 0).map((item) => item.trim())
+    : null;
+  return state || summary || evidence?.length ? { state, summary, evidence: evidence?.length ? evidence : null } : null;
 }
 
 const BUILDING_KINDS = new Set<BuildingKind>(["pad", "depot", "turret", "refinery", "barracks", "lab"]);
