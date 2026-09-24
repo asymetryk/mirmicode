@@ -37,7 +37,7 @@ export function positionBases(bases: CampaignBase[]): PositionedBase[] {
 }
 
 export function fitView(
-  bases: Array<{ x: number; y: number }>,
+  bases: Array<{ x: number; y: number; units?: unknown[] }>,
   width: number,
   height: number,
 ): ViewState {
@@ -51,10 +51,13 @@ export function fitView(
   let maxX = -Infinity;
   let maxY = -Infinity;
   for (const base of bases) {
+    const unitCount = base.units?.length ?? 0;
+    const unitRows = Math.ceil(unitCount / 5);
+    const lastUnitBottom = unitRows > 0 ? 108 + (unitRows - 1) * 108 + 150 + 120 : 0;
     minX = Math.min(minX, base.x - padX);
     minY = Math.min(minY, base.y - padY);
     maxX = Math.max(maxX, base.x + padX);
-    maxY = Math.max(maxY, base.y + padY);
+    maxY = Math.max(maxY, base.y + Math.max(padY, lastUnitBottom));
   }
   const worldW = Math.max(1, maxX - minX);
   const worldH = Math.max(1, maxY - minY);
