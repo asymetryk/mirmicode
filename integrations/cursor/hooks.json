@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "python3 \"$HOME/.local/share/mirmicode/report_harness.py\" --harness cursor --event sessionStart"
+      }
+    ],
+    "sessionEnd": [
+      {
+        "command": "python3 \"$HOME/.local/share/mirmicode/report_harness.py\" --harness cursor --event sessionEnd"
+      }
+    ],
+    "beforeSubmitPrompt": [
+      {
+        "command": "python3 \"$HOME/.local/share/mirmicode/report_harness.py\" --harness cursor --event beforeSubmitPrompt"
+      }
+    ],
+    "stop": [
+      {
+        "command": "python3 \"$HOME/.local/share/mirmicode/report_harness.py\" --harness cursor --event stop"
+      }
+    ],
+    "subagentStart": [
+      {
+        "command": "python3 \"$HOME/.local/share/mirmicode/report_harness.py\" --harness cursor --event subagentStart"
+      }
+    ],
+    "subagentStop": [
+      {
+        "command": "python3 \"$HOME/.local/share/mirmicode/report_harness.py\" --harness cursor --event subagentStop"
+      }
+    ]
+  }
+}

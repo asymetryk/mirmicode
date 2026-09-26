@@ -13,7 +13,7 @@ import os
 import re
 import sqlite3
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -59,7 +59,8 @@ CREATE TABLE IF NOT EXISTS source_runs (
   source TEXT PRIMARY KEY,
   observed_at TEXT NOT NULL,
   repository_count INTEGER NOT NULL,
-  session_count INTEGER NOT NULL
+  session_count INTEGER NOT NULL,
+  mode TEXT NOT NULL DEFAULT 'snapshot'
 );
 CREATE TABLE IF NOT EXISTS metadata_state (
   singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
@@ -114,6 +115,9 @@ def connect(db_path):
     ):
         if name not in session_columns:
             db.execute(f"ALTER TABLE sessions ADD COLUMN {name} {declaration}")
+    source_columns = {row["name"] for row in db.execute("PRAGMA table_info(source_runs)")}
+    if "mode" not in source_columns:
+        db.execute("ALTER TABLE source_runs ADD COLUMN mode TEXT NOT NULL DEFAULT 'snapshot'")
     return db
 
 
@@ -396,7 +400,7 @@ def validate_outcome(value):
     return {"state": state, "summary": summary, "evidence": evidence}
 
 
-def ingest(db, payload):
+def ingest(db, payload, replace=True):
     if not isinstance(payload, dict):
         raise ValueError("payload must be an object")
     source = required_string(payload.get("source"), "source", 120)
@@ -440,6 +444,32 @@ def ingest(db, payload):
             if not isinstance(entry, dict):
                 raise ValueError("session must be an object")
             session_id = required_string(entry.get("id"), "id")
+            previous = db.execute("SELECT * FROM sessions WHERE id=?", (session_id,)).fetchone() if not replace else None
+            if previous is not None:
+                if previous["source"] != source:
+                    raise ValueError("session id belongs to another source")
+                incoming_at = validate_timestamp(entry.get("updated_at"), "updated_at")
+                incoming_time = datetime.fromisoformat(incoming_at.replace("Z", "+00:00"))
+                previous_time = datetime.fromisoformat(previous["updated_at"].replace("Z", "+00:00"))
+                if incoming_time < previous_time or (
+                    incoming_time == previous_time and previous["status"] != "working"
+                    and entry.get("status") == "working"
+                ):
+                    continue  # A delayed hook cannot regress a completed turn.
+                entry = dict(entry)
+                for name, column in (
+                    ("model", "model"), ("thread_name", "thread_name"),
+                    ("parent_id", "parent_id"), ("native_url", "native_url"),
+                ):
+                    if entry.get(name) is None:
+                        entry[name] = previous[column]
+                if entry.get("status") != "working":
+                    if entry.get("prompt_tldr") is None:
+                        entry["prompt_tldr"] = previous["prompt_tldr"]
+                    if entry.get("token_usage") is None and previous["token_usage_json"]:
+                        entry["token_usage"] = json.loads(previous["token_usage_json"])
+                    if entry.get("started_at") is None:
+                        entry["started_at"] = previous["started_at"]
             repo_key = required_string(entry.get("repo_key"), "repo_key")
             status = required_string(entry.get("status"), "status", 40)
             if status not in ("working", "completed", "needs-attention", "unknown"):
@@ -448,6 +478,11 @@ def ingest(db, payload):
             started_at = validate_timestamp(entry.get("started_at"), "started_at", nullable=True)
             finished_at = validate_timestamp(entry.get("finished_at"), "finished_at", nullable=True)
             duration_ms = entry.get("duration_ms")
+            if not replace and status != "working" and duration_ms is None and started_at and finished_at:
+                elapsed = datetime.fromisoformat(finished_at.replace("Z", "+00:00")) - datetime.fromisoformat(
+                    started_at.replace("Z", "+00:00")
+                )
+                duration_ms = max(0, int(elapsed.total_seconds() * 1000))
             if duration_ms is not None and (
                 isinstance(duration_ms, bool) or not isinstance(duration_ms, int) or duration_ms < 0
             ):
@@ -478,19 +513,26 @@ def ingest(db, payload):
                 json.dumps(token_usage, separators=(",", ":")) if token_usage is not None else None,
                 json.dumps(outcome, separators=(",", ":")) if outcome is not None else None,
             ))
-        # Each source publishes a complete recent window. Remove sessions that
-        # fell outside it; otherwise yesterday's "working" units linger forever.
-        ids = [required_string(entry.get("id"), "id") for entry in sessions]
-        if ids:
-            db.execute("DELETE FROM sessions WHERE source=? AND id NOT IN (" + ",".join("?" for _ in ids) + ")",
-                       [source, *ids])
+        if replace:
+            # Snapshot sources publish a complete recent window.
+            ids = [required_string(entry.get("id"), "id") for entry in sessions]
+            if ids:
+                db.execute("DELETE FROM sessions WHERE source=? AND id NOT IN (" + ",".join("?" for _ in ids) + ")",
+                           [source, *ids])
+            else:
+                db.execute("DELETE FROM sessions WHERE source=?", (source,))
         else:
-            db.execute("DELETE FROM sessions WHERE source=?", (source,))
-        db.execute("""INSERT INTO source_runs VALUES (?, ?, ?, ?)
+            # Hook sources publish one observation at a time; keep sibling
+            # threads and recent completions, but bound the retained window.
+            cutoff = (datetime.now(timezone.utc) - timedelta(hours=48)).isoformat(timespec="seconds").replace("+00:00", "Z")
+            db.execute("DELETE FROM sessions WHERE source=? AND updated_at<?", (source, cutoff))
+        counts = db.execute("SELECT COUNT(DISTINCT repo_key), COUNT(*) FROM sessions WHERE source=?", (source,)).fetchone()
+        db.execute("""INSERT INTO source_runs(source, observed_at, repository_count, session_count, mode)
+            VALUES (?, ?, ?, ?, ?)
             ON CONFLICT(source) DO UPDATE SET observed_at=excluded.observed_at,
-            repository_count=excluded.repository_count,
-            session_count=excluded.session_count""",
-            (source, now, len(repositories), len(sessions)))
+            repository_count=excluded.repository_count, session_count=excluded.session_count,
+            mode=excluded.mode""",
+            (source, now, counts[0], counts[1], "snapshot" if replace else "event"))
     return {"source": source, "repositories": len(repositories), "sessions": len(sessions)}
 
 
@@ -504,7 +546,7 @@ def snapshot(db, stale_after_seconds=180, include_prompt_tldr=False):
     now = datetime.now(timezone.utc)
     stale_sources = set()
     for run in runs:
-        if run["source"] in STATIC_SOURCES:
+        if run["source"] in STATIC_SOURCES or run["mode"] == "event":
             continue
         observed = datetime.fromisoformat(run["observed_at"].replace("Z", "+00:00"))
         if (now - observed).total_seconds() > stale_after_seconds:
@@ -619,7 +661,7 @@ def make_handler(db_path, static_dir, token_file, editor_token_file):
             if path == "/api/v1/session":
                 self._create_editor_session()
                 return
-            if path != "/api/v1/ingest":
+            if path not in ("/api/v1/ingest", "/api/v1/events"):
                 self._json(404, {"error": "not_found"})
                 return
             try:
@@ -638,7 +680,7 @@ def make_handler(db_path, static_dir, token_file, editor_token_file):
                     raise ValueError("invalid payload size")
                 payload = json.loads(self.rfile.read(size))
                 with connect(db_path) as db:
-                    result = ingest(db, payload)
+                    result = ingest(db, payload, replace=path != "/api/v1/events")
             except (ValueError, json.JSONDecodeError, sqlite3.IntegrityError) as exc:
                 self._json(400, {"error": str(exc)})
                 return

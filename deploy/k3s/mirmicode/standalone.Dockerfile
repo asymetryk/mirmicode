@@ -10,6 +10,7 @@ RUN npm test && npm run build
 FROM python:3.12-alpine
 WORKDIR /app
 COPY server/ /app/server/
+COPY integrations/ /app/integrations/
 COPY --from=assets /src/dist /app/dist
 RUN python3 -m unittest discover -s /app/server -p 'test_*.py' && \
     addgroup -S mirmicode && adduser -S -G mirmicode -u 10001 mirmicode && \

@@ -162,6 +162,9 @@ class StoreTests(unittest.TestCase):
             "  observed_at TEXT NOT NULL,\n  prompt_tldr TEXT,\n  started_at TEXT,\n"
             "  finished_at TEXT,\n  duration_ms INTEGER,\n  token_usage_json TEXT,\n  outcome_json TEXT\n",
             "  observed_at TEXT NOT NULL\n",
+        ).replace(
+            "  session_count INTEGER NOT NULL,\n  mode TEXT NOT NULL DEFAULT 'snapshot'\n",
+            "  session_count INTEGER NOT NULL\n",
         )
         with sqlite3.connect(self.db_path) as old_db:
             old_db.executescript(legacy_schema)
@@ -179,11 +182,59 @@ class StoreTests(unittest.TestCase):
             columns = {row["name"] for row in db.execute("PRAGMA table_info(sessions)")}
             unit = snapshot(db)["units"][0]
         self.assertIn("buzz_channel_id", repository_columns)
+        self.assertIn("mode", {row["name"] for row in db.execute("PRAGMA table_info(source_runs)")})
         self.assertTrue({"prompt_tldr", "started_at", "finished_at", "duration_ms",
                          "token_usage_json", "outcome_json"}.issubset(columns))
         for field in ("prompt_tldr", "started_at", "finished_at", "duration_ms",
                       "token_usage", "outcome"):
             self.assertIsNone(unit[field])
+
+    def test_event_ingest_keeps_concurrent_threads_and_preserves_turn_start(self):
+        key = "github.com/asymetryk/mirmicode"
+        start = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(minutes=5)
+        stamp = lambda seconds: (start + timedelta(seconds=seconds)).isoformat().replace("+00:00", "Z")
+
+        def event(session_id, status, timestamp, **fields):
+            return {"source": "cursor-hooks", "repositories": [{"repo_key": key}],
+                    "sessions": [{"id": session_id, "repo_key": key, "harness": "Cursor",
+                                  "status": status, "updated_at": timestamp, **fields}]}
+
+        with connect(self.db_path) as db:
+            ingest(db, event("cursor:parent", "working", stamp(0),
+                             started_at=stamp(0), prompt_tldr="Prompt keywords: map"), replace=False)
+            ingest(db, event("cursor:child", "working", stamp(10),
+                             parent_id="cursor:parent", started_at=stamp(10)), replace=False)
+            ingest(db, event("cursor:parent", "completed", stamp(120),
+                             finished_at=stamp(120)), replace=False)
+            ingest(db, event("cursor:parent", "working", stamp(60)), replace=False)
+            ingest(db, event("cursor:parent", "working", stamp(120)), replace=False)
+            result = {unit["id"]: unit for unit in snapshot(db, include_prompt_tldr=True)["units"]}
+            mode = db.execute("SELECT mode FROM source_runs WHERE source='cursor-hooks'").fetchone()[0]
+        self.assertEqual(mode, "event")
+        self.assertEqual(set(result), {"cursor:parent", "cursor:child"})
+        self.assertEqual(result["cursor:parent"]["status"], "completed")
+        self.assertEqual(result["cursor:parent"]["duration_ms"], 120000)
+        self.assertEqual(result["cursor:parent"]["prompt_tldr"], "Prompt keywords: map")
+        self.assertIsNone(result["cursor:parent"]["outcome"])
+        self.assertEqual(result["cursor:child"]["parent_id"], "cursor:parent")
+
+    def test_new_event_turn_clears_prior_prompt_and_usage(self):
+        key = "github.com/asymetryk/mirmicode"
+        start = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(minutes=5)
+        earlier = start.isoformat().replace("+00:00", "Z")
+        later = (start + timedelta(minutes=1)).isoformat().replace("+00:00", "Z")
+        base = {"source": "ohmypi-hooks", "repositories": [{"repo_key": key}]}
+        with connect(self.db_path) as db:
+            ingest(db, {**base, "sessions": [{"id": "ohmypi:one", "repo_key": key,
+                "harness": "OhMyPi", "status": "completed", "updated_at": earlier,
+                "prompt_tldr": "Prompt keywords: first", "token_usage": {"total_tokens": 42}}]}, replace=False)
+            ingest(db, {**base, "sessions": [{"id": "ohmypi:one", "repo_key": key,
+                "harness": "OhMyPi", "status": "working", "updated_at": later,
+                "started_at": later}]}, replace=False)
+            unit = snapshot(db, include_prompt_tldr=True)["units"][0]
+        self.assertEqual(unit["status"], "working")
+        self.assertIsNone(unit["prompt_tldr"])
+        self.assertIsNone(unit["token_usage"])
 
     def test_invalid_session_rolls_back_entire_batch(self):
         payload = {"source": "codex-local", "repositories": [{"repo_key": "repo"}],
