@@ -13,6 +13,8 @@ export function positionBases(bases: CampaignBase[]): PositionedBase[] {
   const unplaced = bases.filter((base) => base.place === null);
   const columns = Math.max(1, Math.ceil(Math.sqrt(unplaced.length || 1)));
   const rows = Math.max(1, Math.ceil(unplaced.length / columns));
+  const pitchX = Math.min(900, (WORLD.width - FIELD_MARGIN_X * 2) / Math.max(columns - 1, 1));
+  const pitchY = Math.min(760, (WORLD.height - FIELD_MARGIN_Y * 2) / Math.max(rows - 1, 1));
   let unplacedIndex = 0;
 
   return bases.map((base) => {
@@ -28,14 +30,14 @@ export function positionBases(bases: CampaignBase[]): PositionedBase[] {
     unplacedIndex += 1;
     return {
       ...base,
-      x: ((column + 0.5) / columns) * (WORLD.width - FIELD_MARGIN_X * 2) + FIELD_MARGIN_X,
-      y: ((row + 0.5) / rows) * (WORLD.height - FIELD_MARGIN_Y * 2) + FIELD_MARGIN_Y,
+      x: WORLD.width / 2 + (column - (columns - 1) / 2) * pitchX,
+      y: WORLD.height / 2 + (row - (rows - 1) / 2) * pitchY,
     };
   });
 }
 
 export function fitView(
-  bases: Array<{ x: number; y: number }>,
+  bases: Array<{ x: number; y: number; units?: unknown[] }>,
   width: number,
   height: number,
 ): ViewState {
@@ -49,10 +51,13 @@ export function fitView(
   let maxX = -Infinity;
   let maxY = -Infinity;
   for (const base of bases) {
+    const unitCount = base.units?.length ?? 0;
+    const unitRows = Math.ceil(unitCount / 5);
+    const lastUnitBottom = unitRows > 0 ? 108 + (unitRows - 1) * 108 + 150 + 120 : 0;
     minX = Math.min(minX, base.x - padX);
     minY = Math.min(minY, base.y - padY);
     maxX = Math.max(maxX, base.x + padX);
-    maxY = Math.max(maxY, base.y + padY);
+    maxY = Math.max(maxY, base.y + Math.max(padY, lastUnitBottom));
   }
   const worldW = Math.max(1, maxX - minX);
   const worldH = Math.max(1, maxY - minY);

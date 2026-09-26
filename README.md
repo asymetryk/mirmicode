@@ -1,5 +1,13 @@
 # Mirmicode
 
+The standalone-core migration is being validated on K3s at
+<https://mirmicode-uat.tail21f530.ts.net/>. It owns a persistent API and live
+Codex metadata feed; production still uses the deployment described below.
+See [the migration plan](docs/migration-plan.md),
+[standalone architecture and evidence](docs/standalone-core.md), and
+[OpenProject WP #788](https://openproject.tail21f530.ts.net/work_packages/788)
+before promoting it.
+
 **Macro the project. Micro the agents.**
 
 Bird’s-eye map of an agent campaign. A **base** is a repo outpost. A **faction** is a harness. Cursor, Codex, and OhMyPi each have a painted body — angular, organic, and mechanical. **Grok Bot** (`grokbot`) is a first-class faction on the same legend, rail, and HUD. No grokbot paint was staged, so it wears the neutral v2 body with a bone-white wash. A **unit** is one agent on that outpost, a Mirmi. The **model picks the silhouette** from the v2 atlas: scout, worker, drone, tankette, walker, medic, mirmi, armed, skiff, or builder. The same model wears the same silhouette on whichever faction body it stands on. Idle and working add a ground marker. Blocked adds a red slash. The repo name and last touch stay in the HUD.

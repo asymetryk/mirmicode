@@ -1,7 +1,7 @@
 import feedV0Snapshot from "../../fixtures/feed-v0-snapshot.json";
 import { repoKey as canonicalRepoKey } from "../repos";
 import { stageFromString } from "../rtsArt";
-import type { CampaignBase, MapSnapshot, OpenProjectSummary, Unit } from "../types";
+import type { BuildingKind, CampAppearance, CampLinks, CampaignBase, LatestThread, LinkProvenance, MapSnapshot, OpenProjectSummary, TaskOutcome, TaskTokenUsage, Unit, UnitAppearance, UnitRole } from "../types";
 
 /**
  * mirmicode-native feed adapter (contract v0).
@@ -32,6 +32,24 @@ export type NativeFeedCamp = {
   } | null;
   one_liner?: string;
   aliases?: string[];
+  appearance?: { color?: unknown; building_set?: unknown };
+  links?: {
+    github_url?: string | null;
+    openproject_url?: string | null;
+    buzz_url?: string | null;
+  };
+  buzz_channel_id?: string | null;
+  link_provenance?: {
+    github_url?: "manual" | "observation" | "none";
+    openproject_url?: "manual" | "observation" | "none";
+    buzz_url?: "manual" | "observation" | "none";
+  };
+  latest_thread?: {
+    id?: string;
+    title?: string | null;
+    url?: string;
+    updated_at?: string;
+  } | null;
 };
 
 export type NativeFeedDestination = {
@@ -46,8 +64,17 @@ export type NativeFeedUnit = {
   model?: string;
   thread_name?: string;
   status?: string;
+  prompt_tldr?: string | null;
+  started_at?: string | null;
+  finished_at?: string | null;
+  duration_ms?: number | null;
+  token_usage?: Partial<TaskTokenUsage> | null;
+  outcome?: Partial<TaskOutcome> | null;
   destination?: NativeFeedDestination;
   updated_at?: string;
+  parent_id?: string | null;
+  native_url?: string | null;
+  appearance?: { color?: unknown; unit_role?: unknown };
 };
 
 export type NativeFeedSnapshot = {
@@ -55,6 +82,9 @@ export type NativeFeedSnapshot = {
   source?: string;
   camps?: NativeFeedCamp[];
   units?: NativeFeedUnit[];
+  stale?: boolean;
+  notice?: string | null;
+  metadata_revision?: number;
 };
 
 export type NativeFeedRejection = {
@@ -132,6 +162,8 @@ export function parseNativeFeedSnapshot(snapshot: unknown): NativeFeedParseResul
     const bucket = unitsByCamp.get(key) ?? [];
     bases.push({
       id: campIdFor(repo),
+      // Keep the source's canonical key for writes; `repo` is a display identity.
+      repoKey: typeof camp.repo_key === "string" && camp.repo_key.trim() ? camp.repo_key.trim() : key,
       repo,
       label: labelFromCamp(camp),
       openProject: openProjectFromCamp(camp),
@@ -139,6 +171,11 @@ export function parseNativeFeedSnapshot(snapshot: unknown): NativeFeedParseResul
       place: null,
       stage: stageFromString(camp.stage ?? null),
       oneLiner: oneLinerFromCamp(camp),
+      buzzChannelId: safeUuid(camp.buzz_channel_id),
+      appearance: campAppearanceFrom(camp.appearance),
+      links: linksFromCamp(camp),
+      linkProvenance: linkProvenanceFrom(camp.link_provenance),
+      latestThread: latestThreadFrom(camp.latest_thread),
       units: bucket,
     });
   }
@@ -162,11 +199,21 @@ export function loadNativeFeed(
       source: NATIVE_FEED_SOURCE,
       fetchedAt,
       bases: parsed.bases,
-      notice: null,
-      stale: false,
+      notice: typeof (payload as NativeFeedSnapshot).notice === "string" ? (payload as NativeFeedSnapshot).notice! : null,
+      stale: (payload as NativeFeedSnapshot).stale === true,
+      metadataRevision: typeof (payload as NativeFeedSnapshot).metadata_revision === "number"
+        ? (payload as NativeFeedSnapshot).metadata_revision
+        : undefined,
     },
     rejected: parsed.rejected,
   };
+}
+
+/** Same-origin Mirmicode API, used by the standalone deployment. */
+export async function loadNativeFeedServer(fetchImpl: typeof fetch = fetch): Promise<MapSnapshot> {
+  const response = await fetchImpl("/api/v1/snapshot", { cache: "no-store" });
+  if (!response.ok) throw new Error(`Mirmicode feed returned HTTP ${response.status}.`);
+  return { ...loadNativeFeed(await response.json()).snapshot, source: "mirmicode" };
 }
 
 /** Module-baked fixture used by App when VITE_FEED_SOURCE=native. */
@@ -184,6 +231,10 @@ function normalizeRepoKey(value: unknown): string | null {
 }
 
 function repoFromCamp(camp: NativeFeedCamp): string | null {
+  if (typeof camp.repo_key === "string" && camp.repo_key.startsWith("local:sha256:") &&
+      typeof camp.repo_label === "string" && camp.repo_label.trim()) {
+    return camp.repo_label.trim();
+  }
   const url = typeof camp.github_url === "string" ? camp.github_url : "";
   const trimmed = url.trim();
   if (trimmed) {
@@ -220,7 +271,13 @@ function toUnit(raw: NativeFeedUnit): Unit {
   const harness = typeof raw.harness === "string" && raw.harness.trim() ? raw.harness.trim() : PLACEHOLDER;
   const model = typeof raw.model === "string" && raw.model.trim() ? raw.model.trim() : PLACEHOLDER;
   const threadName = typeof raw.thread_name === "string" && raw.thread_name.trim() ? raw.thread_name.trim() : null;
-  const status = typeof raw.status === "string" && raw.status.trim() ? raw.status.trim() : null;
+  const sourceStatus = typeof raw.status === "string" && raw.status.trim() ? raw.status.trim() : null;
+  const activityStatus = sourceStatus && ["working", "completed", "needs-attention", "unknown"].includes(sourceStatus)
+    ? sourceStatus
+    : null;
+  // Preserve the preexisting map posture input; the task card consumes the
+  // additional activityStatus field without changing current map behavior.
+  const status = sourceStatus;
   const updatedAt = typeof raw.updated_at === "string" && raw.updated_at ? raw.updated_at : PLACEHOLDER;
   // The native feed never carries prompt bodies. lastPrompt stays null so the
   // public-mode scrubber is a no-op for this source. snippetExempt lets the
@@ -235,11 +292,134 @@ function toUnit(raw: NativeFeedUnit): Unit {
     hasContextSnippet: false,
     snippetExempt: true,
     status,
+    activityStatus,
+    // Public snapshots are redacted by the API; an included value means the
+    // server verified the private editor session for this request.
+    promptTldr: readNullableString(raw.prompt_tldr),
+    taskStartedAt: readNullableString(raw.started_at),
+    taskFinishedAt: readNullableString(raw.finished_at),
+    taskDurationMs: readNullableNumber(raw.duration_ms),
+    tokenUsage: normalizeTokenUsage(raw.token_usage),
+    outcome: normalizeOutcome(raw.outcome),
     lifecycle: null,
     presence: null,
     freshness: null,
     hidden: false,
     updatedAt,
+    parentId: typeof raw.parent_id === "string" ? raw.parent_id : null,
+    nativeUrl: typeof raw.native_url === "string" && /^https:\/\/|^codex:\/\//.test(raw.native_url) ? raw.native_url : null,
+    appearance: unitAppearanceFrom(raw.appearance),
+  };
+}
+
+function readNullableString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function readNullableNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+function normalizeTokenUsage(value: unknown): TaskTokenUsage | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const raw = value as Partial<TaskTokenUsage>;
+  const normalized = {
+    input_tokens: readNullableNumber(raw.input_tokens),
+    output_tokens: readNullableNumber(raw.output_tokens),
+    cached_input_tokens: readNullableNumber(raw.cached_input_tokens),
+    reasoning_output_tokens: readNullableNumber(raw.reasoning_output_tokens),
+    total_tokens: readNullableNumber(raw.total_tokens),
+  };
+  return Object.values(normalized).some((count) => count !== null) ? normalized : null;
+}
+
+function normalizeOutcome(value: unknown): TaskOutcome | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const raw = value as Partial<TaskOutcome>;
+  const state = readNullableString(raw.state);
+  const summary = readNullableString(raw.summary);
+  const evidence = Array.isArray(raw.evidence)
+    ? raw.evidence.filter((item): item is string => typeof item === "string" && item.trim().length > 0).map((item) => item.trim())
+    : null;
+  return state || summary || evidence?.length ? { state, summary, evidence: evidence?.length ? evidence : null } : null;
+}
+
+const BUILDING_KINDS = new Set<BuildingKind>(["pad", "depot", "turret", "refinery", "barracks", "lab"]);
+const UNIT_ROLES = new Set<UnitRole>([
+  "scout", "worker", "drone", "tankette", "walker", "medic", "mirmi-small", "mirmi-armed", "skiff", "builder",
+]);
+
+function validColor(value: unknown): string | null {
+  return typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value) ? value.toLowerCase() : null;
+}
+
+function campAppearanceFrom(value: unknown): CampAppearance {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return { color: null, buildingSet: null };
+  const source = value as Record<string, unknown>;
+  const buildingSet = Array.isArray(source.building_set) &&
+    source.building_set.every((kind) => typeof kind === "string" && BUILDING_KINDS.has(kind as BuildingKind))
+    ? [...new Set(source.building_set as BuildingKind[])] : null;
+  return { color: validColor(source.color), buildingSet };
+}
+
+function unitAppearanceFrom(value: unknown): UnitAppearance {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return { color: null, unitRole: null };
+  const source = value as Record<string, unknown>;
+  const unitRole = typeof source.unit_role === "string" && UNIT_ROLES.has(source.unit_role as UnitRole)
+    ? source.unit_role as UnitRole : null;
+  return { color: validColor(source.color), unitRole };
+}
+
+function linksFromCamp(camp: NativeFeedCamp): CampLinks {
+  const links = camp.links;
+  const github = links && Object.prototype.hasOwnProperty.call(links, "github_url") ? links.github_url : camp.github_url;
+  const openProject = links && Object.prototype.hasOwnProperty.call(links, "openproject_url")
+    ? links.openproject_url : openProjectFromCamp(camp)?.href ?? null;
+  const buzz = links && Object.prototype.hasOwnProperty.call(links, "buzz_url") ? links.buzz_url : null;
+  return {
+    githubUrl: safeHttps(github),
+    openProjectUrl: safeHttps(openProject),
+    buzzUrl: safeHttps(buzz),
+  };
+}
+
+function safeHttps(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  try {
+    return new URL(value).protocol === "https:" ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function safeUuid(value: unknown): string | null {
+  return typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+    ? value.toLowerCase() : null;
+}
+
+function latestThreadFrom(value: NativeFeedCamp["latest_thread"]): LatestThread | null {
+  if (!value || typeof value !== "object" || typeof value.id !== "string" ||
+      typeof value.updated_at !== "string") return null;
+  const url = typeof value.url === "string" && /^(https:\/\/|codex:\/\/)/.test(value.url)
+    ? value.url : null;
+  if (!url) return null;
+  return {
+    id: value.id,
+    title: typeof value.title === "string" ? value.title : null,
+    url,
+    updatedAt: value.updated_at,
+  };
+}
+
+function linkProvenanceFrom(value: NativeFeedCamp["link_provenance"]): LinkProvenance {
+  const allowed = new Set(["manual", "observation", "none"]);
+  const read = (item: unknown): "manual" | "observation" | "none" =>
+    typeof item === "string" && allowed.has(item) ? item as "manual" | "observation" | "none" : "none";
+  return {
+    githubUrl: read(value?.github_url),
+    openProjectUrl: read(value?.openproject_url),
+    buzzUrl: read(value?.buzz_url),
   };
 }
 

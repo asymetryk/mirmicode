@@ -1,7 +1,21 @@
-export type MapSource = "fixture" | "working-set" | "native-feed";
+export type MapSource = "fixture" | "working-set" | "native-feed" | "mirmicode";
 
 /** Camp lifecycle stage from the camp dossier. */
 export type CampStage = "idea" | "mvp" | "active" | "parked" | "archive" | "unknown";
+
+export type TaskTokenUsage = {
+  input_tokens: number | null;
+  output_tokens: number | null;
+  cached_input_tokens: number | null;
+  reasoning_output_tokens: number | null;
+  total_tokens: number | null;
+};
+
+export type TaskOutcome = {
+  state: string | null;
+  summary: string | null;
+  evidence: string[] | null;
+};
 
 /** One agent on a base. The harness is its faction. The model is its unit type. */
 export type Unit = {
@@ -28,6 +42,16 @@ export type Unit = {
   snippetExempt?: boolean;
   /** annotation.status, then flat status. Operator triage such as open or done. Not lifecycle. */
   status: string | null;
+  /** Captured task lifecycle, separate from the legacy operator triage status above. */
+  activityStatus?: string | null;
+  /** Compact last-prompt summary supplied by the task source; never a prompt body. */
+  promptTldr?: string | null;
+  taskStartedAt?: string | null;
+  taskFinishedAt?: string | null;
+  taskDurationMs?: number | null;
+  tokenUsage?: TaskTokenUsage | null;
+  /** Explicit source assessment only; lifecycle completion does not imply an outcome. */
+  outcome?: TaskOutcome | null;
   /** observed.lifecycle. Live values: idle, detached, archived, unknown. Null when absent. */
   lifecycle: string | null;
   /** observed.presence. Live values: present, not_seen. Null when absent. */
@@ -37,6 +61,46 @@ export type Unit = {
   /** True only when annotation.hidden is boolean true. */
   hidden: boolean;
   /** ISO-8601 timestamp, or "unknown" when the payload omitted it. */
+  updatedAt: string;
+  /** Parent Codex task for a subagent; null for top-level or unknown. */
+  parentId?: string | null;
+  /** Verified native destination only; never synthesized from a session ID. */
+  nativeUrl?: string | null;
+  /** User-controlled map presentation, separate from source observations. */
+  appearance?: UnitAppearance;
+};
+
+export type BuildingKind = "pad" | "depot" | "turret" | "refinery" | "barracks" | "lab";
+export type UnitRole =
+  | "scout" | "worker" | "drone" | "tankette" | "walker" | "medic"
+  | "mirmi-small" | "mirmi-armed" | "skiff" | "builder";
+
+export type CampAppearance = {
+  color: string | null;
+  buildingSet: BuildingKind[] | null;
+};
+
+export type UnitAppearance = {
+  color: string | null;
+  unitRole: UnitRole | null;
+};
+
+export type CampLinks = {
+  githubUrl: string | null;
+  openProjectUrl: string | null;
+  buzzUrl: string | null;
+};
+
+export type LinkProvenance = {
+  githubUrl: "manual" | "observation" | "none";
+  openProjectUrl: "manual" | "observation" | "none";
+  buzzUrl: "manual" | "observation" | "none";
+};
+
+export type LatestThread = {
+  id: string;
+  title: string | null;
+  url: string;
   updatedAt: string;
 };
 
@@ -51,6 +115,8 @@ export type OpenProjectSummary = {
 /** One project/repo on the campaign map. */
 export type CampaignBase = {
   id: string;
+  /** Stable canonical source key, used for shared metadata writes. */
+  repoKey?: string;
   repo: string;
   label: string | null;
   /** Aggregated from unit associations, else a repo map already on the payload. */
@@ -69,7 +135,17 @@ export type CampaignBase = {
    * when no dossier entry exists for this base. Null for other feeds.
    */
   oneLiner: string | null;
+  /** Canonical Buzz channel UUID supplied by the verified repo registry. */
+  buzzChannelId?: string | null;
   units: Unit[];
+  /** Shared operator-editable display overrides. */
+  appearance?: CampAppearance;
+  /** Shared operator-editable destinations, overriding observed links. */
+  links?: CampLinks;
+  /** Manual edits are not equivalent to provider-verified destinations. */
+  linkProvenance?: LinkProvenance;
+  /** Most recent source-provided thread URL; null when no verified URL exists. */
+  latestThread?: LatestThread | null;
 };
 
 export type MapSnapshot = {
@@ -79,6 +155,8 @@ export type MapSnapshot = {
   notice: string | null;
   /** True when snapshot.stale is boolean true. A banner only; units stay. */
   stale: boolean;
+  /** Revision for optimistic concurrency on shared metadata edits. */
+  metadataRevision?: number;
 };
 
 export type ViewState = {

@@ -1027,6 +1027,12 @@ describe("rts sprites", () => {
 });
 
 describe("layout", () => {
+  it("keeps a sparse live map close enough to read on a laptop", () => {
+    const pair = loadFixture().bases.slice(0, 2).map((base) => ({ ...base, place: null }));
+    const positioned = positionBases(pair);
+    expect(fitView(positioned, 912, 750).scale).toBeGreaterThan(0.4);
+  });
+
   it("places fixture bases inside the world and fits them in a viewport", () => {
     const positioned = positionBases(loadFixture().bases);
     for (const base of positioned) {

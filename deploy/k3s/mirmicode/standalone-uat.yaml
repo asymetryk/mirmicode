@@ -1,0 +1,157 @@
+# Apply only for standalone UAT in the existing mirmicode namespace. This does
+# not modify the production Deployment or service. The secret is provisioned
+# separately from the approved credential ledger.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mirmicode-standalone-uat-data
+  namespace: mirmicode
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mirmicode-standalone-uat-tailscale-state
+  namespace: mirmicode
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 256Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mirmicode-standalone-uat
+  namespace: mirmicode
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mirmicode-standalone-uat
+  template:
+    metadata:
+      labels:
+        app: mirmicode-standalone-uat
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: asym-k1
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 10001
+      containers:
+        - name: web
+          image: mirmicode.local/standalone-uat:REPLACE_WITH_BUILD_ID
+          imagePullPolicy: Never
+          env:
+            - name: MIRMICODE_EDITOR_TOKEN_FILE
+              value: /run/secrets/editor-token
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: "1"
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: auth-tokens
+              mountPath: /run/secrets
+              readOnly: true
+        - name: tailscale
+          image: docker.io/tailscale/tailscale@sha256:d54b2e6a9c09f0e5ec52e82b9ad4af3d446b54a7c08075e92f11c39dd410105f
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "/usr/local/bin/k3s-identity-entrypoint.sh"]
+          env:
+            - name: TS_HOSTNAME
+              value: mirmicode-uat
+            - name: TS_SERVE_TARGET
+              value: http://127.0.0.1:8080
+            - name: TS_SOCKET
+              value: /tmp/tailscaled.sock
+            - name: TS_STATE_DIR
+              value: /var/lib/tailscale
+            - name: TS_AUTHKEY_FILE
+              value: /run/secrets/tailscale/authkey
+            - name: TS_ADVERTISE_TAGS
+              value: tag:homelab-sidecar
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: tailscale-state
+              mountPath: /var/lib/tailscale
+            - name: tailscale-entrypoint
+              mountPath: /usr/local/bin/k3s-identity-entrypoint.sh
+              subPath: ts-entrypoint.sh
+              readOnly: true
+            - name: tailscale-auth
+              mountPath: /run/secrets/tailscale
+              readOnly: true
+            - name: tailscale-tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: mirmicode-standalone-uat-data
+        - name: auth-tokens
+          projected:
+            sources:
+              - secret:
+                  name: mirmicode-standalone-uat-ingest
+                  items:
+                    - key: token
+                      path: ingest-token
+              - secret:
+                  name: mirmicode-standalone-uat-editor
+                  items:
+                    - key: token
+                      path: editor-token
+        - name: tailscale-state
+          persistentVolumeClaim:
+            claimName: mirmicode-standalone-uat-tailscale-state
+        - name: tailscale-entrypoint
+          configMap:
+            name: mirmicode-tailscale-entrypoint
+            defaultMode: 365
+        - name: tailscale-auth
+          secret:
+            secretName: mirmicode-tailscale-auth
+            items:
+              - key: authkey
+                path: authkey
+        - name: tailscale-tmp
+          emptyDir: {}

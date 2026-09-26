@@ -8,16 +8,17 @@ import {
   readStartupWorkingSetUrl,
   resolveSnapshot,
 } from "./adapters/source";
-import { loadNativeFeedFixture } from "./adapters/nativeFeed";
+import { loadNativeFeedFixture, loadNativeFeedServer } from "./adapters/nativeFeed";
 import campDossiers from "./data/camp-dossiers.json";
 import { CampDossierPanel } from "./components/CampDossierPanel";
 import { MapStage } from "./components/MapStage";
+import { MapHud } from "./components/MapHud";
 import { SelectionPopover } from "./components/SelectionPopover";
 import { SideRail } from "./components/SideRail";
 import { resolveDossier } from "./dossier";
 import { positionBases } from "./layout";
 import { DEFAULT_NOISE_FILTER, applyNoiseFilter, type NoiseFilter } from "./mapNoise";
-import type { CampDossierCatalog, MapSnapshot } from "./types";
+import type { CampaignBase, CampDossierCatalog, MapSnapshot } from "./types";
 
 const HIDE_NOISE_KEY = "mirmicode.hideNoise";
 const HIDE_DETACHED_KEY = "mirmicode.hideDetached";
@@ -32,6 +33,7 @@ export function App() {
   const [selectedBaseId, setSelectedBaseId] = useState<string | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [attached, setAttached] = useState(false);
+  const [showAllCamps, setShowAllCamps] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [filter, setFilter] = useState<NoiseFilter>(readNoiseFilter);
   const [railOpen, setRailOpen] = useState(readRailOpen);
@@ -48,7 +50,25 @@ export function App() {
       setFallbackReason(reason);
       setLoading(false);
     };
-    if (useNativeFeed()) {
+    if (useServerFeed()) {
+      void loadServer(commit);
+      const timer = window.setInterval(() => {
+        void loadNativeFeedServer().then((next) => {
+          if (!cancelled && version === requestVersion.current) {
+            setSnapshot(next);
+            setFallbackReason(null);
+          }
+        }).catch(() => {
+          if (!cancelled && version === requestVersion.current) {
+            setFallbackReason("Mirmicode feed is unavailable; showing the last observation.");
+          }
+        });
+      }, 15_000);
+      return () => {
+        cancelled = true;
+        window.clearInterval(timer);
+      };
+    } else if (useNativeFeed()) {
       void loadNative(commit);
     } else {
       void apply(readStartupUrl(), commit);
@@ -100,8 +120,26 @@ export function App() {
     () => positionBases(filtered.bases),
     [filtered],
   );
+  const liveMapBases = useMemo(
+    () => positionBases(filtered.bases.filter((base) => hasLiveMapActivity(base, now))),
+    [filtered, now],
+  );
+  const liveMapBaseIds = useMemo(() => new Set(liveMapBases.map((base) => base.id)), [liveMapBases]);
+  const focusEnabled = snapshot?.source === "mirmicode";
+  const allMode = !focusEnabled || showAllCamps || liveMapBases.length === 0;
+  const mapBases = allMode ? positioned : liveMapBases;
   const selected = positioned.find((base) => base.id === selectedBaseId) ?? null;
   const selectedUnit = selected?.units.find((unit) => unit.id === selectedUnitId) ?? null;
+
+  useEffect(() => {
+    if (selectedBaseId) setRailOpen(true);
+  }, [selectedBaseId]);
+
+  useEffect(() => {
+    if (focusEnabled && !showAllCamps && selectedBaseId && !liveMapBaseIds.has(selectedBaseId)) {
+      setShowAllCamps(true);
+    }
+  }, [focusEnabled, showAllCamps, selectedBaseId, liveMapBaseIds]);
 
   async function onLoadUrl(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -141,6 +179,23 @@ export function App() {
     setAttached(false);
   }
 
+  function onSelectRailBase(id: string) {
+    if (focusEnabled && !liveMapBaseIds.has(id)) setShowAllCamps(true);
+    setSelectedBaseId(id);
+    setSelectedUnitId(null);
+  }
+
+  function onSelectRailUnit(baseId: string, unitId: string) {
+    if (focusEnabled && !liveMapBaseIds.has(baseId)) setShowAllCamps(true);
+    setSelectedBaseId(baseId);
+    setSelectedUnitId(unitId);
+  }
+
+  function showLiveCamps() {
+    if (selectedBaseId && !liveMapBaseIds.has(selectedBaseId)) onClearSelection();
+    setShowAllCamps(false);
+  }
+
   const status = statusLine(snapshot, loading, positioned, filtered.hiddenCount);
   const staleNote = snapshot?.stale ? STALE_SNAPSHOT_BANNER : null;
 
@@ -166,6 +221,16 @@ export function App() {
     writeFlag(RAIL_OPEN_KEY, value);
   }
 
+  function refreshLiveSnapshot() {
+    if (!useServerFeed()) return;
+    void loadNativeFeedServer().then((next) => {
+      setSnapshot(next);
+      setFallbackReason(null);
+    }).catch(() => {
+      setFallbackReason("Mirmicode feed is unavailable; showing the last observation.");
+    });
+  }
+
   return (
     <div className="app">
       <header className="topbar">
@@ -173,10 +238,13 @@ export function App() {
           <h1>Mirmicode</h1>
           <p className="tagline">Macro the project. Micro the agents.</p>
         </div>
+        <MapHud
+          bases={positioned}
+          sourceLabel={status}
+          observedAt={snapshot?.fetchedAt ?? null}
+          now={now}
+        />
         <div className="topbar-meta">
-          <p className="status" role="status">
-            {status}
-          </p>
           <p className="public-note">Build in public. Not monetized.</p>
         </div>
         {banner ? (
@@ -187,9 +255,27 @@ export function App() {
       </header>
       <div className={railOpen ? "stage-shell is-rail-open" : "stage-shell"}>
         <div className="map-frame">
+          {focusEnabled ? <div className="map-scope-controls" role="group" aria-label="Map camp visibility">
+            <button
+              type="button"
+              aria-pressed={!allMode}
+              disabled={liveMapBases.length === 0}
+              onClick={showLiveCamps}
+            >
+              Live work ({liveMapBases.length})
+            </button>
+            <button
+              type="button"
+              aria-pressed={allMode}
+              onClick={() => setShowAllCamps(true)}
+            >
+              All camps ({positioned.length})
+            </button>
+            <span>Working, attention, and completions within 24h</span>
+          </div> : null}
           <MapStage
-            key={`${snapshot?.source ?? "pending"}:${snapshot?.fetchedAt ?? "0"}`}
-            bases={positioned}
+            key={`${snapshot?.source ?? "pending"}:${allMode ? "all" : "live"}`}
+            bases={mapBases}
             selectedBaseId={selectedBaseId}
             selectedUnitId={selectedUnitId}
             attached={attached && selected !== null}
@@ -202,25 +288,7 @@ export function App() {
               setSelectedUnitId(unitId);
             }}
             onClearSelection={onClearSelection}
-          >
-            <SelectionPopover
-              base={selected}
-              unit={selectedUnit}
-              attached={attached && selected !== null}
-              now={now}
-              onToggleAttach={onToggleAttach}
-              onClose={onClearSelection}
-              onSelectUnit={(baseId, unitId) => {
-                setSelectedBaseId(baseId);
-                setSelectedUnitId(unitId);
-              }}
-            />
-            <CampDossierPanel
-              base={selected}
-              dossier={selected ? resolveDossier(selected, dossierCatalog) : null}
-              onClose={onClearSelection}
-            />
-          </MapStage>
+          />
           {railOpen ? null : (
             <button
               type="button"
@@ -234,6 +302,25 @@ export function App() {
         </div>
         {railOpen ? (
           <SideRail
+            inspector={selected ? <>
+              <SelectionPopover
+                base={selected}
+                unit={selectedUnit}
+                attached={attached && selected !== null}
+                now={now}
+                metadataRevision={snapshot?.metadataRevision ?? null}
+                canEditMetadata={snapshot?.source === "mirmicode" && Boolean(selected.repoKey)}
+                onRefreshSnapshot={refreshLiveSnapshot}
+                onToggleAttach={onToggleAttach}
+                onClose={onClearSelection}
+                onSelectUnit={onSelectRailUnit}
+              />
+              <CampDossierPanel
+                base={selected}
+                dossier={snapshot?.source === "mirmicode" ? null : resolveDossier(selected, dossierCatalog)}
+                onClose={onClearSelection}
+              />
+            </> : null}
             bases={positioned}
             selectedBaseId={selectedBaseId}
             selectedUnitId={selectedUnitId}
@@ -248,15 +335,12 @@ export function App() {
             onHideNoise={onHideNoise}
             onHideDetached={onHideDetached}
             onHideArchived={onHideArchived}
-            onCollapse={() => onRailOpen(false)}
-            onSelectBase={(id) => {
-              setSelectedBaseId(id);
-              setSelectedUnitId(null);
+            onCollapse={() => {
+              onClearSelection();
+              onRailOpen(false);
             }}
-            onSelectUnit={(baseId, unitId) => {
-              setSelectedBaseId(baseId);
-              setSelectedUnitId(unitId);
-            }}
+            onSelectBase={onSelectRailBase}
+            onSelectUnit={onSelectRailUnit}
             onUrlDraft={setUrlDraft}
             onLoadUrl={onLoadUrl}
             onUseFixture={onUseFixture}
@@ -280,8 +364,26 @@ function statusLine(
   const count = `${visible.length} ${visible.length === 1 ? "base" : "bases"} · ${units} units${hidden}`;
   if (loading) return `Loading… · ${count}`;
   if (snapshot.source === "working-set") return `Live Working Set · ${count}`;
+  if (snapshot.source === "mirmicode") return `Mirmicode live · ${count}`;
   if (snapshot.source === "native-feed") return `Native feed · ${count}`;
   return `Fixture · sample data · ${count}`;
+}
+
+const LIVE_MAP_STATES = new Set([
+  "working", "active", "busy", "blocked", "queued", "stuck", "error", "needs-attention", "needs attention", "attention",
+]);
+const COMPLETED_MAP_STATES = new Set(["done", "complete", "completed"]);
+const RECENT_COMPLETION_MS = 24 * 60 * 60 * 1000;
+
+/** Keep live work, attention states, and completions observed within the last day on the default map. */
+export function hasLiveMapActivity(base: CampaignBase, now: number): boolean {
+  return base.units.some((unit) => {
+    const states = [unit.status, unit.lifecycle].map((value) => (value ?? "").trim().toLowerCase());
+    if (states.some((state) => LIVE_MAP_STATES.has(state))) return true;
+    if (!states.some((state) => COMPLETED_MAP_STATES.has(state))) return false;
+    const updatedAt = Date.parse(unit.updatedAt);
+    return Number.isFinite(updatedAt) && updatedAt <= now && now - updatedAt <= RECENT_COMPLETION_MS;
+  });
 }
 
 function readRailOpen(): boolean {
@@ -334,6 +436,17 @@ async function loadNative(
   }
 }
 
+async function loadServer(
+  commit: (snapshot: MapSnapshot, fallbackReason: string | null) => void,
+): Promise<void> {
+  try {
+    commit(await loadNativeFeedServer(), null);
+  } catch (error) {
+    commit({ source: "mirmicode", fetchedAt: new Date().toISOString(), bases: [],
+      stale: true, notice: "Waiting for a live Mirmicode feed." }, readableReason(error));
+  }
+}
+
 function loadFixtureForFallback(): MapSnapshot {
   // Fallback when the native feed fails to load: keep the existing fixture
   // behavior so the UI never blanks. The fixture is independent of the
@@ -350,8 +463,12 @@ function useNativeFeed(): boolean {
   return (import.meta.env.VITE_FEED_SOURCE ?? "").trim().toLowerCase() === "native";
 }
 
+function useServerFeed(): boolean {
+  return (import.meta.env.VITE_FEED_SOURCE ?? "").trim().toLowerCase() === "server";
+}
+
 function readStartupUrl(): string {
-  if (useNativeFeed()) return "";
+  if (useNativeFeed() || useServerFeed()) return "";
   const envUrl = import.meta.env.VITE_WORKING_SET_URL;
   try {
     return readStartupWorkingSetUrl(envUrl, localStorage);
