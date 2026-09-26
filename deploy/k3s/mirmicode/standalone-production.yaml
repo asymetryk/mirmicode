@@ -154,4 +154,3 @@ spec:
                 path: authkey
         - name: tailscale-tmp
           emptyDir: {}
-
