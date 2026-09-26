@@ -15,7 +15,7 @@ graft_required: true
 ## Scope
 - Mirmicode owns the repository/project/collaboration/agent-session map.
 - The legacy CAHQ Working Set adapter is a migration fallback, not the core data authority.
-- Keep production intact until standalone UAT and a reviewed release prove cutover safe.
+- Standalone private production was promoted after K3s UAT and desktop validation on 2026-09-26; Howard explicitly waived PR review. Keep its independent data/credential boundary and the saved legacy rollback. Verify current live state before further promotion.
 
 ## Current project association
 - 2026-09-23 — Howard's repository-wide consistency request supersedes the adapter-cut waiver for new work. This repository has its own OpenProject project and private Buzz forum; linked worktrees and clones reuse these identities.

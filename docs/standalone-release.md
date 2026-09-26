@@ -48,10 +48,35 @@ image; use an online database backup when compatibility is uncertain.
 
 ## 2026-09-26 acceptance
 
+PR 22 merged as `4b590e8efd12f7b2099c99fc21905d2e74f5b7ed`. The exact merged
+source was built on K3s and deployed as `mirmicode.local/standalone:4b590e8`
+to private production. OCI index digest:
+`sha256:3994c7890c04843590d49104061ba84bbd70191361c3268fbf2d50b5cae86130`.
+The merged-source build passed the same 167 frontend tests, TypeScript/Vite,
+and 46 runtime Python tests (six Git-dependent installer tests passed in
+the separate 52-test K3s run).
+
+Production snapshot readback showed 31 camps, 19 units, revision 7, and
+`stale: false` after retargeting the host reporters. Two fresh concurrent CLI
+jobs each in Cursor and OhMyPi were observed working then completed through
+production, with 16-second durations and null outcomes. The current Codex
+parent reported working and its completed child remained linked. Both host
+LaunchAgents exited 0 and the retry queue was empty. Tailnet HTTPS health,
+snapshot, private editor-session exchange, and private keyword display
+passed; unauthenticated ingest and event endpoints returned 401.
+
+Retargeting initially malformed the collector argument list: numerical
+`plutil` array edits inserted values, leaving the old endpoint/arguments.
+The source correctly became stale. Replacing the full argument array and
+restarting the LaunchAgent restored fresh Codex data. Validate the complete
+installed argument list when changing endpoints.
+
 Production secret handles: private operator files
 `~/.codex/secrets/mirmicode-standalone-production-ingest-token` and
 `~/.codex/secrets/mirmicode-standalone-production-editor-token`, both mode
 0600, provision the two K3s Secrets named above. UAT handles remain separate.
+The approved Baserow Secrets ledger contains production ingest in row 67
+and production editor in row 68; both values were written and read back.
 
 Candidate `mirmicode.local/standalone-uat:20260926-acceptance1` passed 167
 frontend tests and TypeScript/Vite build on `asym-k1`; all 52 Python tests
