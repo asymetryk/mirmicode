@@ -1,0 +1,53 @@
+{
+  "description": "Wake the Mirmicode Codex reporter on prompt and agent lifecycle events.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/mirmicode_report.py\"",
+            "async": true,
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/mirmicode_report.py\"",
+            "async": true,
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/mirmicode_report.py\"",
+            "async": true,
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/mirmicode_report.py\"",
+            "async": true,
+            "timeout": 3
+          }
+        ]
+      }
+    ]
+  }
+}
